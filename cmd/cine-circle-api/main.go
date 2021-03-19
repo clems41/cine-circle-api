@@ -57,7 +57,7 @@ func run(cmd *cobra.Command, args []string) {
 	// AutoMigrate will create tables, missing foreign keys, constraints, columns and indexes. It will change existing
 	// column’s type if its size, precision, nullable changed.
 	// It WON’T delete unused columns to protect your data.
-	database.DB().AutoMigrate(&model.UserRating{}, &model.User{})
+	database.DB().AutoMigrate(&model.UserRating{}, &model.User{}, &model.Circle{})
 
 	err = database.Close()
 	if err.IsNotNil() {
