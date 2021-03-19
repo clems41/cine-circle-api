@@ -1,10 +1,10 @@
 package main
 
 import (
-	"cine-circle/external/omdb"
 	"cine-circle/internal/api"
-	"cine-circle/internal/db"
+	"cine-circle/internal/database"
 	"cine-circle/internal/logger"
+	"cine-circle/internal/model"
 	"context"
 	"flag"
 	"github.com/emicklei/go-restful"
@@ -49,20 +49,20 @@ func run(cmd *cobra.Command, args []string) {
 	signal.Notify(Signals, os.Interrupt)
 
 	// Try to connect to PostgresSQL database
-	database, err := db.OpenConnection()
-	if err.IsNotNil() {
-		logger.Sugar.Fatalf(err.Error())
-	}
-	err = database.Close()
+	database, err := database.OpenConnection()
 	if err.IsNotNil() {
 		logger.Sugar.Fatalf(err.Error())
 	}
 
-	// Test to get some movies from open data movie
-	_, movie := omdb.FindMovieByTitle("avengers endgame")
-	logger.Sugar.Info("movie : %+v", movie)
-	_, movie = omdb.FindMovieByID("tt0848228")
-	logger.Sugar.Info("movie : %+v", movie)
+	// AutoMigrate will create tables, missing foreign keys, constraints, columns and indexes. It will change existing
+	// column’s type if its size, precision, nullable changed.
+	// It WON’T delete unused columns to protect your data.
+	database.DB().AutoMigrate(&model.UserRating{}, &model.User{})
+
+	err = database.Close()
+	if err.IsNotNil() {
+		logger.Sugar.Fatalf(err.Error())
+	}
 
 	// Add container filter to enable CORS
 	cors := restful.CrossOriginResourceSharing{

@@ -13,8 +13,12 @@ const (
 
 	ErrInternalDatabaseNilCode = "ERR_INTERNAL_DATABASE_NIL"
 	ErrInternalDatabaseConnectionCode = "ERR_INTERNAL_DATABASE_CONNECTION"
+	ErrInternalDatabaseCreationFailedCode = "ERR_INTERNAL_DATABASE_CREATION_FAILED"
+	ErrInternalDatabaseQueryFailedCode = "ERR_INTERNAL_DATABASE_QUERY_FAILED"
 
 	ErrInternalApiBadRequestCode = "ERR_INTERNAL_API_BAD_REQUEST"
+	ErrInternalApiUnprocessableEntityCode = "ERR_INTERNAL_API_UNPROCESSABLE_ENTITY"
+	ErrInternalApiNotFoundCode = "ERR_INTERNAL_API_NOT_FOUND"
 )
 
 var (
@@ -27,6 +31,16 @@ var (
 		errors.New("request cannot be proceeded"),
 		http.StatusBadRequest,
 		ErrInternalApiBadRequestCode)
+
+	ErrInternalApiUnprocessableEntity = NewCustomError(
+		errors.New("cannot process entity"),
+		http.StatusUnprocessableEntity,
+		ErrInternalApiUnprocessableEntityCode)
+
+	ErrInternalApiNotFound = NewCustomError(
+		errors.New("entity cannot be found"),
+		http.StatusNotFound,
+		ErrInternalApiNotFoundCode)
 )
 
 type codeError struct {

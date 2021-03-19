@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"cine-circle/internal/logger"
@@ -97,6 +97,10 @@ func OpenConnection() (*Database, model.CustomError) {
 		logger.Sugar.Fatalf(model.ErrInternalDatabaseIsNil.Error())
 	}
 
+	if pgConfig.Debug {
+		database = database.Debug()
+	}
+
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
 	//database.DB().SetMaxIdleConns(5)
 
@@ -117,4 +121,8 @@ func (db *Database) Close() model.CustomError {
 		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
 	}
 	return model.NewCustomError(sqlDB.Close(), http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
+}
+
+func (db *Database) DB() *gorm.DB {
+	return db.db
 }

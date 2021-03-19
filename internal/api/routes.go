@@ -31,7 +31,29 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser()).
 		To(FindMovie))
 
-	return []*restful.WebService{wsRoot, wsMovie}
+	// USER
+
+	wsUSer := &restful.WebService{}
+	wsUSer.Path("/v1/user")
+
+	wsUSer.Route(wsUSer.POST("/").
+		Doc("Create new user").
+		Writes("").
+		Returns(201, "Created", "").
+		Returns(400, "Bad request, fields not validated", model.CustomError{}.CodeError()).
+		Returns(422, "Not processable, impossible to serialize json to User", model.CustomError{}.CodeError()).
+		Filter(filterUser()).
+		To(CreateUser))
+
+	wsUSer.Route(wsUSer.GET("/").
+		Doc("Get user by ID").
+		Param(wsUSer.QueryParameter("id", "Get user by ID").DataType("string")).
+		Writes(model.User{}).
+		Returns(200, "OK", model.User{}).
+		Filter(filterUser()).
+		To(GetUser))
+
+	return []*restful.WebService{wsRoot, wsMovie, wsUSer}
 }
 
 // Add filter for getting user infos (token, ID, etc...) in order to authenticate him
