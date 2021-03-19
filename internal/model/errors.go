@@ -7,18 +7,24 @@ import (
 )
 
 const (
-	ErrExternalSendRequestCode = "ERR_EXTERNAL_SEND_REQUEST"
-	ErrExternalReceiveResponseCode = "ERR_EXTERNAL_RECEIVE_RESPONSE"
-	ErrExternalReadBodyCode = "ERR_EXTERNAL_READ_BODY"
+	ErrExternalSendRequestCode = "ERR_EXTERNAL_SEND_REQUEST_CODE"
+	ErrExternalReceiveResponseCode = "ERR_EXTERNAL_RECEIVE_RESPONSE_CODE"
+	ErrExternalReadBodyCode = "ERR_EXTERNAL_READ_BODY_CODE"
 
-	ErrInternalDatabaseNilCode = "ERR_INTERNAL_DATABASE_NIL"
-	ErrInternalDatabaseConnectionCode = "ERR_INTERNAL_DATABASE_CONNECTION"
-	ErrInternalDatabaseCreationFailedCode = "ERR_INTERNAL_DATABASE_CREATION_FAILED"
-	ErrInternalDatabaseQueryFailedCode = "ERR_INTERNAL_DATABASE_QUERY_FAILED"
+	ErrInternalDatabaseNilCode = "ERR_INTERNAL_DATABASE_NIL_CODE"
+	ErrInternalDatabaseResourceNotFoundCode = "ERR_INTERNAL_DATABASE_RESOURCE_NOT_FOUND_CODE"
+	ErrInternalDatabaseConnectionFailedCode = "ERR_INTERNAL_DATABASE_CONNECTION_FAILED_CODE"
+	ErrInternalDatabaseCreationFailedCode = "ERR_INTERNAL_DATABASE_CREATION_FAILED_CODE"
+	ErrInternalDatabaseQueryFailedCode = "ERR_INTERNAL_DATABASE_QUERY_FAILED_CODE"
 
-	ErrInternalApiBadRequestCode = "ERR_INTERNAL_API_BAD_REQUEST"
-	ErrInternalApiUnprocessableEntityCode = "ERR_INTERNAL_API_UNPROCESSABLE_ENTITY"
-	ErrInternalApiNotFoundCode = "ERR_INTERNAL_API_NOT_FOUND"
+	ErrInternalApiBadRequestCode = "ERR_INTERNAL_API_BAD_REQUEST_CODE"
+	ErrInternalApiUnprocessableEntityCode = "ERR_INTERNAL_API_UNPROCESSABLE_ENTITY_CODE"
+	ErrInternalApiUserBadCredentialsCode = "ERR_INTERNAL_API_USER_BAD_CREDENTIALS_CODE"
+	ErrInternalApiUserCredentialsNotFoundCode = "ERR_INTERNAL_API_USER_CREDENTIALS_NOT_FOUND_CODE"
+
+	ErrInternalServiceMissingMandatoryFieldsCode = "ERR_INTERNAL_SERVICE_MISSING_MANDATORY_FIELDS_CODE"
+	ErrInternalServiceBadFormatMandatoryFieldsCode = "ERR_INTERNAL_SERVICE_BAD_FORMAT_MANDATORY_FIELDS_CODE"
+	ErrInternalServiceFieldShouldBeUniqueCode = "ERR_INTERNAL_SERVICE_FIELD_SHOULD_BE_UNIQUE_CODE"
 )
 
 var (
@@ -26,26 +32,45 @@ var (
 		errors.New("got nil database when trying to connect"),
 		http.StatusInternalServerError,
 		ErrInternalDatabaseNilCode)
+	ErrInternalDatabaseResourceNotFound = NewCustomError(
+		errors.New("resource cannot be found in database"),
+		http.StatusNotFound,
+		ErrInternalDatabaseResourceNotFoundCode)
 
 	ErrInternalApiBadRequest = NewCustomError(
 		errors.New("request cannot be proceeded"),
 		http.StatusBadRequest,
 		ErrInternalApiBadRequestCode)
-
 	ErrInternalApiUnprocessableEntity = NewCustomError(
 		errors.New("cannot process entity"),
 		http.StatusUnprocessableEntity,
 		ErrInternalApiUnprocessableEntityCode)
+	ErrInternalApiUserBadCredentials = NewCustomError(
+		errors.New("cannot authenticate user with these credentials"),
+		http.StatusUnauthorized,
+		ErrInternalApiUserBadCredentialsCode)
+	ErrInternalApiUserCredentialsNotFound = NewCustomError(
+		errors.New("user credentials not found"),
+		http.StatusUnauthorized,
+		ErrInternalApiUserCredentialsNotFoundCode)
 
-	ErrInternalApiNotFound = NewCustomError(
-		errors.New("entity cannot be found"),
-		http.StatusNotFound,
-		ErrInternalApiNotFoundCode)
+	ErrInternalServiceMissingMandatoryFields = NewCustomError(
+		errors.New("missing mandatory fields for creating resource"),
+		http.StatusUnprocessableEntity,
+		ErrInternalServiceMissingMandatoryFieldsCode)
+	ErrInternalServiceBadFormatMandatoryFields = NewCustomError(
+		errors.New("bad format for at least one mandatory fields"),
+		http.StatusUnprocessableEntity,
+		ErrInternalServiceBadFormatMandatoryFieldsCode)
+	ErrInternalServiceFieldShouldBeUnique = NewCustomError(
+		errors.New("field should be unique, already used for other resource"),
+		http.StatusUnprocessableEntity,
+		ErrInternalServiceFieldShouldBeUniqueCode)
 )
 
 type codeError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string `json:"Code"`
+	Message string `json:"Message"`
 }
 
 type CustomError struct {

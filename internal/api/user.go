@@ -17,20 +17,20 @@ func CreateUser(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	err2 := service.CreateUser(user.FullName)
+	err2, newUser := service.CreateUser(user.Username, user.FullName, user.Email)
 	if err2.IsNotNil() {
 		res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
 		return
 	}
-	res.WriteHeaderAndEntity(http.StatusCreated, "")
+	res.WriteHeaderAndEntity(http.StatusCreated, newUser)
 }
 
 func GetUser(req *restful.Request, res *restful.Response) {
-	userId := req.QueryParameter("id")
+	username := req.PathParameter("username")
 	var user model.User
-	if userId != "" {
+	if username != "" {
 		var err model.CustomError
-		err, user = service.GetUser(userId)
+		err, user = service.GetUser(username)
 		if err.IsNotNil() {
 			res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
 			return
@@ -40,4 +40,13 @@ func GetUser(req *restful.Request, res *restful.Response) {
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, user)
+}
+
+func UsernameExists(req *restful.Request, res *restful.Response) {
+	username := req.PathParameter("username")
+	if service.UsernameAlreadyExists(username) {
+		res.WriteHeaderAndEntity(http.StatusFound, "true")
+	} else {
+		res.WriteHeaderAndEntity(http.StatusNotFound, "false")
+	}
 }

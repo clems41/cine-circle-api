@@ -6,28 +6,43 @@ import (
 	"net/http"
 )
 
-func CreateUser(fullName string) model.CustomError {
-	user := model.User{FullName: fullName}
-	db, err := database.OpenConnection()
+func CreateUser(username, fullName, email string) (model.CustomError, model.User) {
+	user := model.User{
+		FullName: fullName,
+		Username: username,
+		Email:    email,
+	}
+	err := user.IsValid()
 	if err.IsNotNil() {
-		return err
+		return err, user
+	}
+	db, err2 := database.OpenConnection()
+	if err2.IsNotNil() {
+		return err2, user
 	}
 	defer db.Close()
-	err2 := db.DB().Create(&user).Error
-	return model.NewCustomError(err2, http.StatusBadRequest, model.ErrInternalDatabaseCreationFailedCode)
+	err3 := db.DB().Create(&user).Error
+	return model.NewCustomError(err3, http.StatusBadRequest, model.ErrInternalDatabaseCreationFailedCode), user
 }
 
-func GetUser(id string) (model.CustomError, model.User) {
+func GetUser(username string) (model.CustomError, model.User) {
 	var user model.User
 	db, err := database.OpenConnection()
 	if err.IsNotNil() {
 		return err, user
 	}
 	defer db.Close()
-	result := db.DB().First(&user, "id = ?", id)
+	result := db.DB().Take(&user, "username = ?", username)
 	if result.RowsAffected == 0 {
-		return model.ErrInternalApiNotFound, user
+		return model.ErrInternalDatabaseResourceNotFound, user
 	}
 	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), user
 }
 
+func UsernameAlreadyExists(username string) bool {
+	err, user := GetUser(username)
+	if err == model.ErrInternalDatabaseResourceNotFound {
+		return false
+	}
+	return user.Username == username
+}
