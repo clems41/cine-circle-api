@@ -1,16 +1,17 @@
 package db
 
 import (
+	"cine-circle/internal/logger"
 	"cine-circle/internal/model"
 	"cine-circle/internal/utils"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
 	"net/http"
 	"os"
 	"time"
+	gormLogger "gorm.io/gorm/logger"
 )
 
 const (
@@ -77,11 +78,11 @@ func OpenConnection() (*Database, model.CustomError) {
 	}
 	gormCfg := gorm.Config{}
 	if pgConfig.DetailedLogs {
-		newLogger := logger.New(
+		newLogger := gormLogger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-			logger.Config{
+			gormLogger.Config{
 				SlowThreshold: time.Second,   // Slow SQL threshold
-				LogLevel:      logger.Silent, // Log level
+				LogLevel:      gormLogger.Silent, // Log level
 				Colorful:      false,         // Disable color
 			},
 		)
@@ -89,11 +90,11 @@ func OpenConnection() (*Database, model.CustomError) {
 	}
 	database, err := gorm.Open(postgres.Open(pgConfig.DataSourceName()), &gormCfg)
 	if err != nil {
-		panic(err)
+		logger.Sugar.Fatalf(err.Error())
 	}
 
 	if database == nil {
-		panic(model.ErrInternalDatabaseIsNil)
+		logger.Sugar.Fatalf(model.ErrInternalDatabaseIsNil.Error())
 	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
@@ -104,16 +105,16 @@ func OpenConnection() (*Database, model.CustomError) {
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	//database.DB().SetConnMaxLifetime(time.Hour)
-	return &Database{db: database}, model.NewCustomError(err, http.StatusInternalServerError)
+	return &Database{db: database}, model.NewCustomError(err, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
 }
 
 func (db *Database) Close() model.CustomError {
 	if db.db == nil {
-		return model.NewCustomError(nil, http.StatusInternalServerError)
+		return model.NewCustomError(nil, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
 	}
 	sqlDB, err := db.db.DB()
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError)
+		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
 	}
-	return model.NewCustomError(sqlDB.Close(), http.StatusInternalServerError)
+	return model.NewCustomError(sqlDB.Close(), http.StatusInternalServerError, model.ErrInternalDatabaseConnectionCode)
 }

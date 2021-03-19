@@ -1,4 +1,4 @@
-package api
+package omdb
 
 import (
 	"cine-circle/internal/logger"
@@ -38,7 +38,7 @@ func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", omdbUrl, nil)
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError), nil
+		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalSendRequestCode), nil
 	}
 	q := req.URL.Query()
 	for _, param := range params  {
@@ -50,12 +50,12 @@ func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
 	logger.Sugar.Debugf("Sending request to %s with query %s", omdbUrl, req.URL.RawQuery)
 	res, err := client.Do(req)
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError), nil
+		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReceiveResponseCode), nil
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-	return model.NewCustomError(err, http.StatusInternalServerError), body
+	return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReadBodyCode), body
 }
 
 func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie) {
@@ -65,7 +65,7 @@ func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie)
 		return err, movie
 	}
 	err2 := json.Unmarshal(resp, &movie)
-	return model.NewCustomError(err2, http.StatusInternalServerError), movie
+	return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), movie
 }
 
 func FindMovieByID(id string) (model.CustomError, model.Movie) {
@@ -82,7 +82,7 @@ func FindMovieByID(id string) (model.CustomError, model.Movie) {
 	return finMovieByQueryParams(params)
 }
 
-func FindMovieBySearch(search string) (model.CustomError, model.Movie) {
+func FindMovieByTitle(search string) (model.CustomError, model.Movie) {
 	params := []QueryParam{
 		{
 			Key:   "t",
