@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="run cine-circle-api" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="cine-circle-api" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="DB_PORT" value="65432" />
+    </envs>
+    <kind value="PACKAGE" />
+    <filePath value="$PROJECT_DIR$/cmd/cine-circle-api/main.go" />
+    <package value="cine-circle/cmd/cine-circle-api" />
+    <directory value="$PROJECT_DIR$" />
+    <method v="2" />
+  </configuration>
+</component>
