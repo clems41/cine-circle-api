@@ -78,6 +78,15 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(false)).
 		To(UsernameExists))
 
+	wsUser.Route(wsUser.GET("/{username}/movies").
+		Doc("Get all movies that user had rated").
+		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
+		Writes([]model.Movie{}).
+		Returns(200, "OK", []model.Movie{}).
+		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
+		Filter(filterUser(false)).
+		To(GetMoviesByUser))
+
 	// RATING
 
 	wsRating := &restful.WebService{}

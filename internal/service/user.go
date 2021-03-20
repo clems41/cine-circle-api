@@ -1,6 +1,7 @@
 package service
 
 import (
+	"cine-circle/external/omdb"
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
 	"net/http"
@@ -50,4 +51,29 @@ func UsernameAlreadyExists(username string) bool {
 		return false
 	}
 	return user.Username == username
+}
+
+func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
+	var movies []model.Movie
+	err, userId := GetUserIdByUsername(username)
+	if err.IsNotNil() {
+		return err, nil
+	}
+	db, err := database.OpenConnection()
+	if err.IsNotNil() {
+		return err, nil
+	}
+	defer db.Close()
+	var ratings []model.UserRating
+	result := db.DB().Find(&ratings, "user_id = ?", userId)
+	for _, rating := range ratings {
+		if rating.MovieId != "" {
+			err, movie := omdb.FindMovieByID(rating.MovieId)
+			if err.IsNotNil() {
+				return err, nil
+			}
+			movies = append(movies, movie)
+		}
+	}
+	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), movies
 }
