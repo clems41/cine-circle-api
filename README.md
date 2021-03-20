@@ -106,3 +106,10 @@ curl --location --request POST "http://localhost:8080/v1/ratings/${MOVIE_ID}" \
 	"Comment": "Meilleur film de tous les temps !"
 }'
 ```
+
+## Update swagger.yaml
+```bash
+cd resources
+rm swagger.yaml
+wget http://localhost:8080/api/swagger.yaml
+```

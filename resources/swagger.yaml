@@ -12,6 +12,217 @@
     }
    }
   },
+  "/v1/circles": {
+   "get": {
+    "summary": "Search for circles",
+    "operationId": "GetCircles",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "find circles by name",
+      "name": "name",
+      "in": "query"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Found",
+      "schema": {
+       "type": "array",
+       "items": {
+        "$ref": "#/definitions/model.Circle"
+       }
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   },
+   "post": {
+    "summary": "Create new circle",
+    "operationId": "CreateCircle",
+    "responses": {
+     "201": {
+      "description": "Created",
+      "schema": {
+       "$ref": "#/definitions/model.Circle"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/circles/{circleId}": {
+   "put": {
+    "summary": "Update existing circle",
+    "operationId": "UpdateCircle",
+    "parameters": [
+     {
+      "type": "int",
+      "description": "ID of circle to update",
+      "name": "circleId",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Updated",
+      "schema": {
+       "$ref": "#/definitions/model.Circle"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   },
+   "delete": {
+    "summary": "Delete existing circle",
+    "operationId": "DeleteCircle",
+    "parameters": [
+     {
+      "type": "int",
+      "description": "ID of circle to delete",
+      "name": "circleId",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Updated",
+      "schema": {
+       "$ref": "#/definitions/model.Circle"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/circles/{circleId}/{userId}": {
+   "put": {
+    "summary": "Add user to existing circle",
+    "operationId": "AddUserToCircle",
+    "parameters": [
+     {
+      "type": "int",
+      "description": "ID of circle to update",
+      "name": "circleId",
+      "in": "path",
+      "required": true
+     },
+     {
+      "type": "int",
+      "description": "ID of user to add to circle",
+      "name": "userId",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Updated",
+      "schema": {
+       "$ref": "#/definitions/model.Circle"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   },
+   "delete": {
+    "summary": "Remove user from existing circle",
+    "operationId": "RemoveUserFromCircle",
+    "parameters": [
+     {
+      "type": "int",
+      "description": "ID of circle to update",
+      "name": "circleId",
+      "in": "path",
+      "required": true
+     },
+     {
+      "type": "int",
+      "description": "ID of user to remove from circle",
+      "name": "userId",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Updated",
+      "schema": {
+       "$ref": "#/definitions/model.Circle"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to Circle",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
   "/v1/movies": {
    "get": {
     "summary": "Get movie by search",
@@ -73,6 +284,15 @@
    "post": {
     "summary": "Add rating to movie for specific user",
     "operationId": "AddRating",
+    "parameters": [
+     {
+      "type": "int",
+      "description": "ID of the movie to rate",
+      "name": "movieId",
+      "in": "path",
+      "required": true
+     }
+    ],
     "responses": {
      "201": {
       "description": "Created",
@@ -87,7 +307,7 @@
       }
      },
      "422": {
-      "description": "Not processable, impossible to serialize json to User",
+      "description": "Not processable, impossible to serialize json to Rating",
       "schema": {
        "$ref": "#/definitions/model.codeError"
       }
@@ -213,6 +433,46 @@
   }
  },
  "definitions": {
+  "model.Circle": {
+   "required": [
+    "ID",
+    "CreatedAt",
+    "UpdatedAt",
+    "DeletedAt",
+    "Users",
+    "Name",
+    "Description"
+   ],
+   "properties": {
+    "CreatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "DeletedAt": {
+     "type": "string"
+    },
+    "Description": {
+     "type": "string"
+    },
+    "ID": {
+     "type": "integer",
+     "format": "integer"
+    },
+    "Name": {
+     "type": "string"
+    },
+    "UpdatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "Users": {
+     "type": "array",
+     "items": {
+      "$ref": "#/definitions/model.User"
+     }
+    }
+   }
+  },
   "model.Movie": {
    "required": [
     "Title",
@@ -338,14 +598,13 @@
   },
   "model.User": {
    "required": [
-    "DeletedAt",
     "ID",
     "CreatedAt",
     "UpdatedAt",
+    "DeletedAt",
     "FullName",
     "Username",
-    "Email",
-    "Ratings"
+    "Email"
    ],
    "properties": {
     "CreatedAt": {
@@ -365,12 +624,6 @@
      "type": "integer",
      "format": "integer"
     },
-    "Ratings": {
-     "type": "array",
-     "items": {
-      "$ref": "#/definitions/model.UserRating"
-     }
-    },
     "UpdatedAt": {
      "type": "string",
      "format": "date-time"
@@ -382,10 +635,10 @@
   },
   "model.UserRating": {
    "required": [
-    "ID",
-    "CreatedAt",
     "UpdatedAt",
     "DeletedAt",
+    "ID",
+    "CreatedAt",
     "userId",
     "movieId",
     "rating",

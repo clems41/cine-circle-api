@@ -10,7 +10,6 @@ type User struct {
 	FullName 	string 		`json:"FullName"`
 	Username 	string 		`json:"Username" gorm:"uniqueIndex"`
 	Email	 	string 		`json:"Email"`
-	Ratings 	[]UserRating `json:"Ratings"`
 }
 
 func (user User) IsValid() CustomError {
@@ -20,5 +19,5 @@ func (user User) IsValid() CustomError {
 	if strings.Contains(user.Username, " ") {
 		return ErrInternalServiceBadFormatMandatoryFields
 	}
-	return CustomError{}
+	return NoErr
 }

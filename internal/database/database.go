@@ -109,18 +109,18 @@ func OpenConnection() (*Database, model.CustomError) {
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 	//database.DB().SetConnMaxLifetime(time.Hour)
-	return &Database{db: database}, model.NewCustomError(err, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionFailedCode)
+	return &Database{db: database}, model.NewCustomError(err, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
 }
 
 func (db *Database) Close() model.CustomError {
 	if db.db == nil {
-		return model.NewCustomError(nil, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionFailedCode)
+		return model.NoErr
 	}
 	sqlDB, err := db.db.DB()
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrInternalDatabaseConnectionFailedCode)
+		return model.NewCustomError(err, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
 	}
-	return model.NewCustomError(sqlDB.Close(), http.StatusInternalServerError, model.ErrInternalDatabaseConnectionFailedCode)
+	return model.NewCustomError(sqlDB.Close(), model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
 }
 
 func (db *Database) DB() *gorm.DB {

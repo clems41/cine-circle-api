@@ -90,7 +90,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"FullName\": \"florian sorco\"\n}",
+							"raw": "{\n    \"FullName\": \"florian sorco\",\n    \"Email\": \"test@mail.com\",\n    \"Username\": \"user1\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -223,6 +223,187 @@
 								"v1",
 								"ratings",
 								"tt1375665"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/v1/circles : Cricles",
+			"item": [
+				{
+					"name": "/ : create new circle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "clems41",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Name\": \"Teasy Circle\",\n    \"Description\": \"coucou c'ets moi\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/circles/",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/?name=<name> : Search circles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/?name=Teasy",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Teasy"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId} : update circle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "username",
+								"value": "clems41",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Name\": \"KCDQ Circle v3\",\n    \"Description\": \"troisième des cercles\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/circles/2",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId} : delete circle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/4",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId}/{userId} : add user to circle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/2/7",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"2",
+								"7"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId}/{userId} : remove user from circle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/2/7",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"2",
+								"7"
 							]
 						}
 					},

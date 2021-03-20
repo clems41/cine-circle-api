@@ -28,6 +28,8 @@ const (
 )
 
 var (
+	NoErr = NewCustomError(nil,	http.StatusOK,"")
+
 	ErrInternalDatabaseIsNil = NewCustomError(
 		errors.New("got nil database when trying to connect"),
 		http.StatusInternalServerError,
@@ -36,6 +38,10 @@ var (
 		errors.New("resource cannot be found in database"),
 		http.StatusNotFound,
 		ErrInternalDatabaseResourceNotFoundCode)
+	ErrInternalDatabaseConnectionFailed = NewCustomError(
+		errors.New("connection to database failed"),
+		http.StatusInternalServerError,
+		ErrInternalDatabaseConnectionFailedCode)
 
 	ErrInternalApiBadRequest = NewCustomError(
 		errors.New("request cannot be proceeded"),
