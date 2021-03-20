@@ -43,10 +43,66 @@ Default values :
 - `DB_PORT = 5432`
 
 ## API endpoints
-### localhost:8080/v1/movie
-- `GET / ?id=<movieId>` get movie details by ID (based on IMDb IDs)
-- `GET / ?title=<title>` get movie details based on title
+Postman collection can be found into `resources` directory.
+### Movies
+#### Search for a movie (by title)
+```bash
+MOVIE_TITLE="inception"
+curl --location --request GET 'http://localhost:8080/v1/movies?title=${MOVIE_TITLE}'
+```
+#### Get movie by ID
+```bash
+MOVIE_ID="tt9484998"
+curl --location --request GET 'http://localhost:8080/v1/movies/${MOVIE_ID}'
+```
 
-### localhost:8080/v1/user
-- `POST /` create user
-- `GET / ?id=<userId>` get user details by ID
+### Users
+#### Create user (used for app authentication)
+**Mandatory fields :**
+- fullname (type: string)
+- username (type: string) (SQL unique index constraints --> will be used for log in the application)
+- email (type: string)
+```bash
+curl --location --request POST 'http://localhost:8080/v1/users' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "FullName": "first last",
+    "Email": "test@mail.com",
+    "Username": "user1"
+}'
+```
+
+#### Get user info (using username)
+```bash
+USERNAME="user1"
+curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}'
+```
+
+#### Check if user already exists (using username)
+```bash
+USERNAME="user1"
+curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}/exists'
+```
+
+#### Get all movies rated by user (using username)
+```bash
+USERNAME="user1"
+curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}/movies'
+```
+
+### Ratings
+#### Rate movie for specific (need to be authenticated)
+**Fields :**
+- Rating (type: float)
+- Comment (type: string)
+```bash
+MOVIE_ID="tt9484998"
+USERNAME="user1"
+curl --location --request POST 'http://localhost:8080/v1/ratings/${MOVIE_ID}' \
+--header 'username: ${USERNAME}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"Rating": 10,
+	"Comment": "Meilleur film de tous les temps !"
+}'
+```

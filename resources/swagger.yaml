@@ -1,0 +1,441 @@
+{
+ "swagger": "2.0",
+ "paths": {
+  "/health/ok": {
+   "get": {
+    "summary": "Simple API health check",
+    "operationId": "func1",
+    "responses": {
+     "200": {
+      "description": "OK"
+     }
+    }
+   }
+  },
+  "/v1/movies": {
+   "get": {
+    "summary": "Get movie by search",
+    "operationId": "FindMovie",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "Get movie by title",
+      "name": "title",
+      "in": "query"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "schema": {
+       "$ref": "#/definitions/model.Movie"
+      }
+     },
+     "404": {
+      "description": "Movie not found",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/movies/{movieId}": {
+   "get": {
+    "summary": "Get movie by ID",
+    "operationId": "GetMovieById",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "Get movie by ID (based on IMDb ids)",
+      "name": "id",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "schema": {
+       "$ref": "#/definitions/model.Movie"
+      }
+     },
+     "404": {
+      "description": "Movie not found",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/ratings/{movieId}": {
+   "post": {
+    "summary": "Add rating to movie for specific user",
+    "operationId": "AddRating",
+    "responses": {
+     "201": {
+      "description": "Created",
+      "schema": {
+       "$ref": "#/definitions/model.UserRating"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to User",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/users": {
+   "post": {
+    "summary": "Create new user",
+    "operationId": "CreateUser",
+    "responses": {
+     "201": {
+      "description": "Created",
+      "schema": {
+       "type": "string"
+      }
+     },
+     "400": {
+      "description": "Bad request, fields not validated",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     },
+     "422": {
+      "description": "Not processable, impossible to serialize json to User",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/users/{username}": {
+   "get": {
+    "summary": "Get user with username",
+    "operationId": "GetUser",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "username of sought user",
+      "name": "username",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "schema": {
+       "$ref": "#/definitions/model.User"
+      }
+     },
+     "404": {
+      "description": "User not found",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/users/{username}/exists": {
+   "get": {
+    "summary": "Know if username is already taken",
+    "operationId": "UsernameExists",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "username of sought user",
+      "name": "username",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "schema": {
+       "$ref": "#/definitions/model.User"
+      }
+     },
+     "404": {
+      "description": "User not found",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  },
+  "/v1/users/{username}/movies": {
+   "get": {
+    "summary": "Get all movies that user had rated",
+    "operationId": "GetMoviesByUser",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "username of sought user",
+      "name": "username",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "schema": {
+       "type": "array",
+       "items": {
+        "$ref": "#/definitions/model.Movie"
+       }
+      }
+     },
+     "404": {
+      "description": "User not found",
+      "schema": {
+       "$ref": "#/definitions/model.codeError"
+      }
+     }
+    }
+   }
+  }
+ },
+ "definitions": {
+  "model.Movie": {
+   "required": [
+    "Title",
+    "Year",
+    "Rated",
+    "Released",
+    "Runtime",
+    "Genre",
+    "Director",
+    "Writer",
+    "Actors",
+    "Plot",
+    "Language",
+    "Country",
+    "Awards",
+    "Poster",
+    "Ratings",
+    "Metascore",
+    "imdbRating",
+    "imdbVotes",
+    "imdbID",
+    "Type",
+    "DVD",
+    "BoxOffice",
+    "Production",
+    "Website",
+    "Response"
+   ],
+   "properties": {
+    "Actors": {
+     "type": "string"
+    },
+    "Awards": {
+     "type": "string"
+    },
+    "BoxOffice": {
+     "type": "string"
+    },
+    "Country": {
+     "type": "string"
+    },
+    "DVD": {
+     "type": "string"
+    },
+    "Director": {
+     "type": "string"
+    },
+    "Genre": {
+     "type": "string"
+    },
+    "Language": {
+     "type": "string"
+    },
+    "Metascore": {
+     "type": "string"
+    },
+    "Plot": {
+     "type": "string"
+    },
+    "Poster": {
+     "type": "string"
+    },
+    "Production": {
+     "type": "string"
+    },
+    "Rated": {
+     "type": "string"
+    },
+    "Ratings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/definitions/model.MovieRating"
+     }
+    },
+    "Released": {
+     "type": "string"
+    },
+    "Response": {
+     "type": "string"
+    },
+    "Runtime": {
+     "type": "string"
+    },
+    "Title": {
+     "type": "string"
+    },
+    "Type": {
+     "type": "string"
+    },
+    "Website": {
+     "type": "string"
+    },
+    "Writer": {
+     "type": "string"
+    },
+    "Year": {
+     "type": "string"
+    },
+    "imdbID": {
+     "type": "string"
+    },
+    "imdbRating": {
+     "type": "string"
+    },
+    "imdbVotes": {
+     "type": "string"
+    }
+   }
+  },
+  "model.MovieRating": {
+   "required": [
+    "Source",
+    "Value"
+   ],
+   "properties": {
+    "Source": {
+     "type": "string"
+    },
+    "Value": {
+     "type": "string"
+    }
+   }
+  },
+  "model.User": {
+   "required": [
+    "DeletedAt",
+    "ID",
+    "CreatedAt",
+    "UpdatedAt",
+    "FullName",
+    "Username",
+    "Email",
+    "Ratings"
+   ],
+   "properties": {
+    "CreatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "DeletedAt": {
+     "type": "string"
+    },
+    "Email": {
+     "type": "string"
+    },
+    "FullName": {
+     "type": "string"
+    },
+    "ID": {
+     "type": "integer",
+     "format": "integer"
+    },
+    "Ratings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/definitions/model.UserRating"
+     }
+    },
+    "UpdatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "Username": {
+     "type": "string"
+    }
+   }
+  },
+  "model.UserRating": {
+   "required": [
+    "ID",
+    "CreatedAt",
+    "UpdatedAt",
+    "DeletedAt",
+    "userId",
+    "movieId",
+    "rating",
+    "comment"
+   ],
+   "properties": {
+    "CreatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "DeletedAt": {
+     "type": "string"
+    },
+    "ID": {
+     "type": "integer",
+     "format": "integer"
+    },
+    "UpdatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "movieId": {
+     "type": "string"
+    },
+    "rating": {
+     "type": "number",
+     "format": "double"
+    },
+    "userId": {
+     "type": "integer",
+     "format": "integer"
+    }
+   }
+  },
+  "model.codeError": {
+   "required": [
+    "Code",
+    "Message"
+   ],
+   "properties": {
+    "Code": {
+     "type": "string"
+    },
+    "Message": {
+     "type": "string"
+    }
+   }
+  }
+ }
+}

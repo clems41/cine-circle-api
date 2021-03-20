@@ -1,0 +1,234 @@
+{
+	"info": {
+		"_postman_id": "3b7407f2-54c4-4281-8714-c4eb2269c9ab",
+		"name": "Cine Circle Api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/v1/movies : Movies",
+			"item": [
+				{
+					"name": "/?title=<title> : get movie by Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/movies?title=palm springs",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"movies"
+							],
+							"query": [
+								{
+									"key": "title",
+									"value": "palm springs"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{movieId} : get movie by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/movies/tt9484998",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"movies",
+								"tt9484998"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "tt9856321",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "/v1/users : Users",
+			"item": [
+				{
+					"name": "/ : create new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"FullName\": \"florian sorco\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/users",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{username} : get user by username",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/users/clems41",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"clems41"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{username}/exists : know if username is already used",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/users/clems41/exists",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"clems41",
+								"exists"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{username}/movies : get all movies that user has rated",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/users/fsorco/movies",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"fsorco",
+								"movies"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "/v1/ratings : Ratings",
+			"item": [
+				{
+					"name": "/{movieId} : Add rating for movieId",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "clems41",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"Rating\": 10,\n\t\"Comment\": \"Meilleur film de Nolan !\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/ratings/tt1375665",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"ratings",
+								"tt1375665"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
