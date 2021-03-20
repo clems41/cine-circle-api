@@ -39,6 +39,11 @@ func GetUser(username string) (model.CustomError, model.User) {
 	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), user
 }
 
+func GetUserIdByUsername(username string) (model.CustomError, uint) {
+	err, user := GetUser(username)
+	return err, user.ID
+}
+
 func UsernameAlreadyExists(username string) bool {
 	err, user := GetUser(username)
 	if err == model.ErrInternalDatabaseResourceNotFound {

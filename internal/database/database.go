@@ -126,3 +126,13 @@ func (db *Database) Close() model.CustomError {
 func (db *Database) DB() *gorm.DB {
 	return db.db
 }
+
+func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...interface{}) model.CustomError {
+	result := db.db.Take(modelValue, conditions...)
+	if result.RowsAffected == 0 {
+		result = db.db.Create(value)
+	} else {
+		result = db.db.Model(modelValue).Updates(value)
+	}
+	return model.NewCustomError(result.Error, http.StatusInternalServerError, model.ErrInternalDatabaseCreationFailedCode)
+}

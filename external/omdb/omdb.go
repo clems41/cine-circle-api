@@ -65,6 +65,12 @@ func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie)
 		return err, movie
 	}
 	err2 := json.Unmarshal(resp, &movie)
+	if err2 != nil {
+		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), movie
+	}
+	if movie.Imdbid == "" {
+		return model.ErrInternalDatabaseResourceNotFound, movie
+	}
 	return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), movie
 }
 
@@ -94,4 +100,12 @@ func FindMovieByTitle(search string) (model.CustomError, model.Movie) {
 		},
 	}
 	return finMovieByQueryParams(params)
+}
+
+func MovieExists(id string) bool {
+	err, movie := FindMovieByID(id)
+	if err.IsNotNil() {
+		return false
+	}
+	return movie.Imdbid == id
 }

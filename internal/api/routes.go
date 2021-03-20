@@ -28,8 +28,7 @@ func DefineRoutes() []*restful.WebService {
 	wsMovie.Path("/v1/movies")
 
 	wsMovie.Route(wsMovie.GET("/").
-		Doc("Get movie by ID or by title").
-		Param(wsMovie.QueryParameter("id", "Get movie by ID (based on IMDb ids)").DataType("string")).
+		Doc("Get movie by search").
 		Param(wsMovie.QueryParameter("title", "Get movie by title").DataType("string")).
 		Writes(model.Movie{}).
 		Returns(200, "OK", model.Movie{}).
@@ -37,40 +36,64 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(false)).
 		To(FindMovie))
 
+	wsMovie.Route(wsMovie.GET("/{movieId}").
+		Doc("Get movie by ID").
+		Param(wsMovie.PathParameter("id", "Get movie by ID (based on IMDb ids)").DataType("string")).
+		Writes(model.Movie{}).
+		Returns(200, "OK", model.Movie{}).
+		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
+		Filter(filterUser(false)).
+		To(GetMovieById))
+
 	// USER
 
-	wsUSer := &restful.WebService{}
-	wsUSer.Path("/v1/users")
+	wsUser := &restful.WebService{}
+	wsUser.Path("/v1/users")
 
-	wsUSer.Route(wsUSer.POST("/").
+	wsUser.Route(wsUser.POST("/").
 		Doc("Create new user").
 		Writes("").
 		Returns(201, "Created", "").
-		Returns(400, "Bad request, fields not validated", model.CustomError{}.CodeError()).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to User",
 			model.ErrInternalApiUnprocessableEntity.CodeError()).
 		Filter(filterUser(false)).
 		To(CreateUser))
 
-	wsUSer.Route(wsUSer.GET("/{username}").
+	wsUser.Route(wsUser.GET("/{username}").
 		Doc("Get user with username").
-		Param(wsUSer.PathParameter("username", "username of sought user").DataType("string")).
+		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
 		Writes(model.User{}).
 		Returns(200, "OK", model.User{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
 		Filter(filterUser(false)).
 		To(GetUser))
 
-	wsUSer.Route(wsUSer.GET("/{username}/exists").
+	wsUser.Route(wsUser.GET("/{username}/exists").
 		Doc("Know if username is already taken").
-		Param(wsUSer.PathParameter("username", "username of sought user").DataType("string")).
+		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
 		Writes(model.User{}).
 		Returns(200, "OK", model.User{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
 		Filter(filterUser(false)).
 		To(UsernameExists))
 
-	return []*restful.WebService{wsRoot, wsMovie, wsUSer}
+	// RATING
+
+	wsRating := &restful.WebService{}
+	wsRating.Path("/v1/ratings")
+
+	wsRating.Route(wsRating.POST("/{movieId}").
+		Doc("Add rating to movie for specific user").
+		Writes(model.UserRating{}).
+		Returns(201, "Created", model.UserRating{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Returns(422, "Not processable, impossible to serialize json to User",
+			model.ErrInternalApiUnprocessableEntity.CodeError()).
+		Filter(filterUser(true)).
+		To(AddRating))
+
+	return []*restful.WebService{wsRoot, wsMovie, wsUser, wsRating}
 }
 
 // Add filter for getting user infos (token, ID, etc...) in order to authenticate him
