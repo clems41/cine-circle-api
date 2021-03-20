@@ -48,12 +48,12 @@ Postman collection can be found into `resources` directory.
 #### Search for a movie (by title)
 ```bash
 MOVIE_TITLE="inception"
-curl --location --request GET 'http://localhost:8080/v1/movies?title=${MOVIE_TITLE}'
+curl --location --request GET "http://localhost:8080/v1/movies?title=${MOVIE_TITLE}"
 ```
 #### Get movie by ID
 ```bash
 MOVIE_ID="tt9484998"
-curl --location --request GET 'http://localhost:8080/v1/movies/${MOVIE_ID}'
+curl --location --request GET "http://localhost:8080/v1/movies/${MOVIE_ID}"
 ```
 
 ### Users
@@ -75,19 +75,19 @@ curl --location --request POST 'http://localhost:8080/v1/users' \
 #### Get user info (using username)
 ```bash
 USERNAME="user1"
-curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}'
+curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}"
 ```
 
 #### Check if user already exists (using username)
 ```bash
 USERNAME="user1"
-curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}/exists'
+curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/exists"
 ```
 
 #### Get all movies rated by user (using username)
 ```bash
 USERNAME="user1"
-curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}/movies'
+curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/movies"
 ```
 
 ### Ratings
@@ -98,8 +98,8 @@ curl --location --request GET 'http://localhost:8080/v1/users/${USERNAME}/movies
 ```bash
 MOVIE_ID="tt9484998"
 USERNAME="user1"
-curl --location --request POST 'http://localhost:8080/v1/ratings/${MOVIE_ID}' \
---header 'username: ${USERNAME}' \
+curl --location --request POST "http://localhost:8080/v1/ratings/${MOVIE_ID}" \
+--header "username: ${USERNAME}" \
 --header 'Content-Type: application/json' \
 --data-raw '{
 	"Rating": 10,
