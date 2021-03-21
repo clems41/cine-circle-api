@@ -23,7 +23,7 @@ docker build . -t cine-circle-api
 
 ### Run
 Simple way to run API on local (to be used with PostgresSQl instance !)
-(Don't forget to replace value in `<value>`)
+(!) (Don't forget to replace value in `<>`)
 ```bash
 docker run -d --rm --name cine-circle-api \
   --link pg-cine-circle \
@@ -32,6 +32,14 @@ docker run -d --rm --name cine-circle-api \
   -e DB_PASSWORD=<postgres_password> \
   -e DB_NAME=<database_name> \
   -e DB_PORT=<postgres_port> \
+  -p 8080:8080 \
+  cine-circle-api
+```
+If you want to use default values (see below), simply run :
+```bash
+docker run -d --rm --name cine-circle-api \
+  --link pg-cine-circle \
+  -e DB_HOST=pg-cine-circle \
   -p 8080:8080 \
   cine-circle-api
 ```
@@ -58,7 +66,7 @@ curl --location --request GET "http://localhost:8080/v1/movies/${MOVIE_ID}"
 
 ### Users (used for app authentication)
 #### Create user
-**Mandatory fields :**
+(!) **Mandatory fields :**
 - fullname (type: string)
 - username (type: string) (SQL unique index constraints --> will be used for log in the application)
 - email (type: string)
@@ -198,6 +206,7 @@ curl --location --request GET "http://localhost:8080/v1/circles/${}CIRCLE_ID/mov
 ```
 
 ## Update swagger.yaml
+(!) API should be running for updating swagger
 ```bash
 cd resources
 rm swagger.yaml
