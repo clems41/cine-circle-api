@@ -111,6 +111,66 @@
 					"response": []
 				},
 				{
+					"name": "/{userId} : update existing new user",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n        \"FullName\": \"mark rode\",\n        \"Username\": \"markobobo2\",\n        \"Email\": \"mkrde@mail.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/users/11",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"11"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/? (username, fullname, email) : Search for users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/users?fullname=niot&username=mark&email=@",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users"
+							],
+							"query": [
+								{
+									"key": "fullname",
+									"value": "niot"
+								},
+								{
+									"key": "username",
+									"value": "mark"
+								},
+								{
+									"key": "email",
+									"value": "@"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/{username} : get user by username",
 					"request": {
 						"method": "GET",
@@ -268,37 +328,6 @@
 					"response": []
 				},
 				{
-					"name": "/?name=<name> : Search circles",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
-						"url": {
-							"raw": "{{Server}}/v1/circles/?name=Teasy",
-							"host": [
-								"{{Server}}"
-							],
-							"path": [
-								"v1",
-								"circles",
-								""
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "Teasy"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "/{circleId} : update circle",
 					"request": {
 						"method": "PUT",
@@ -327,6 +356,37 @@
 								"v1",
 								"circles",
 								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/?name=<name> : Search circles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/?name=Teasy",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Teasy"
+								}
 							]
 						}
 					},
@@ -404,6 +464,38 @@
 								"circles",
 								"2",
 								"7"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId}/movies? (sort) : get all movies for specific circle",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"type": "text",
+								"value": "clems41"
+							}
+						],
+						"url": {
+							"raw": "{{Server}}/v1/circles/1/movies?sort=title:desc",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"1",
+								"movies"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "title:desc"
+								}
 							]
 						}
 					},

@@ -56,8 +56,8 @@ MOVIE_ID="tt9484998"
 curl --location --request GET "http://localhost:8080/v1/movies/${MOVIE_ID}"
 ```
 
-### Users
-#### Create user (used for app authentication)
+### Users (used for app authentication)
+#### Create user
 **Mandatory fields :**
 - fullname (type: string)
 - username (type: string) (SQL unique index constraints --> will be used for log in the application)
@@ -70,6 +70,27 @@ curl --location --request POST 'http://localhost:8080/v1/users' \
     "Email": "test@mail.com",
     "Username": "user1"
 }'
+```
+
+#### Update existing user
+```bash
+USER_ID=2
+curl --location --request PUT "http://localhost:8080/v1/users/${USER_ID}" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+        "FullName": "fullName2",
+        "Username": "username2",
+        "Email": "mail2@mail.com"
+}'
+```
+
+#### Search for users
+Not all fields are mandatory, you can use combination with some of thse or none or all at once.
+```bash
+USERNAME="user1"
+FULLNAME="full"
+EMAIL="mail"
+curl --location --request GET "http://localhost:8080/v1/users?fullname=${FULLNAME}&username=${USERNAME}&email=${EMAIL}"
 ```
 
 #### Get user info (using username)
@@ -105,6 +126,75 @@ curl --location --request POST "http://localhost:8080/v1/ratings/${MOVIE_ID}" \
 	"Rating": 10,
 	"Comment": "Meilleur film de tous les temps !"
 }'
+```
+
+### Circles
+#### Create new circle
+```bash
+USERNAME="user1"
+curl --location --request POST 'http://localhost:8080/v1/circles/' \
+--header 'username: ${USERNAME}' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "Name": "circle name",
+    "Description": "cercle pour les films dactions du dimanche soir"
+}'
+```
+
+#### Update existing circle
+```bash
+USERNAME="user1"
+CIRCLE_ID="1"
+curl --location --request PUT "http://localhost:8080/v1/circles/${CIRCLE_ID}" \
+--header "username: ${USERNAME}" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "Name": "circle name",
+    "Description": "cercle pour les films dactions du dimanche soir"
+}'
+```
+
+#### Delete existing circle
+```bash
+USERNAME="user1"
+CIRCLE_ID="1"
+curl --location --request DELETE "http://localhost:8080/v1/circles/${CIRCLE_ID}" \
+--header "username: ${USERNAME}"
+```
+
+#### Search for existing circles
+```bash
+USERNAME="user1"
+NAME_TO_SEARCH="my_name"
+curl --location --request GET "http://localhost:8080/v1/circles/?name=${NAME_TO_SEARCH}" \
+--header "username: ${USERNAME}"
+```
+
+#### Add user to existing circle
+```bash
+USERNAME="user1"
+CIRCLE_ID="1"
+USER_ID="7"
+curl --location --request PUT "http://localhost:8080/v1/circles/${CIRCLE_ID}/${USER_ID}" \
+--header "username: ${USERNAME}"
+```
+
+#### Remove user from existing circle
+```bash
+USERNAME="user1"
+CIRCLE_ID="1"
+USER_ID="7"
+curl --location --request DELETE "http://localhost:8080/v1/circles/${CIRCLE_ID}/${USER_ID}" \
+--header "username: ${USERNAME}"
+```
+
+#### Get all movies rated by users from a circle
+```bash
+USERNAME="user1"
+CIRCLE_ID="1"
+SORT_PARAMETER="title:asc"
+curl --location --request GET "http://localhost:8080/v1/circles/${}CIRCLE_ID/movies?sort=${SORT_PARAMETER}" \
+--header "username: ${USERNAME}"
 ```
 
 ## Update swagger.yaml
