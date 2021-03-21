@@ -138,3 +138,26 @@ func RemoveUserFromCircle(req *restful.Request, res *restful.Response) {
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, circle)
 }
+
+func GetMoviesOfCircle(req *restful.Request, res *restful.Response) {
+	circleIdStr := req.PathParameter("circleId")
+	sortParameter := req.QueryParameter("sort")
+	var movies []model.Movie
+	if circleIdStr != "" {
+		circleId, err := strconv.Atoi(circleIdStr)
+		if err != nil {
+			model.NewCustomError(err, model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequestCode)
+			return
+		}
+		var err2 model.CustomError
+		err2, movies = service.GetMoviesForCircle(uint(circleId), sortParameter)
+		if err2.IsNotNil() {
+			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
+			return
+		}
+	} else {
+		res.WriteHeaderAndEntity(model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequest.CodeError())
+		return
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, movies)
+}

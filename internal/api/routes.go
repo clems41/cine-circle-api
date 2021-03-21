@@ -139,6 +139,17 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(true)).
 		To(CreateCircle))
 
+	wsCircle.Route(wsCircle.PUT("/{circleId}").
+		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
+		Doc("Update existing circle").
+		Writes(model.Circle{}).
+		Returns(200, "Updated", model.Circle{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Returns(422, "Not processable, impossible to serialize json to Circle",
+			model.ErrInternalApiUnprocessableEntity.CodeError()).
+		Filter(filterUser(true)).
+		To(UpdateCircle))
+
 	wsCircle.Route(wsCircle.GET("/").
 		Param(wsCircle.QueryParameter("name", "find circles by name").DataType("string")).
 		Doc("Search for circles").
@@ -150,16 +161,15 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(true)).
 		To(GetCircles))
 
-	wsCircle.Route(wsCircle.PUT("/{circleId}").
-		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
-		Doc("Update existing circle").
-		Writes(model.Circle{}).
-		Returns(200, "Updated", model.Circle{}).
+	wsCircle.Route(wsCircle.GET("/{circleId}/movies").
+		Param(wsCircle.PathParameter("circleId", "ID of circle to get movies").DataType("int")).
+		Param(wsCircle.QueryParameter("sort", "way of sorting movies").DataType("string")).
+		Doc("Get movies of circle with sorting (default='date:desc'").
+		Writes([]model.Movie{}).
+		Returns(200, "OK", []model.Movie{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
-		Returns(422, "Not processable, impossible to serialize json to Circle",
-			model.ErrInternalApiUnprocessableEntity.CodeError()).
 		Filter(filterUser(true)).
-		To(UpdateCircle))
+		To(GetMoviesOfCircle))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).

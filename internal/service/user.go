@@ -46,9 +46,9 @@ func UserExists(conditions ...interface{}) bool {
 	return err != model.ErrInternalDatabaseResourceNotFound && user.ID != 0
 }
 
-func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
+func GetMoviesByUser(username string) (model.CustomError, []model.Movie) {
 	var movies []model.Movie
-	err, userId := GetUser( "username = ?", username)
+	err, user := GetUser( "username = ?", username)
 	if err.IsNotNil() {
 		return err, nil
 	}
@@ -58,7 +58,7 @@ func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
 	}
 	defer db.Close()
 	var ratings []model.UserRating
-	result := db.DB().Find(&ratings, "user_id = ?", userId)
+	result := db.DB().Find(&ratings, "user_id = ?", user.ID)
 	for _, rating := range ratings {
 		if rating.MovieId != "" {
 			err, movie := omdb.FindMovieByID(rating.MovieId)
@@ -67,8 +67,9 @@ func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
 			}
 			movie.Ratings = append(movie.Ratings, model.MovieRating{
 				Source: model.RatingSourceCineCircle,
-				Value:  fmt.Sprintf("%f%s", rating.Rating, model.RatingOver),
+				Value:  fmt.Sprintf("%.1f%s", rating.Rating, model.RatingOver),
 				Comment: rating.Comment,
+				PostedDate: rating.UpdatedAt,
 			})
 			movies = append(movies, movie)
 		}

@@ -101,7 +101,7 @@ func GetMoviesByUser(req *restful.Request, res *restful.Response) {
 	var movies []model.Movie
 	if username != "" {
 		var err model.CustomError
-		err, movies = service.GetMovieByUser(username)
+		err, movies = service.GetMoviesByUser(username)
 		if err.IsNotNil() {
 			res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
 			return

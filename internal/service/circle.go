@@ -76,12 +76,34 @@ func GetCircles(name string) (model.CustomError, []model.Circle) {
 	var err2 error
 	if name != "" {
 		queryName := "%" + name + "%"
-		err2 = db.DB().Find(&circles, "name LIKE ?", queryName).Error
+		err2 = db.DB().Preload("Users").Find(&circles, "name LIKE ?", queryName).Error
 	} else {
-		err2 = db.DB().Find(&circles).Error
+		err2 = db.DB().Preload("Users").Find(&circles).Error
 	}
 	if err2 != nil {
 		return model.NewCustomError(err2, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode), nil
 	}
 	return model.NoErr, circles
+}
+
+func GetMoviesForCircle(circleId uint, sort string) (model.CustomError, []model.Movie) {
+	var circle model.Circle
+	db, err := database.OpenConnection()
+	if err.IsNotNil() {
+		return err, nil
+	}
+	defer db.Close()
+	result := db.DB().Preload("Users").Take(&circle, "id = ?", circleId)
+	if result.RowsAffected != 1 {
+		return model.ErrInternalDatabaseResourceNotFound, nil
+	}
+	var movies []model.Movie
+	for _, user := range circle.Users {
+		err2, userMovies := GetMoviesByUser(user.Username)
+		if err2.IsNotNil() {
+			return err2, nil
+		}
+		movies = append(movies, userMovies...)
+	}
+	return model.NoErr, SortMovies(movies, sort)
 }

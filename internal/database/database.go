@@ -139,3 +139,8 @@ func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...
 	}
 	return model.NewCustomError(result.Error, http.StatusInternalServerError, model.ErrInternalDatabaseCreationFailedCode)
 }
+
+func (db *Database) Exists(modelValue interface{}, conditions ...interface{}) bool {
+	result := db.db.Take(modelValue, conditions...)
+	return result.RowsAffected != 0
+}

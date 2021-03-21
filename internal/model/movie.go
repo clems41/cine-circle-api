@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 const (
 	RatingSourceCineCircle = "Cine Circle"
 )
@@ -8,6 +10,7 @@ type MovieRating struct {
 	Source string `json:"Source"`
 	Value  string `json:"Value"`
 	Comment string `json:"Comment"`
+	PostedDate time.Time `json:"PostedDate"`
 }
 
 type Movie struct {
