@@ -42,6 +42,10 @@ var (
 		errors.New("connection to database failed"),
 		http.StatusInternalServerError,
 		ErrInternalDatabaseConnectionFailedCode)
+	ErrInternalDatabaseQueryFailed = NewCustomError(
+		errors.New("query sent to database failed"),
+		http.StatusInternalServerError,
+		ErrInternalDatabaseQueryFailedCode)
 
 	ErrInternalApiBadRequest = NewCustomError(
 		errors.New("request cannot be proceeded"),

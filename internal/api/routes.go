@@ -53,12 +53,33 @@ func DefineRoutes() []*restful.WebService {
 	wsUser.Route(wsUser.POST("/").
 		Doc("Create new user").
 		Writes("").
-		Returns(201, "Created", "").
+		Returns(201, "Created", model.User{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to User",
 			model.ErrInternalApiUnprocessableEntity.CodeError()).
 		Filter(filterUser(false)).
 		To(CreateUser))
+
+	wsUser.Route(wsUser.PUT("/{userId}").
+		Doc("Update existing user").
+		Writes("").
+		Returns(200, "OK", model.User{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Returns(422, "Not processable, impossible to serialize json to User",
+			model.ErrInternalApiUnprocessableEntity.CodeError()).
+		Filter(filterUser(false)).
+		To(UpdateUser))
+
+	wsUser.Route(wsUser.GET("/").
+		Doc("Search for user(s)").
+		Param(wsUser.QueryParameter("username", "search user by username").DataType("string")).
+		Param(wsUser.QueryParameter("email", "search user by email").DataType("string")).
+		Param(wsUser.QueryParameter("fullname", "search user by fullname").DataType("string")).
+		Writes("").
+		Returns(200, "OK", "").
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(false)).
+		To(SearchUsers))
 
 	wsUser.Route(wsUser.GET("/{username}").
 		Doc("Get user with username").
@@ -189,7 +210,7 @@ func filterUser(needAuthentication bool) func(*restful.Request, *restful.Respons
 				res.WriteHeaderAndEntity(model.ErrInternalApiUserCredentialsNotFound.HttpCode(),
 					model.ErrInternalApiUserCredentialsNotFound.CodeError())
 				return
-			} else if !service.UsernameAlreadyExists(username) {
+			} else if !service.UserExists("username = ?", username) {
 				res.WriteHeaderAndEntity(model.ErrInternalApiUserBadCredentials.HttpCode(),
 					model.ErrInternalApiUserBadCredentials.CodeError())
 				return

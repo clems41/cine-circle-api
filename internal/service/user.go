@@ -4,14 +4,15 @@ import (
 	"cine-circle/external/omdb"
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
+	"fmt"
 	"net/http"
 )
 
-func CreateUser(username, fullName, email string) (model.CustomError, model.User) {
-	user := model.User{
-		FullName: fullName,
-		Username: username,
-		Email:    email,
+func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.CustomError, model.User) {
+	newUser := model.User{
+		FullName: user.FullName,
+		Username: user.Username,
+		Email:    user.Email,
 	}
 	err := user.IsValid()
 	if err.IsNotNil() {
@@ -22,40 +23,32 @@ func CreateUser(username, fullName, email string) (model.CustomError, model.User
 		return err2, user
 	}
 	defer db.Close()
-	err3 := db.DB().Create(&user).Error
-	return model.NewCustomError(err3, http.StatusBadRequest, model.ErrInternalDatabaseCreationFailedCode), user
+	err3 := db.CreateOrUpdate(&model.User{}, &newUser, conditions...)
+	return err3, newUser
 }
 
-func GetUser(username string) (model.CustomError, model.User) {
+func GetUser(conditions ...interface{}) (model.CustomError, model.User) {
 	var user model.User
 	db, err := database.OpenConnection()
 	if err.IsNotNil() {
 		return err, user
 	}
 	defer db.Close()
-	result := db.DB().Take(&user, "username = ?", username)
+	result := db.DB().Take(&user, conditions...)
 	if result.RowsAffected == 0 {
 		return model.ErrInternalDatabaseResourceNotFound, user
 	}
 	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), user
 }
 
-func GetUserIdByUsername(username string) (model.CustomError, uint) {
-	err, user := GetUser(username)
-	return err, user.ID
-}
-
-func UsernameAlreadyExists(username string) bool {
-	err, user := GetUser(username)
-	if err == model.ErrInternalDatabaseResourceNotFound {
-		return false
-	}
-	return user.Username == username
+func UserExists(conditions ...interface{}) bool {
+	err, user := GetUser(conditions...)
+	return err != model.ErrInternalDatabaseResourceNotFound && user.ID != 0
 }
 
 func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
 	var movies []model.Movie
-	err, userId := GetUserIdByUsername(username)
+	err, userId := GetUser( "username = ?", username)
 	if err.IsNotNil() {
 		return err, nil
 	}
@@ -72,8 +65,31 @@ func GetMovieByUser(username string) (model.CustomError, []model.Movie) {
 			if err.IsNotNil() {
 				return err, nil
 			}
+			movie.Ratings = append(movie.Ratings, model.MovieRating{
+				Source: model.RatingSourceCineCircle,
+				Value:  fmt.Sprintf("%f%s", rating.Rating, model.RatingOver),
+				Comment: rating.Comment,
+			})
 			movies = append(movies, movie)
 		}
 	}
 	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), movies
+}
+
+func SearchUsers(username, fullname, email string) (model.CustomError, []model.User) {
+	db, err := database.OpenConnection()
+	if err.IsNotNil() {
+		return err, nil
+	}
+	defer db.Close()
+	var users []model.User
+	queryUsername := "%" + username + "%"
+	queryFullname := "%" + fullname + "%"
+	queryEmail := "%" + email + "%"
+	err2 := db.DB().Find(&users, "username LIKE ? AND full_name LIKE ? AND email LIKE ?",
+		queryUsername, queryFullname, queryEmail).Error
+	if err2 != nil {
+		return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), users
+	}
+	return model.NoErr, users
 }

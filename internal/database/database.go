@@ -134,5 +134,8 @@ func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...
 	} else {
 		result = db.db.Model(modelValue).Updates(value)
 	}
+	if result.Error == nil {
+		result = db.db.Take(modelValue, conditions...)
+	}
 	return model.NewCustomError(result.Error, http.StatusInternalServerError, model.ErrInternalDatabaseCreationFailedCode)
 }

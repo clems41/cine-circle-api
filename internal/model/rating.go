@@ -1,6 +1,18 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
+
+const (
+	RatingBoundMin = 0
+	RatingBoundMax = 10
+)
+
+var (
+	RatingOver = "/" + fmt.Sprintf("%d", RatingBoundMax)
+)
 
 type UserRating struct {
 	gorm.Model

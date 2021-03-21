@@ -1,8 +1,13 @@
 package model
 
+const (
+	RatingSourceCineCircle = "Cine Circle"
+)
+
 type MovieRating struct {
 	Source string `json:"Source"`
 	Value  string `json:"Value"`
+	Comment string `json:"Comment"`
 }
 
 type Movie struct {
