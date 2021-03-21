@@ -1,9 +1,10 @@
 # cine-circle-api
-WARNING : you need postgres database for running this API
+**(!) WARNING :** you need postgres database for running this API
 
 ## PostgresSQL
-This project is using PostgresSQl Database. For getting one on your machine, you can use docker :
-(Don't forget to replace value in `<value>`)
+This project is using PostgresSQL Database.  
+For getting one on your machine, you can use docker.  
+**(!) (Don't forget to replace value in `<>`)**
 ```bash
 docker run --rm -d --name pg-cine-circle \
   -e POSTGRES_PASSWORD=<postgres_password> \
@@ -22,8 +23,8 @@ docker build . -t cine-circle-api
 ```
 
 ### Run
-Simple way to run API on local (to be used with PostgresSQl instance !)
-(!) (Don't forget to replace value in `<>`)
+Simple way to run API on local (to be used with PostgresSQl instance !)  
+**(!) (Don't forget to replace value in `<>`)**
 ```bash
 docker run -d --rm --name cine-circle-api \
   --link pg-cine-circle \
@@ -66,7 +67,7 @@ curl --location --request GET "http://localhost:8080/v1/movies/${MOVIE_ID}"
 
 ### Users (used for app authentication)
 #### Create user
-(!) **Mandatory fields :**
+**(!) Mandatory fields :**
 - fullname (type: string)
 - username (type: string) (SQL unique index constraints --> will be used for log in the application)
 - email (type: string)
