@@ -53,6 +53,12 @@ Default values :
 
 ## API endpoints
 Postman collection can be found into `resources` directory.
+Some authentication is needed for this kind of application.  
+We'll be using OAuthv2 with JWT token.  
+But, until we get these, we are doing authentication by simply adding header into the request with the username.
+```bash
+--header "username: ${USERNAME}" \
+```
 ### Movies
 #### Search for a movie (by title)
 ```bash
@@ -82,9 +88,15 @@ curl --location --request POST 'http://localhost:8080/v1/users' \
 ```
 
 #### Update existing user
+**(!) Mandatory fields :**
+- fullname (type: string)
+- username (type: string) (SQL unique index constraints --> will be used for log in the application)
+- email (type: string)
 ```bash
 USER_ID=2
+USERNAME="user1"
 curl --location --request PUT "http://localhost:8080/v1/users/${USER_ID}" \
+--header "username: ${USERNAME}" \
 --header 'Content-Type: application/json' \
 --data-raw '{
         "FullName": "fullName2",
@@ -102,13 +114,13 @@ EMAIL="mail"
 curl --location --request GET "http://localhost:8080/v1/users?fullname=${FULLNAME}&username=${USERNAME}&email=${EMAIL}"
 ```
 
-#### Get user info (using username)
+#### Get user info (using ID)
 ```bash
-USERNAME="user1"
-curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}"
+USER_ID="10"
+curl --location --request GET "http://localhost:8080/v1/users/${USER_ID}"
 ```
 
-#### Check if user already exists (using username)
+#### Check if username already exists (using username)
 ```bash
 USERNAME="user1"
 curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/exists"
@@ -116,8 +128,8 @@ curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/exists
 
 #### Get all movies rated by user (using username)
 ```bash
-USERNAME="user1"
-curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/movies"
+USER_ID="10"
+curl --location --request GET "http://localhost:8080/v1/users/${USER_ID}/movies"
 ```
 
 ### Ratings

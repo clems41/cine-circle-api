@@ -6,11 +6,20 @@ const (
 	RatingSourceCineCircle = "Cine Circle"
 )
 
+const (
+	UserRatingType = RatingType("user")
+	CircleRatingType = RatingType("circle")
+)
+
+type RatingType string
+
 type MovieRating struct {
 	Source string `json:"Source"`
+	RatingType RatingType `json:"RatingType"`
 	Value  string `json:"Value"`
 	Comment string `json:"Comment"`
 	PostedDate time.Time `json:"PostedDate"`
+	Username string `json:"Username"`
 }
 
 type Movie struct {

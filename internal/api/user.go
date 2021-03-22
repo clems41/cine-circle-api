@@ -57,11 +57,11 @@ func UpdateUser(req *restful.Request, res *restful.Response) {
 }
 
 func GetUser(req *restful.Request, res *restful.Response) {
-	username := req.PathParameter("username")
+	userId := req.PathParameter("userId")
 	var user model.User
-	if username != "" {
+	if userId != "" {
 		var err model.CustomError
-		err, user = service.GetUser(username)
+		err, user = service.GetUser("id = ?", userId)
 		if err.IsNotNil() {
 			res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
 			return
@@ -97,11 +97,11 @@ func UsernameExists(req *restful.Request, res *restful.Response) {
 }
 
 func GetMoviesByUser(req *restful.Request, res *restful.Response) {
-	username := req.PathParameter("username")
+	userId := req.PathParameter("userId")
 	var movies []model.Movie
-	if username != "" {
+	if userId != "" {
 		var err model.CustomError
-		err, movies = service.GetMoviesByUser(username)
+		err, movies = service.GetMoviesByUser("id = ?", userId)
 		if err.IsNotNil() {
 			res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
 			return

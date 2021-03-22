@@ -67,7 +67,7 @@ func DefineRoutes() []*restful.WebService {
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to User",
 			model.ErrInternalApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(UpdateUser))
 
 	wsUser.Route(wsUser.GET("/").
@@ -81,9 +81,9 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(false)).
 		To(SearchUsers))
 
-	wsUser.Route(wsUser.GET("/{username}").
+	wsUser.Route(wsUser.GET("/{userId}").
 		Doc("Get user with username").
-		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
+		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
 		Writes(model.User{}).
 		Returns(200, "OK", model.User{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
@@ -99,9 +99,9 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(false)).
 		To(UsernameExists))
 
-	wsUser.Route(wsUser.GET("/{username}/movies").
+	wsUser.Route(wsUser.GET("/{userId}/movies").
 		Doc("Get all movies that user had rated").
-		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
+		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
 		Writes([]model.Movie{}).
 		Returns(200, "OK", []model.Movie{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).

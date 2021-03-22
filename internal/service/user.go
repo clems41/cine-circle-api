@@ -46,9 +46,9 @@ func UserExists(conditions ...interface{}) bool {
 	return err != model.ErrInternalDatabaseResourceNotFound && user.ID != 0
 }
 
-func GetMoviesByUser(username string) (model.CustomError, []model.Movie) {
+func GetMoviesByUser(conditions ...interface{}) (model.CustomError, []model.Movie) {
 	var movies []model.Movie
-	err, user := GetUser( "username = ?", username)
+	err, user := GetUser(conditions...)
 	if err.IsNotNil() {
 		return err, nil
 	}
@@ -67,9 +67,11 @@ func GetMoviesByUser(username string) (model.CustomError, []model.Movie) {
 			}
 			movie.Ratings = append(movie.Ratings, model.MovieRating{
 				Source: model.RatingSourceCineCircle,
+				RatingType: model.UserRatingType,
 				Value:  fmt.Sprintf("%.1f%s", rating.Rating, model.RatingOver),
 				Comment: rating.Comment,
 				PostedDate: rating.UpdatedAt,
+				Username: user.Username,
 			})
 			movies = append(movies, movie)
 		}

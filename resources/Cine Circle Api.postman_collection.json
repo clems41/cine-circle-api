@@ -14,7 +14,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/movies?title=palm springs",
+							"raw": "{{Server}}/v1/movies?title=room",
 							"host": [
 								"{{Server}}"
 							],
@@ -25,7 +25,7 @@
 							"query": [
 								{
 									"key": "title",
-									"value": "palm springs"
+									"value": "room"
 								}
 							]
 						}
@@ -38,14 +38,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/movies/tt9484998",
+							"raw": "{{Server}}/v1/movies/tt3170832",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"movies",
-								"tt9484998"
+								"tt3170832"
 							],
 							"query": [
 								{
@@ -90,7 +90,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"FullName\": \"florian sorco\",\n    \"Email\": \"test@mail.com\",\n    \"Username\": \"user1\"\n}",
+							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Email\": \"rc@bg.com\",\n    \"Username\": \"pepere\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -114,10 +114,16 @@
 					"name": "/{userId} : update existing new user",
 					"request": {
 						"method": "PUT",
-						"header": [],
+						"header": [
+							{
+								"key": "username",
+								"value": "mon-pepere",
+								"type": "text"
+							}
+						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n        \"FullName\": \"mark rode\",\n        \"Username\": \"markobobo2\",\n        \"Email\": \"mkrde@mail.com\"\n}",
+							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Username\": \"mon-pepere\",\n    \"Email\": \"renan@bg.com\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -125,14 +131,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/users/11",
+							"raw": "{{Server}}/v1/users/13",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"users",
-								"11"
+								"13"
 							]
 						}
 					},
@@ -144,7 +150,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/users?fullname=niot&username=mark&email=@",
+							"raw": "{{Server}}/v1/users?fullname=renan",
 							"host": [
 								"{{Server}}"
 							],
@@ -155,15 +161,17 @@
 							"query": [
 								{
 									"key": "fullname",
-									"value": "niot"
+									"value": "renan"
 								},
 								{
 									"key": "username",
-									"value": "mark"
+									"value": "mark",
+									"disabled": true
 								},
 								{
 									"key": "email",
-									"value": "@"
+									"value": "@",
+									"disabled": true
 								}
 							]
 						}
@@ -171,19 +179,19 @@
 					"response": []
 				},
 				{
-					"name": "/{username} : get user by username",
+					"name": "/{userID} : get user info",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/users/clems41",
+							"raw": "{{Server}}/v1/users/13",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"users",
-								"clems41"
+								"13"
 							]
 						}
 					},
@@ -195,14 +203,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/users/clems41/exists",
+							"raw": "{{Server}}/v1/users/gezrezr/exists",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"users",
-								"clems41",
+								"gezrezr",
 								"exists"
 							]
 						}
@@ -210,19 +218,19 @@
 					"response": []
 				},
 				{
-					"name": "/{username}/movies : get all movies that user has rated",
+					"name": "/{userID}/movies : get all movies that user has rated",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/users/fsorco/movies",
+							"raw": "{{Server}}/v1/users/13/movies",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"users",
-								"fsorco",
+								"13",
 								"movies"
 							]
 						}
@@ -261,13 +269,13 @@
 						"header": [
 							{
 								"key": "username",
-								"value": "clems41",
+								"value": "mon-pepere",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"Rating\": 10,\n\t\"Comment\": \"Meilleur film de Nolan !\"\n}",
+							"raw": "{\n\t\"Rating\": 8.2,\n\t\"Comment\": \"Film très puissant et très psychologique\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -275,14 +283,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/ratings/tt1375665",
+							"raw": "{{Server}}/v1/ratings/tt3170832",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"ratings",
-								"tt1375665"
+								"tt3170832"
 							]
 						}
 					},
@@ -481,14 +489,14 @@
 							}
 						],
 						"url": {
-							"raw": "{{Server}}/v1/circles/1/movies?sort=title:desc",
+							"raw": "{{Server}}/v1/circles/8/movies?sort=title:desc",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"1",
+								"8",
 								"movies"
 							],
 							"query": [
