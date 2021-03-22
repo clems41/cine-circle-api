@@ -9,6 +9,7 @@ require (
 	github.com/go-openapi/spec v0.20.3 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
+	github.com/lib/pq v1.10.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.6 // indirect
 	github.com/spf13/cobra v1.1.3 // indirect

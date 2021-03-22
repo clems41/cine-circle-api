@@ -4,7 +4,6 @@ import (
 	"cine-circle/external/omdb"
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
-	"fmt"
 	"net/http"
 )
 
@@ -57,22 +56,15 @@ func GetMoviesByUser(conditions ...interface{}) (model.CustomError, []model.Movi
 		return err, nil
 	}
 	defer db.Close()
-	var ratings []model.UserRating
+	var ratings []model.Rating
 	result := db.DB().Find(&ratings, "user_id = ?", user.ID)
 	for _, rating := range ratings {
-		if rating.MovieId != "" {
-			err, movie := omdb.FindMovieByID(rating.MovieId)
+		if rating.MovieID != "" {
+			err, movie := omdb.FindMovieByID(rating.MovieID)
 			if err.IsNotNil() {
 				return err, nil
 			}
-			movie.Ratings = append(movie.Ratings, model.MovieRating{
-				Source: model.RatingSourceCineCircle,
-				RatingType: model.UserRatingType,
-				Value:  fmt.Sprintf("%.1f%s", rating.Rating, model.RatingOver),
-				Comment: rating.Comment,
-				PostedDate: rating.UpdatedAt,
-				Username: user.Username,
-			})
+			movie.UserRatings = append(movie.UserRatings, rating)
 			movies = append(movies, movie)
 		}
 	}

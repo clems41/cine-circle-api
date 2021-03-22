@@ -98,16 +98,14 @@ func GetMoviesForCircle(circleId uint, sort string) (model.CustomError, []model.
 		return model.ErrInternalDatabaseResourceNotFound, nil
 	}
 	var movies []model.Movie
-	var usersId []uint
 	for _, user := range circle.Users {
 		err2, userMovies := GetMoviesByUser("username = ?", user.Username)
 		if err2.IsNotNil() {
 			return err2, nil
 		}
 		movies = append(movies, userMovies...)
-		usersId = append(usersId, user.ID)
 	}
-	err2, moviesMerged := MergeMovies(movies, usersId)
+	err2, moviesMerged := MergeMovies(movies)
 	if err2.IsNotNil() {
 		return err2, nil
 	}

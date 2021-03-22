@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -35,6 +36,7 @@ func init() {
 }
 
 func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
+	timeStart := time.Now()
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", omdbUrl, nil)
 	if err != nil {
@@ -46,8 +48,6 @@ func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
 	}
 	q.Add("apikey", omdbAPIKey)
 	req.URL.RawQuery = q.Encode()
-
-	logger.Sugar.Debugf("Sending request to %s with query %s", omdbUrl, req.URL.RawQuery)
 	res, err := client.Do(req)
 	if err != nil {
 		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReceiveResponseCode), nil
@@ -55,23 +55,24 @@ func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
+	logger.Sugar.Debugf("Sending request to %s with query %s took %+v", omdbUrl, req.URL.RawQuery, time.Since(timeStart))
 	return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReadBodyCode), body
 }
 
 func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie) {
-	var movie model.Movie
+	var omdbMovie model.OmdbMovie
 	err, resp := getDataFromOpenData(params)
 	if err.IsNotNil() {
-		return err, movie
+		return err, model.Movie{}
 	}
-	err2 := json.Unmarshal(resp, &movie)
+	err2 := json.Unmarshal(resp, &omdbMovie)
 	if err2 != nil {
-		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), movie
+		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), model.Movie{}
 	}
-	if movie.Imdbid == "" {
-		return model.ErrInternalDatabaseResourceNotFound, movie
+	if omdbMovie.Imdbid == "" {
+		return model.ErrInternalDatabaseResourceNotFound, model.Movie{}
 	}
-	return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), movie
+	return model.NoErr, omdbMovie.Movie()
 }
 
 func FindMovieByID(id string) (model.CustomError, model.Movie) {
@@ -107,5 +108,5 @@ func MovieExists(id string) bool {
 	if err.IsNotNil() {
 		return false
 	}
-	return movie.Imdbid == id
+	return movie.ID == id
 }

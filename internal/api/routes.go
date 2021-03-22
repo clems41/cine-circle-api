@@ -116,8 +116,8 @@ func DefineRoutes() []*restful.WebService {
 	wsRating.Route(wsRating.POST("/{movieId}").
 		Param(wsRating.PathParameter("movieId", "ID of the movie to rate").DataType("int")).
 		Doc("Add rating to movie for specific user").
-		Writes(model.UserRating{}).
-		Returns(201, "Created", model.UserRating{}).
+		Writes(model.Rating{}).
+		Returns(201, "Created", model.Rating{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Rating",
 			model.ErrInternalApiUnprocessableEntity.CodeError()).

@@ -10,7 +10,7 @@ import (
 func AddRating(req *restful.Request, res *restful.Response) {
 	movieId := req.PathParameter("movieId")
 	username := req.HeaderParameter(userHeaderParameter)
-	var rating model.UserRating
+	var rating model.Rating
 	err := req.ReadEntity(&rating)
 	if err != nil {
 		res.WriteHeaderAndEntity(model.ErrInternalApiUnprocessableEntity.HttpCode(),

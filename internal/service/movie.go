@@ -22,14 +22,14 @@ func SortMovies(movies []model.Movie, sortParam string) model.CustomError {
 	default:
 		sort.SliceStable(movies, func(i, j int) bool {
 			var firstPostedDate, secondPostedDate time.Time
-			for _, rating := range movies[i].Ratings {
-				if rating.Source == model.RatingSourceCineCircle {
-					firstPostedDate = rating.PostedDate
+			for _, rating := range movies[i].UserRatings {
+				if asc == rating.UpdatedAt.Before(firstPostedDate) || firstPostedDate.IsZero() {
+					firstPostedDate = rating.UpdatedAt
 				}
 			}
-			for _, rating := range movies[j].Ratings {
-				if rating.Source == model.RatingSourceCineCircle {
-					secondPostedDate = rating.PostedDate
+			for _, rating := range movies[j].UserRatings {
+				if asc == rating.UpdatedAt.Before(firstPostedDate) || secondPostedDate.IsZero() {
+					secondPostedDate = rating.UpdatedAt
 				}
 			}
 			return firstPostedDate.Before(secondPostedDate) == asc
@@ -38,28 +38,16 @@ func SortMovies(movies []model.Movie, sortParam string) model.CustomError {
 	return model.NoErr
 }
 
-func MergeMovies(movies []model.Movie, usersId []uint) (model.CustomError, []model.Movie) {
+func MergeMovies(movies []model.Movie) (model.CustomError, []model.Movie) {
 	moviesMerged := make(map[string]model.Movie)
-	moviesRatings := make(map[string][]model.MovieRating)
+	moviesRatings := make(map[string][]model.Rating)
 	var result []model.Movie
 	for _, movie := range movies {
-		if _, exists := moviesMerged[movie.Imdbid]; !exists {
-			moviesMerged[movie.Imdbid] = movie
-			moviesRatings[movie.Imdbid] = append(moviesRatings[movie.Imdbid], movie.Ratings...)
-		} else {
-			userRatingIdx := -1
-			for ratingIdx, rating := range movie.Ratings {
-				if rating.Source == model.RatingSourceCineCircle {
-					userRatingIdx = ratingIdx
-				}
-			}
-			if userRatingIdx >= 0 {
-				moviesRatings[movie.Imdbid] = append(moviesRatings[movie.Imdbid], movie.Ratings[userRatingIdx])
-			}
-		}
+		moviesMerged[movie.ID] = movie
+		moviesRatings[movie.ID] = append(moviesRatings[movie.ID], movie.UserRatings...)
 	}
 	for movieId, movieMerged := range moviesMerged {
-		movieMerged.Ratings = moviesRatings[movieId]
+		movieMerged.UserRatings = moviesRatings[movieId]
 		result = append(result, movieMerged)
 	}
 	return model.NoErr, result
