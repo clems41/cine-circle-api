@@ -53,7 +53,25 @@ func UpdateUser(req *restful.Request, res *restful.Response) {
 			return
 		}
 	}
-	res.WriteHeaderAndEntity(http.StatusCreated, newUser)
+	res.WriteHeaderAndEntity(http.StatusOK, newUser)
+}
+
+func DeleteUser(req *restful.Request, res *restful.Response) {
+	userIdStr := req.PathParameter("userId")
+	if userIdStr != "" {
+		if !service.UserExists("id = ?", userIdStr) {
+			res.WriteHeaderAndEntity(model.ErrInternalDatabaseResourceNotFound.HttpCode(), model.ErrInternalDatabaseResourceNotFound.CodeError())
+			return
+		}
+
+		var err2 model.CustomError
+		err2 = service.DeleteUser("id = ?", userIdStr)
+		if err2.IsNotNil() {
+			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
+			return
+		}
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, "")
 }
 
 func GetUser(req *restful.Request, res *restful.Response) {

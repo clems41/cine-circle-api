@@ -66,24 +66,27 @@ func RemoveUserFromCircle(circleId, userId uint) (model.CustomError, model.Circl
 	return model.NoErr, circle
 }
 
-func GetCircles(name string) (model.CustomError, []model.Circle) {
+func GetCircles(username string, conditions ...interface{}) (model.CustomError, []model.Circle) {
 	var circles []model.Circle
 	db, err := database.OpenConnection()
 	if err.IsNotNil() {
 		return err, nil
 	}
 	defer db.Close()
-	var err2 error
-	if name != "" {
-		queryName := "%" + name + "%"
-		err2 = db.DB().Preload("Users").Find(&circles, "name LIKE ?", queryName).Error
-	} else {
-		err2 = db.DB().Preload("Users").Find(&circles).Error
-	}
+	err2 := db.DB().Preload("Users").Find(&circles, conditions...).Error
 	if err2 != nil {
 		return model.NewCustomError(err2, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode), nil
 	}
-	return model.NoErr, circles
+	var result []model.Circle
+	for _, circle := range circles {
+		for _, user := range circle.Users {
+			if user.Username == username {
+				result = append(result, circle)
+				break
+			}
+		}
+	}
+	return model.NoErr, result
 }
 
 func GetMoviesForCircle(circleId uint, sort string) (model.CustomError, []model.Movie) {

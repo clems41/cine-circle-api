@@ -26,6 +26,16 @@ func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.Custo
 	return err3, newUser
 }
 
+func DeleteUser(conditions ...interface{}) model.CustomError {
+	db, err := database.OpenConnection()
+	if err.IsNotNil() {
+		return err
+	}
+	defer db.Close()
+	err2 := db.DB().Delete(&model.User{}, conditions...).Error
+	return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode)
+}
+
 func GetUser(conditions ...interface{}) (model.CustomError, model.User) {
 	var user model.User
 	db, err := database.OpenConnection()

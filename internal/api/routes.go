@@ -33,7 +33,7 @@ func DefineRoutes() []*restful.WebService {
 		Writes(model.Movie{}).
 		Returns(200, "OK", model.Movie{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(FindMovie))
 
 	wsMovie.Route(wsMovie.GET("/{movieId}").
@@ -42,7 +42,7 @@ func DefineRoutes() []*restful.WebService {
 		Writes(model.Movie{}).
 		Returns(200, "OK", model.Movie{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(GetMovieById))
 
 	// USER
@@ -69,6 +69,14 @@ func DefineRoutes() []*restful.WebService {
 			model.ErrInternalApiUnprocessableEntity.CodeError()).
 		Filter(filterUser(true)).
 		To(UpdateUser))
+
+	wsUser.Route(wsUser.DELETE("/{userId}").
+		Doc("Delete existing user").
+		Writes("").
+		Returns(200, "OK", "").
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(DeleteUser))
 
 	wsUser.Route(wsUser.GET("/").
 		Doc("Search for user(s)").
@@ -105,7 +113,7 @@ func DefineRoutes() []*restful.WebService {
 		Writes([]model.Movie{}).
 		Returns(200, "OK", []model.Movie{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(GetMoviesByUser))
 
 	// RATING
@@ -150,6 +158,15 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(true)).
 		To(UpdateCircle))
 
+	wsCircle.Route(wsCircle.GET("/{circleId}").
+		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
+		Doc("Get existing circle").
+		Writes(model.Circle{}).
+		Returns(200, "Updated", model.Circle{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(GetCircle))
+
 	wsCircle.Route(wsCircle.GET("/").
 		Param(wsCircle.QueryParameter("name", "find circles by name").DataType("string")).
 		Doc("Search for circles").
@@ -170,6 +187,16 @@ func DefineRoutes() []*restful.WebService {
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Filter(filterUser(true)).
 		To(GetMoviesOfCircle))
+
+	wsCircle.Route(wsCircle.GET("/{circleId}/movie/{movieId}").
+		Param(wsCircle.PathParameter("circleId", "ID of circle to get movies").DataType("int")).
+		Param(wsCircle.PathParameter("movieId", "ID of movie").DataType("int")).
+		Doc("Get specific movie for circle").
+		Writes(model.Movie{}).
+		Returns(200, "OK", model.Movie{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(GetMovieOfCircle))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).

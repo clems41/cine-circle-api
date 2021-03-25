@@ -26,7 +26,8 @@ func CreateCircle(req *restful.Request, res *restful.Response) {
 
 func GetCircles(req *restful.Request, res *restful.Response) {
 	name := req.QueryParameter("name")
-	err, circles := service.GetCircles(name)
+	username := req.HeaderParameter("username")
+	err, circles := service.GetCircles(username, "name LIKE ?", "%" + name + "%")
 	if err.IsNotNil() {
 		res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
 		return
@@ -81,6 +82,28 @@ func UpdateCircle(req *restful.Request, res *restful.Response) {
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, circle)
+}
+
+func GetCircle(req *restful.Request, res *restful.Response) {
+	circleId := req.PathParameter("circleId")
+	var circles []model.Circle
+	username := req.HeaderParameter("username")
+	if circleId != "" {
+		var err2 model.CustomError
+		err2, circles = service.GetCircles(username, "id = ?", circleId)
+		if err2.IsNotNil() {
+			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
+			return
+		}
+	} else {
+		res.WriteHeaderAndEntity(model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequest.CodeError())
+		return
+	}
+	if len(circles) != 1 {
+		res.WriteHeaderAndEntity(model.ErrInternalDatabaseResourceNotFound.HttpCode(), model.ErrInternalDatabaseResourceNotFound.CodeError())
+		return
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, circles[0])
 }
 
 func AddUserToCircle(req *restful.Request, res *restful.Response) {
@@ -160,4 +183,31 @@ func GetMoviesOfCircle(req *restful.Request, res *restful.Response) {
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, movies)
+}
+
+func GetMovieOfCircle(req *restful.Request, res *restful.Response) {
+	circleIdStr := req.PathParameter("circleId")
+	movieIdStr := req.PathParameter("movieId")
+	var movieFound model.Movie
+	if circleIdStr != "" && movieIdStr != "" {
+		circleId, err := strconv.Atoi(circleIdStr)
+		if err != nil {
+			model.NewCustomError(err, model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequestCode)
+			return
+		}
+		err2, movies := service.GetMoviesForCircle(uint(circleId), "date:desc")
+		if err2.IsNotNil() {
+			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
+			return
+		}
+		for _, movie := range movies {
+			if movie.ID == movieIdStr {
+				movieFound = movie
+			}
+		}
+	} else {
+		res.WriteHeaderAndEntity(model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequest.CodeError())
+		return
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, movieFound)
 }
