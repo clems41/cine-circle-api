@@ -102,8 +102,8 @@ func DefineRoutes() []*restful.WebService {
 	wsUser.Route(wsUser.GET("/{username}/exists").
 		Doc("Know if username is already taken").
 		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
-		Writes(model.User{}).
-		Returns(200, "OK", model.User{}).
+		Writes("").
+		Returns(200, "OK", "").
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
 		Filter(filterUser(false)).
 		To(UsernameExists))
@@ -132,6 +132,46 @@ func DefineRoutes() []*restful.WebService {
 			model.ErrInternalApiUnprocessableEntity.CodeError()).
 		Filter(filterUser(true)).
 		To(AddRating))
+
+	// WATCHLIST
+
+	wsWatchlist := &restful.WebService{}
+	wsWatchlist.Path("/v1/watchlist")
+
+	wsWatchlist.Route(wsWatchlist.POST("/{movieId}").
+		Param(wsWatchlist.PathParameter("movieId", "ID of the movie to add in watchlist").DataType("int")).
+		Doc("Add movie to user's watchlist").
+		Writes("").
+		Returns(201, "Created", "").
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(AddToWatchlist))
+
+	wsWatchlist.Route(wsWatchlist.DELETE("/{movieId}").
+		Param(wsWatchlist.PathParameter("movieId", "ID of the movie to remove from watchlist").DataType("int")).
+		Doc("remove movie from users' watchlist").
+		Writes("").
+		Returns(200, "OK", "").
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(RemoveFromWatchlist))
+
+	wsWatchlist.Route(wsWatchlist.GET("/").
+		Doc("get movies from users' watchlist").
+		Writes(model.MovieSearch{}).
+		Returns(200, "OK", model.MovieSearch{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(GetWatchlist))
+
+	wsWatchlist.Route(wsWatchlist.GET("/{movieId}").
+		Param(wsWatchlist.PathParameter("movieId", "ID of the movie to check").DataType("int")).
+		Doc("Know if movie is already in user's watchlist").
+		Writes([]model.Movie{}).
+		Returns(200, "OK", []model.Movie{}).
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Filter(filterUser(true)).
+		To(IsInWatchlist))
 
 	// CIRCLE
 
@@ -224,7 +264,7 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(true)).
 		To(RemoveUserFromCircle))
 
-	return []*restful.WebService{wsRoot, wsMovie, wsUser, wsRating, wsCircle}
+	return []*restful.WebService{wsRoot, wsMovie, wsUser, wsRating, wsCircle, wsWatchlist}
 }
 
 // Add filter for getting user infos (token, ID, etc...) in order to authenticate him

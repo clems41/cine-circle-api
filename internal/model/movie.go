@@ -152,6 +152,16 @@ func (om OmdbMovie) Movie() Movie {
 	return movie
 }
 
+func (m Movie) MovieShort() MovieShort {
+	return MovieShort{
+		ID:     m.ID,
+		Title:  m.Title,
+		Year:   m.Year,
+		Poster: m.Poster,
+		Type:   m.Type,
+	}
+}
+
 func convertRatingDependingOnSource(pressRating OmdbMovieRating) Rating {
 	rating := Rating{
 		Source:   pressRating.Source,
