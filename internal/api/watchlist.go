@@ -47,9 +47,9 @@ func IsInWatchlist(req *restful.Request, res *restful.Response) {
 		return
 	}
 	if isIn {
-		res.WriteHeaderAndEntity(http.StatusFound, "true")
+		res.WriteHeaderAndEntity(http.StatusOK, "true")
 	} else {
-		res.WriteHeaderAndEntity(http.StatusNotFound, "false")
+		res.WriteHeaderAndEntity(http.StatusOK, "false")
 	}
 }
 

@@ -108,9 +108,9 @@ func SearchUsers(req *restful.Request, res *restful.Response) {
 func UsernameExists(req *restful.Request, res *restful.Response) {
 	username := req.PathParameter("username")
 	if service.UserExists("username = ?", username) {
-		res.WriteHeaderAndEntity(http.StatusFound, "true")
+		res.WriteHeaderAndEntity(http.StatusOK, "true")
 	} else {
-		res.WriteHeaderAndEntity(http.StatusNotFound, "false")
+		res.WriteHeaderAndEntity(http.StatusOK, "false")
 	}
 }
 
