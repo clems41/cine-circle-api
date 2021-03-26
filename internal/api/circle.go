@@ -9,6 +9,7 @@ import (
 )
 
 func CreateCircle(req *restful.Request, res *restful.Response) {
+	username := req.HeaderParameter("username")
 	var circle model.Circle
 	err := req.ReadEntity(&circle)
 	if err != nil {
@@ -16,7 +17,7 @@ func CreateCircle(req *restful.Request, res *restful.Response) {
 			model.ErrInternalApiUnprocessableEntity.CodeError())
 		return
 	}
-	err2, newCircle := service.CreateOrUpdateCircle(circle)
+	err2, newCircle := service.CreateCircle(circle, username)
 	if err2.IsNotNil() {
 		res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
 		return
@@ -36,14 +37,10 @@ func GetCircles(req *restful.Request, res *restful.Response) {
 }
 
 func DeleteCircle(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	if circleIdStr != "" {
-		circleId, err := strconv.Atoi(circleIdStr)
-		if err != nil {
-			model.NewCustomError(err, model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequestCode)
-			return
-		}
-		err2 := service.DeleteCircle(uint(circleId))
+	username := req.HeaderParameter("username")
+	circleId := req.PathParameter("circleId")
+	if circleId != "" {
+		err2 := service.DeleteCircle(circleId, username)
 		if err2.IsNotNil() {
 			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
 			return
@@ -56,6 +53,7 @@ func DeleteCircle(req *restful.Request, res *restful.Response) {
 }
 
 func UpdateCircle(req *restful.Request, res *restful.Response) {
+	username := req.HeaderParameter("username")
 	circleId := req.PathParameter("circleId")
 	var circle model.Circle
 	if circleId != "" {
@@ -65,14 +63,8 @@ func UpdateCircle(req *restful.Request, res *restful.Response) {
 				model.ErrInternalApiUnprocessableEntity.CodeError())
 			return
 		}
-		id, err := strconv.Atoi(circleId)
-		if err != nil {
-			model.NewCustomError(err, model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequestCode)
-			return
-		}
-		circle.ID = uint(id)
 		var err2 model.CustomError
-		err2, circle = service.CreateOrUpdateCircle(circle)
+		err2, circle = service.UpdateCircle(circle, circleId, username)
 		if err2.IsNotNil() {
 			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
 			return

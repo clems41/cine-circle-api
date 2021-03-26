@@ -11,6 +11,11 @@ type Circle struct {
 	Description string `json:"Description"`
 }
 
+type UserCircle struct {
+	CircleID uint
+	UserID uint
+}
+
 func (c *Circle) IsValid() CustomError {
 	return NoErr
 }

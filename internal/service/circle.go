@@ -3,13 +3,11 @@ package service
 import (
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
-	"gorm.io/gorm"
 	"net/http"
 )
 
-func CreateOrUpdateCircle(circle model.Circle) (model.CustomError, model.Circle) {
+func CreateCircle(circle model.Circle, username string) (model.CustomError, model.Circle) {
 	newCircle := model.Circle{
-		Model:       gorm.Model{ID: circle.ID},
 		Name:        circle.Name,
 		Description: circle.Description,
 	}
@@ -17,27 +15,71 @@ func CreateOrUpdateCircle(circle model.Circle) (model.CustomError, model.Circle)
 	if err.IsNotNil() {
 		return err, newCircle
 	}
+	err, user := GetUser("username = ?", username)
+	if err.IsNotNil() {
+		return err, newCircle
+	}
+	newCircle.Users = []model.User{user}
 	db, err2 := database.OpenConnection()
 	if err2.IsNotNil() {
 		return err2, newCircle
 	}
 	defer db.Close()
-	err3 := db.CreateOrUpdate(&model.Circle{}, &newCircle, "id = ?", newCircle.ID)
-	return err3, newCircle
+	err3 := db.DB().Create(&newCircle).Association("Users").Error
+	return model.NewCustomError(err3, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), newCircle
 }
 
-func DeleteCircle(circleId uint) model.CustomError {
+func UpdateCircle(circle model.Circle, circleId, username string) (model.CustomError, model.Circle) {
+	err := circle.IsValid()
+	if err.IsNotNil() {
+		return err, circle
+	}
+	err, user := GetUser("username = ?", username)
+	if err.IsNotNil() {
+		return err, circle
+	}
+	db, err2 := database.OpenConnection()
+	if err2.IsNotNil() {
+		return err2, circle
+	}
+	defer db.Close()
+	var association model.UserCircle
+	result := db.DB().Table("user_circle").Find(&association, "circle_id = ? AND user_id = ?", circleId, user.ID)
+	if result.RowsAffected != 1 {
+		return model.ErrInternalApiUserBadCredentials, circle
+	}
+	err3 := db.DB().Model(&circle).Where("id = ?", circleId).Update("name", circle.Name).Update("description", circle.Description).Error
+	if err3 == nil {
+		err3 = db.DB().Preload("Users").Find(&circle, "id = ?", circleId).Error
+	}
+	return model.NewCustomError(err3, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), circle
+}
+
+func DeleteCircle(circleId, username string) model.CustomError {
+	err, user := GetUser("username = ?", username)
+	if err.IsNotNil() {
+		return err
+	}
 	db, err := database.OpenConnection()
 	if err.IsNotNil() {
 		return err
 	}
 	defer db.Close()
-	result := db.DB().Delete(&model.Circle{}, "id = ?", circleId)
+	var association model.UserCircle
+	result := db.DB().Table("user_circle").Find(&association, "circle_id = ? AND user_id = ?", circleId, user.ID)
+	if result.RowsAffected != 1 {
+		return model.ErrInternalApiUserBadCredentials
+	}
+	result = db.DB().Delete(&model.Circle{}, "id = ?", circleId)
 	if result.Error != nil {
 		return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode)
 	}
 	if result.RowsAffected != 1 {
 		return model.ErrInternalDatabaseResourceNotFound
+	}
+	result = db.DB().Table("user_circle").Delete(&model.UserCircle{}, "circle_id = ?", circleId)
+	if result.Error != nil {
+		return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode)
 	}
 	return model.NoErr
 }
