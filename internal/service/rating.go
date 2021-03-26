@@ -4,6 +4,7 @@ import (
 	"cine-circle/external/omdb"
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
+	"sort"
 )
 
 func AddRating(rating model.Rating, movieId, username string) (model.CustomError, model.Rating) {
@@ -30,18 +31,47 @@ func AddRating(rating model.Rating, movieId, username string) (model.CustomError
 	return err, rating
 }
 
-func AddUserRating(username string, movie *model.Movie) model.CustomError {
-	var rating model.Rating
+func AddUserRatings(username string, movie *model.Movie) model.CustomError {
+	if username == "" {
+		return model.NoErr
+	}
+	var ratings []model.Rating
 	err, user := GetUser("username = ?", username)
+	var circlesId []uint
+	var usersId []uint
 	db, err := database.OpenConnection()
 	if err.IsNotNil() {
 		return err
 	}
 	defer db.Close()
-	result := db.DB().Find(&rating, "user_id = ? AND movie_id = ?", user.ID, movie.ID)
+	result := db.DB().Table("user_circle").Select("circle_id").Find(&circlesId, "user_id = ?", user.ID)
 	if result.RowsAffected > 0 {
-		movie.UserRatings = append(movie.UserRatings, rating)
+		db.DB().Table("user_circle").Select("user_id").Find(&usersId, "circle_id IN (?)", circlesId)
+	} else {
+		usersId = append(usersId, user.ID)
+	}
+	result = db.DB().Find(&ratings, "user_id IN (?) AND movie_id = ?", filterUsersId(usersId), movie.ID)
+	if result.RowsAffected > 0 {
+		sortRatings(ratings)
+		movie.UserRatings = append(movie.UserRatings, ratings...)
 	}
 	return err
+}
 
+func filterUsersId(ids []uint) []uint {
+	resultMap := make(map[uint]uint)
+	var result []uint
+	for _, id := range ids {
+		resultMap[id] = id
+	}
+	for newId, _ := range resultMap {
+		result = append(result, newId)
+	}
+	return result
+}
+
+func sortRatings(ratings []model.Rating) {
+	sort.Slice(ratings, func(i, j int) bool {
+		return ratings[i].UpdatedAt.After(ratings[j].UpdatedAt)
+	})
 }

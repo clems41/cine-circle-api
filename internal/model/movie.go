@@ -51,6 +51,14 @@ type OmdbMovie struct {
 	TotalSeasons string `json:"totalSeasons"`
 }
 
+type MovieShort struct {
+	ID       string `gorm:"primarykey"`
+	Title    string `json:"Title"`
+	Year     string `json:"Year"`
+	Poster   string `json:"Poster"`
+	Type       string `json:"Type"`
+}
+
 type Movie struct {
 	ID       string `gorm:"primarykey"`
 	Title    string `json:"Title"`
@@ -77,6 +85,32 @@ type Movie struct {
 	Productions pq.StringArray `json:"Productions"`
 	Website    string `json:"Website"`
 	TotalSeasons int `json:"TotalSeasons"`
+}
+
+type OmdbMovieSearch struct {
+	Search []OmdbMovie `json:"Search"`
+	TotalResults string `json:"totalResults"`
+	Response   string `json:"Response"`
+}
+
+type MovieSearch struct {
+	Search []MovieShort `json:"Search"`
+	TotalResults int `json:"TotalResults"`
+}
+
+func (oms OmdbMovieSearch) MovieSearch() MovieSearch {
+	movieSearch := MovieSearch{}
+	for _, movie := range oms.Search {
+		movieSearch.Search = append(movieSearch.Search, MovieShort{
+			ID:     movie.Imdbid,
+			Title:  movie.Title,
+			Year:   movie.Year,
+			Poster: movie.Poster,
+			Type:   movie.Type,
+		})
+	}
+	movieSearch.TotalResults, _ = strconv.Atoi(oms.TotalResults)
+	return movieSearch
 }
 
 func (om OmdbMovie) Movie() Movie {
@@ -109,10 +143,12 @@ func (om OmdbMovie) Movie() Movie {
 		movie.PressRatings = append(movie.PressRatings, convertRatingDependingOnSource(pressRating))
 	}
 	imdbRating, _ := strconv.ParseFloat(om.Imdbrating, 64)
-	movie.PressRatings = append(movie.PressRatings, Rating{
-		Source:   ImdbSource,
-		Value:    imdbRating,
-	})
+	if imdbRating > 0 {
+		movie.PressRatings = append(movie.PressRatings, Rating{
+			Source:   ImdbSource,
+			Value:    imdbRating,
+		})
+	}
 	return movie
 }
 

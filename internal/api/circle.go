@@ -184,30 +184,3 @@ func GetMoviesOfCircle(req *restful.Request, res *restful.Response) {
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, movies)
 }
-
-func GetMovieOfCircle(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	movieIdStr := req.PathParameter("movieId")
-	var movieFound model.Movie
-	if circleIdStr != "" && movieIdStr != "" {
-		circleId, err := strconv.Atoi(circleIdStr)
-		if err != nil {
-			model.NewCustomError(err, model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequestCode)
-			return
-		}
-		err2, movies := service.GetMoviesForCircle(uint(circleId), "date:desc")
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-		for _, movie := range movies {
-			if movie.ID == movieIdStr {
-				movieFound = movie
-			}
-		}
-	} else {
-		res.WriteHeaderAndEntity(model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, movieFound)
-}

@@ -28,13 +28,14 @@ func DefineRoutes() []*restful.WebService {
 	wsMovie.Path("/v1/movies")
 
 	wsMovie.Route(wsMovie.GET("/").
-		Doc("Get movie by search").
-		Param(wsMovie.QueryParameter("title", "Get movie by title").DataType("string")).
-		Writes(model.Movie{}).
-		Returns(200, "OK", model.Movie{}).
+		Doc("Get movie or series by search").
+		Param(wsMovie.QueryParameter("title", "Get movie or series by title").DataType("string")).
+		Param(wsMovie.QueryParameter("type", "Type of media to search (movie, series, episode)").DataType("string")).
+		Writes(model.MovieSearch{}).
+		Returns(200, "OK", model.MovieSearch{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(true)).
-		To(FindMovie))
+		Filter(filterUser(false)).
+		To(FindMovies))
 
 	wsMovie.Route(wsMovie.GET("/{movieId}").
 		Doc("Get movie by ID").
@@ -42,7 +43,7 @@ func DefineRoutes() []*restful.WebService {
 		Writes(model.Movie{}).
 		Returns(200, "OK", model.Movie{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(true)).
+		Filter(filterUser(false)).
 		To(GetMovieById))
 
 	// USER
@@ -110,8 +111,8 @@ func DefineRoutes() []*restful.WebService {
 	wsUser.Route(wsUser.GET("/{userId}/movies").
 		Doc("Get all movies that user had rated").
 		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
-		Writes([]model.Movie{}).
-		Returns(200, "OK", []model.Movie{}).
+		Writes(model.MovieSearch{}).
+		Returns(200, "OK", model.MovieSearch{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
 		Filter(filterUser(true)).
 		To(GetMoviesByUser))
@@ -187,16 +188,6 @@ func DefineRoutes() []*restful.WebService {
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Filter(filterUser(true)).
 		To(GetMoviesOfCircle))
-
-	wsCircle.Route(wsCircle.GET("/{circleId}/movie/{movieId}").
-		Param(wsCircle.PathParameter("circleId", "ID of circle to get movies").DataType("int")).
-		Param(wsCircle.PathParameter("movieId", "ID of movie").DataType("int")).
-		Doc("Get specific movie for circle").
-		Writes(model.Movie{}).
-		Returns(200, "OK", model.Movie{}).
-		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
-		Filter(filterUser(true)).
-		To(GetMovieOfCircle))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).

@@ -20,6 +20,12 @@ const (
 	envPlot = "OMDB_PLOT"
 )
 
+const (
+	movieMedia = "movie"
+	seriesMedia = "series"
+	episodeMedia = "episode"
+)
+
 type QueryParam struct {
 	Key string
 	Value string
@@ -69,7 +75,7 @@ func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie)
 	if err2 != nil {
 		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), model.Movie{}
 	}
-	if omdbMovie.Imdbid == "" {
+	if omdbMovie.Response == "False" {
 		return model.ErrInternalDatabaseResourceNotFound, model.Movie{}
 	}
 	return model.NoErr, omdbMovie.Movie()
@@ -89,18 +95,36 @@ func FindMovieByID(id string) (model.CustomError, model.Movie) {
 	return finMovieByQueryParams(params)
 }
 
-func FindMovieByTitle(search string) (model.CustomError, model.Movie) {
+func FindMovieBySearch(titleToSearch, mediaType string) (model.CustomError, model.MovieSearch) {
 	params := []QueryParam{
 		{
-			Key:   "t",
-			Value: search,
+			Key:   "s",
+			Value: titleToSearch,
 		},
 		{
 			Key:   "plot",
 			Value: omdbPlot,
 		},
 	}
-	return finMovieByQueryParams(params)
+	if mediaType == movieMedia || mediaType == seriesMedia || mediaType == episodeMedia {
+		params = append(params, QueryParam{
+			Key:   "type",
+			Value: mediaType,
+		})
+	}
+	var omdbMovieSearch model.OmdbMovieSearch
+	err, resp := getDataFromOpenData(params)
+	if err.IsNotNil() {
+		return err, model.MovieSearch{}
+	}
+	err2 := json.Unmarshal(resp, &omdbMovieSearch)
+	if err2 != nil {
+		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), model.MovieSearch{}
+	}
+	if omdbMovieSearch.Response == "False" {
+		return model.ErrInternalDatabaseResourceNotFound, model.MovieSearch{}
+	}
+	return model.NoErr, omdbMovieSearch.MovieSearch()
 }
 
 func MovieExists(id string) bool {
