@@ -6,15 +6,103 @@
 	},
 	"item": [
 		{
+			"name": "/v1 : Connexion",
+			"item": [
+				{
+					"name": "/signup : create new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Email\": \"rc@bg.com\",\n    \"Username\": \"pepere\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/signup",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/signin : get token with existing user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"// postman.setEnvironmentVariable(\"peps-access-token\", jsonData.access_token);",
+									"pm.environment.set(\"AccessToken\", jsonData)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "coucoulol03",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "clems41",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/signin",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "/v1/movies : Movies",
 			"item": [
 				{
 					"name": "/?title=<title> : get movie by Search",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/movies?title=room",
+							"raw": "{{Server}}/v1/movies?title=dark knight",
 							"host": [
 								"{{Server}}"
 							],
@@ -25,7 +113,7 @@
 							"query": [
 								{
 									"key": "title",
-									"value": "room"
+									"value": "dark knight"
 								}
 							]
 						}
@@ -35,17 +123,27 @@
 				{
 					"name": "/{movieId} : get movie by ID",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/movies/tt3170832",
+							"raw": "{{Server}}/v1/movies/tt0468569",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"movies",
-								"tt3170832"
+								"tt0468569"
 							],
 							"query": [
 								{
@@ -84,13 +182,23 @@
 			"name": "/v1/users : Users",
 			"item": [
 				{
-					"name": "/ : create new user",
+					"name": "/{userId} : update existing user",
 					"request": {
-						"method": "POST",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Email\": \"rc@bg.com\",\n    \"Username\": \"pepere\"\n}",
+							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Username\": \"mon-pepere41\",\n    \"Email\": \"renan@bg.com\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -98,29 +206,34 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/users",
+							"raw": "{{Server}}/v1/users/11",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
-								"users"
+								"users",
+								"11"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "/{userId} : update existing new user",
+					"name": "/{userId} : delete existing user",
 					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "username",
-								"value": "mon-pepere",
-								"type": "text"
-							}
-						],
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"FullName\": \"renan chauvel\",\n    \"Username\": \"mon-pepere\",\n    \"Email\": \"renan@bg.com\"\n}",
@@ -131,14 +244,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/users/13",
+							"raw": "{{Server}}/v1/users/14",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"users",
-								"13"
+								"14"
 							]
 						}
 					},
@@ -147,10 +260,20 @@
 				{
 					"name": "/? (username, fullname, email) : Search for users",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/users?fullname=renan",
+							"raw": "{{Server}}/v1/users",
 							"host": [
 								"{{Server}}"
 							],
@@ -161,7 +284,8 @@
 							"query": [
 								{
 									"key": "fullname",
-									"value": "renan"
+									"value": "renan",
+									"disabled": true
 								},
 								{
 									"key": "username",
@@ -181,6 +305,16 @@
 				{
 					"name": "/{userID} : get user info",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -198,8 +332,47 @@
 					"response": []
 				},
 				{
+					"name": "/me : get own user info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/users/me",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/{username}/exists : know if username is already used",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -220,6 +393,16 @@
 				{
 					"name": "/{userID}/movies : get all movies that user has rated",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -265,17 +448,21 @@
 				{
 					"name": "/{movieId} : Add rating for movieId",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "username",
-								"value": "mon-pepere",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"Rating\": 8.2,\n\t\"Comment\": \"Film très puissant et très psychologique\"\n}",
+							"raw": "{\n\t\"Value\": 9.0,\n\t\"Comment\": \"Excellent\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -283,18 +470,177 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/ratings/tt3170832",
+							"raw": "{{Server}}/v1/ratings/tt0468569",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"ratings",
+								"tt0468569"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/v1/watchlist : Watchlist",
+			"item": [
+				{
+					"name": "/{movieId} : Add movie to watchlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"Value\": 6.3,\n\t\"Comment\": \"Sympa mais sans plus\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/watchlist/tt0468569",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"watchlist",
+								"tt0468569"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{movieId} : Remove movie from watchlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"Value\": 6.3,\n\t\"Comment\": \"Sympa mais sans plus\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Server}}/v1/watchlist/tt3170832",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"watchlist",
 								"tt3170832"
 							]
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "/ : Get movies from watchlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/watchlist/",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"watchlist",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{movieId} : Know if movie is in watchlist",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/watchlist/tt0468569",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"watchlist",
+								"tt0468569"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -304,17 +650,21 @@
 				{
 					"name": "/ : create new circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "username",
-								"value": "clems41",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"Name\": \"Teasy Circle\",\n    \"Description\": \"coucou c'ets moi\"\n}",
+							"raw": "{\n    \"Name\": \"Le cercle de la chatologie\",\n    \"Description\": \"Cercle pour les gens qui aiment se moquer\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -338,17 +688,21 @@
 				{
 					"name": "/{circleId} : update circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
-						"header": [
-							{
-								"key": "username",
-								"value": "clems41",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"Name\": \"KCDQ Circle v3\",\n    \"Description\": \"troisième des cercles\"\n}",
+							"raw": "{\n        \"Name\": \"Le cercle de la chatologie v5\",\n        \"Description\": \"Cercle pour les gens qui aiment se moquer bien fort !!!\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -356,14 +710,14 @@
 							}
 						},
 						"url": {
-							"raw": "{{Server}}/v1/circles/2",
+							"raw": "{{Server}}/v1/circles/13",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"2"
+								"13"
 							]
 						}
 					},
@@ -372,16 +726,20 @@
 				{
 					"name": "/?name=<name> : Search circles",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/circles/?name=Teasy",
+							"raw": "{{Server}}/v1/circles/",
 							"host": [
 								"{{Server}}"
 							],
@@ -392,9 +750,44 @@
 							],
 							"query": [
 								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								},
+								{
 									"key": "name",
-									"value": "Teasy"
+									"value": "KCDQ",
+									"disabled": true
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/{circleId} : get specific circle",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Server}}/v1/circles/12",
+							"host": [
+								"{{Server}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								"12"
 							]
 						}
 					},
@@ -403,23 +796,27 @@
 				{
 					"name": "/{circleId} : delete circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/circles/4",
+							"raw": "{{Server}}/v1/circles/13",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"4"
+								"13"
 							]
 						}
 					},
@@ -428,23 +825,27 @@
 				{
 					"name": "/{circleId}/{userId} : add user to circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "PUT",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/circles/2/7",
+							"raw": "{{Server}}/v1/circles/13/7",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"2",
+								"13",
 								"7"
 							]
 						}
@@ -454,23 +855,27 @@
 				{
 					"name": "/{circleId}/{userId} : remove user from circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/circles/2/7",
+							"raw": "{{Server}}/v1/circles/8/7",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"2",
+								"8",
 								"7"
 							]
 						}
@@ -480,29 +885,33 @@
 				{
 					"name": "/{circleId}/movies? (sort) : get all movies for specific circle",
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
-						"header": [
-							{
-								"key": "username",
-								"type": "text",
-								"value": "clems41"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{Server}}/v1/circles/8/movies?sort=title:desc",
+							"raw": "{{Server}}/v1/circles/14/movies?sort=date:desc",
 							"host": [
 								"{{Server}}"
 							],
 							"path": [
 								"v1",
 								"circles",
-								"8",
+								"14",
 								"movies"
 							],
 							"query": [
 								{
 									"key": "sort",
-									"value": "title:desc"
+									"value": "date:desc"
 								}
 							]
 						}
