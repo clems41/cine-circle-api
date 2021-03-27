@@ -8,12 +8,16 @@ import (
 )
 
 func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.CustomError, model.User) {
+	err := user.IsValid()
+	if err.IsNotNil() {
+		return err, user
+	}
 	newUser := model.User{
 		FullName: user.FullName,
 		Username: user.Username,
 		Email:    user.Email,
 	}
-	err := user.IsValid()
+	err = HashAndSaltPassword(user.Password, &newUser)
 	if err.IsNotNil() {
 		return err, user
 	}
@@ -56,7 +60,7 @@ func UserExists(conditions ...interface{}) bool {
 }
 
 func GetMoviesByUser(conditions ...interface{}) (model.CustomError, []model.Movie) {
-	var movies []model.Movie
+	movies := []model.Movie{}
 	err, user := GetUser(conditions...)
 	if err.IsNotNil() {
 		return err, nil

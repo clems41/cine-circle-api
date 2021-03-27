@@ -9,7 +9,7 @@ import (
 )
 
 func CreateCircle(req *restful.Request, res *restful.Response) {
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	var circle model.Circle
 	err := req.ReadEntity(&circle)
 	if err != nil {
@@ -27,7 +27,7 @@ func CreateCircle(req *restful.Request, res *restful.Response) {
 
 func GetCircles(req *restful.Request, res *restful.Response) {
 	name := req.QueryParameter("name")
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	err, circles := service.GetCircles(username, "name LIKE ?", "%" + name + "%")
 	if err.IsNotNil() {
 		res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
@@ -37,7 +37,7 @@ func GetCircles(req *restful.Request, res *restful.Response) {
 }
 
 func DeleteCircle(req *restful.Request, res *restful.Response) {
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	circleId := req.PathParameter("circleId")
 	if circleId != "" {
 		err2 := service.DeleteCircle(circleId, username)
@@ -53,7 +53,7 @@ func DeleteCircle(req *restful.Request, res *restful.Response) {
 }
 
 func UpdateCircle(req *restful.Request, res *restful.Response) {
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	circleId := req.PathParameter("circleId")
 	var circle model.Circle
 	if circleId != "" {
@@ -79,7 +79,7 @@ func UpdateCircle(req *restful.Request, res *restful.Response) {
 func GetCircle(req *restful.Request, res *restful.Response) {
 	circleId := req.PathParameter("circleId")
 	var circles []model.Circle
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	if circleId != "" {
 		var err2 model.CustomError
 		err2, circles = service.GetCircles(username, "id = ?", circleId)

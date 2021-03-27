@@ -91,6 +91,23 @@ func GetUser(req *restful.Request, res *restful.Response) {
 	res.WriteHeaderAndEntity(http.StatusOK, user)
 }
 
+func GetOwnUserInfo(req *restful.Request, res *restful.Response) {
+	_, username := service.CheckTokenAndGetUsername(req)
+	var user model.User
+	if username != "" {
+		var err model.CustomError
+		err, user = service.GetUser("username = ?", username)
+		if err.IsNotNil() {
+			res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
+			return
+		}
+	} else {
+		res.WriteHeaderAndEntity(model.ErrInternalApiBadRequest.HttpCode(), model.ErrInternalApiBadRequest.CodeError())
+		return
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, user)
+}
+
 func SearchUsers(req *restful.Request, res *restful.Response) {
 	username := req.QueryParameter("username")
 	email := req.QueryParameter("email")

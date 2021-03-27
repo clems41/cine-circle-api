@@ -9,7 +9,7 @@ import (
 
 func AddRating(req *restful.Request, res *restful.Response) {
 	movieId := req.PathParameter("movieId")
-	username := req.HeaderParameter(userHeaderParameter)
+	_, username := service.CheckTokenAndGetUsername(req)
 	var rating model.Rating
 	err := req.ReadEntity(&rating)
 	if err != nil {

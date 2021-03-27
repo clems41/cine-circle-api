@@ -8,10 +8,6 @@ import (
 	"net/http"
 )
 
-const (
-	userHeaderParameter = "username"
-)
-
 func DefineRoutes() []*restful.WebService {
 	wsRoot := &restful.WebService{}
 
@@ -34,7 +30,7 @@ func DefineRoutes() []*restful.WebService {
 		Writes(model.MovieSearch{}).
 		Returns(200, "OK", model.MovieSearch{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(FindMovies))
 
 	wsMovie.Route(wsMovie.GET("/{movieId}").
@@ -43,17 +39,17 @@ func DefineRoutes() []*restful.WebService {
 		Writes(model.Movie{}).
 		Returns(200, "OK", model.Movie{}).
 		Returns(404, "Movie not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(GetMovieById))
 
-	// USER
+	// LOGIN
 
-	wsUser := &restful.WebService{}
-	wsUser.Path("/v1/users")
+	wsLogin := &restful.WebService{}
+	wsLogin.Path("/v1")
 
-	wsUser.Route(wsUser.POST("/").
+	wsLogin.Route(wsLogin.POST("/signup").
 		Doc("Create new user").
-		Writes("").
+		Writes(model.User{}).
 		Returns(201, "Created", model.User{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to User",
@@ -61,9 +57,25 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(false)).
 		To(CreateUser))
 
+	wsLogin.Route(wsLogin.POST("/signin").
+		Doc("Connect with existing user").
+		Writes("").
+		Returns(200, "OK", "").
+		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
+		Returns(422, "Not processable, impossible to serialize json to User",
+			model.ErrInternalApiUnprocessableEntity.CodeError()).
+		Filter(filterUser(false)).
+		To(GetToken))
+
+
+	// USER
+
+	wsUser := &restful.WebService{}
+	wsUser.Path("/v1/users")
+
 	wsUser.Route(wsUser.PUT("/{userId}").
 		Doc("Update existing user").
-		Writes("").
+		Writes(model.User{}).
 		Returns(200, "OK", model.User{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to User",
@@ -84,20 +96,28 @@ func DefineRoutes() []*restful.WebService {
 		Param(wsUser.QueryParameter("username", "search user by username").DataType("string")).
 		Param(wsUser.QueryParameter("email", "search user by email").DataType("string")).
 		Param(wsUser.QueryParameter("fullname", "search user by fullname").DataType("string")).
-		Writes("").
-		Returns(200, "OK", "").
+		Writes([]model.User{}).
+		Returns(200, "OK", []model.User{}).
 		Returns(400, "Bad request, fields not validated", model.ErrInternalApiBadRequest.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(SearchUsers))
 
 	wsUser.Route(wsUser.GET("/{userId}").
-		Doc("Get user with username").
-		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
+		Param(wsUser.PathParameter("userId", "ID of sought user").DataType("int")).
+		Doc("Get user info from ID").
 		Writes(model.User{}).
 		Returns(200, "OK", model.User{}).
 		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
-		Filter(filterUser(false)).
+		Filter(filterUser(true)).
 		To(GetUser))
+
+	wsUser.Route(wsUser.GET("/me").
+		Doc("Get user info from token").
+		Writes(model.User{}).
+		Returns(200, "OK", model.User{}).
+		Returns(404, "User not found", model.ErrInternalDatabaseResourceNotFound.CodeError()).
+		Filter(filterUser(true)).
+		To(GetOwnUserInfo))
 
 	wsUser.Route(wsUser.GET("/{username}/exists").
 		Doc("Know if username is already taken").
@@ -264,7 +284,7 @@ func DefineRoutes() []*restful.WebService {
 		Filter(filterUser(true)).
 		To(RemoveUserFromCircle))
 
-	return []*restful.WebService{wsRoot, wsMovie, wsUser, wsRating, wsCircle, wsWatchlist}
+	return []*restful.WebService{wsRoot, wsMovie, wsUser, wsRating, wsCircle, wsWatchlist, wsLogin}
 }
 
 // Add filter for getting user infos (token, ID, etc...) in order to authenticate him
@@ -272,16 +292,9 @@ func filterUser(needAuthentication bool) func(*restful.Request, *restful.Respons
 	filter := func(req *restful.Request, res *restful.Response, chain *restful.FilterChain) {
 		logger.Sugar.Debugf("%s - %s - ", req.Request.Method, req.Request.URL.String())
 		if needAuthentication {
-			username := req.HeaderParameter(userHeaderParameter)
-			logger.Sugar.Debugf("Token will be checked for this resource with username %s", username)
-			if username == "" {
-				res.WriteHeaderAndEntity(model.ErrInternalApiUserCredentialsNotFound.HttpCode(),
-					model.ErrInternalApiUserCredentialsNotFound.CodeError())
-				return
-			} else if !service.UserExists("username = ?", username) {
-				res.WriteHeaderAndEntity(model.ErrInternalApiUserBadCredentials.HttpCode(),
-					model.ErrInternalApiUserBadCredentials.CodeError())
-				return
+			logger.Sugar.Debugf("Token will be checked")
+			if err, _ := service.CheckTokenAndGetUsername(req); err.IsNotNil() {
+				res.WriteHeaderAndEntity(err.HttpCode(), err.Error())
 			}
 		}
 		chain.ProcessFilter(req, res)

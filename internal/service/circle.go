@@ -119,7 +119,7 @@ func GetCircles(username string, conditions ...interface{}) (model.CustomError, 
 	if err2 != nil {
 		return model.NewCustomError(err2, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode), nil
 	}
-	var result []model.Circle
+	result := []model.Circle{}
 	for _, circle := range circles {
 		for _, user := range circle.Users {
 			if user.Username == username {

@@ -61,6 +61,9 @@ func GetMoviesFromWatchlist(username string) (model.CustomError, model.MovieSear
 		}
 		result.Search = append(result.Search, movie.MovieShort())
 	}
+	if result.Search == nil {
+		result.Search = []model.MovieShort{}
+	}
 	result.TotalResults = len(result.Search)
 	return model.NoErr, result
 }

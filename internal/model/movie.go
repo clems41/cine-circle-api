@@ -99,7 +99,7 @@ type MovieSearch struct {
 }
 
 func (oms OmdbMovieSearch) MovieSearch() MovieSearch {
-	movieSearch := MovieSearch{}
+	movieSearch := MovieSearch{Search: []MovieShort{}}
 	for _, movie := range oms.Search {
 		movieSearch.Search = append(movieSearch.Search, MovieShort{
 			ID:     movie.Imdbid,

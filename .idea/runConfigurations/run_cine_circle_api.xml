@@ -4,6 +4,7 @@
     <working_directory value="$PROJECT_DIR$" />
     <envs>
       <env name="DB_PORT" value="65432" />
+      <env name="SECRET_TOKEN" value="secret12" />
     </envs>
     <kind value="PACKAGE" />
     <filePath value="$PROJECT_DIR$/cmd/cine-circle-api/main.go" />

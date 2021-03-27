@@ -21,7 +21,7 @@ func FindMovies(req *restful.Request, res *restful.Response) {
 
 func GetMovieById(req *restful.Request, res *restful.Response) {
 	movieId := req.PathParameter("movieId")
-	username := req.HeaderParameter("username")
+	_, username := service.CheckTokenAndGetUsername(req)
 	var movie model.Movie
 	var err model.CustomError
 
