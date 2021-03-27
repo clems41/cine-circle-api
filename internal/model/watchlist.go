@@ -1,6 +1,6 @@
 package model
 
 type Watchlist struct {
-	UserID uint `json:"user_id"`
-	MovieID uint `json:"movie_id"`
+	UserID uint `json:"user_id" gorm:"primaryKey"`
+	MovieID string `json:"movie_id" gorm:"primaryKey"`
 }

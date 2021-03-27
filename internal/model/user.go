@@ -1,17 +1,16 @@
 package model
 
 import (
-	"gorm.io/gorm"
 	"strings"
 )
 
 type User struct {
-	gorm.Model
-	FullName 	string 		`json:"FullName"`
-	Username 	string 		`json:"Username" gorm:"uniqueIndex"`
-	Email	 	string 		`json:"Email"`
+	GormModel
+	FullName 	string 		`json:"fullName"`
+	Username 	string 		`json:"username" gorm:"uniqueIndex"`
+	Email	 	string 		`json:"email"`
 	Hash 		string 		`json:"-"`
-	Password	string 		`json:"Password" gorm:"-"`
+	Password	string 		`json:"password" gorm:"-"`
 }
 
 func (user User) IsValid() CustomError {

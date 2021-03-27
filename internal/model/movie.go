@@ -52,39 +52,39 @@ type OmdbMovie struct {
 }
 
 type MovieShort struct {
-	ID       string `gorm:"primarykey"`
-	Title    string `json:"Title"`
-	Year     string `json:"Year"`
-	Poster   string `json:"Poster"`
-	Type       string `json:"Type"`
+	ID       string `gorm:"primarykey" json:"id"`
+	Title    string `json:"title"`
+	Year     string `json:"year"`
+	Poster   string `json:"poster"`
+	Type       string `json:"type"`
 }
 
 type Movie struct {
-	ID       string `gorm:"primarykey"`
-	Title    string `json:"Title"`
-	Year     string `json:"Year"`
-	Released time.Time `json:"Released"`
-	Runtime  int `json:"Runtime"`
-	Genres    pq.StringArray `json:"Genres"`
-	Directors pq.StringArray `json:"Directors"`
-	Writers   pq.StringArray `json:"Writers"`
-	Actors   pq.StringArray `json:"Actors"`
-	Plot     string `json:"Plot"`
-	Languages pq.StringArray `json:"Languages"`
-	Countries  pq.StringArray `json:"Countries"`
-	Awards   string `json:"Awards"`
-	Poster   string `json:"Poster"`
-	UserRatings  []Rating `json:"UserRatings"`
-	PressRatings  []Rating `json:"PressRatings"`
-	Metascore  string `json:"Metascore"`
+	ID       string `gorm:"primarykey" json:"id"`
+	Title    string `json:"title"`
+	Year     string `json:"year"`
+	Released time.Time `json:"released"`
+	Runtime  int `json:"runtime"`
+	Genres    pq.StringArray `json:"genres"`
+	Directors pq.StringArray `json:"directors"`
+	Writers   pq.StringArray `json:"writers"`
+	Actors   pq.StringArray `json:"actors"`
+	Plot     string `json:"plot"`
+	Languages pq.StringArray `json:"languages"`
+	Countries  pq.StringArray `json:"countries"`
+	Awards   string `json:"awards"`
+	Poster   string `json:"poster"`
+	UserRatings  []Rating `json:"userRatings"`
+	PressRatings  []Rating `json:"pressRatings"`
+	Metascore  string `json:"metascore"`
 	Imdbvotes  string `json:"imdbVotes"`
-	Type       string `json:"Type"`
-	Dvd        time.Time `json:"DVD"`
-	BoxOffice  int `json:"BoxOffice"`
-	BoxOfficeCurrency  string `json:"BoxOfficeCurrency"`
-	Productions pq.StringArray `json:"Productions"`
-	Website    string `json:"Website"`
-	TotalSeasons int `json:"TotalSeasons"`
+	Type       string `json:"type"`
+	Dvd        time.Time `json:"dvd"`
+	BoxOffice  int `json:"boxOffice"`
+	BoxOfficeCurrency  string `json:"boxOfficeCurrency"`
+	Productions pq.StringArray `json:"productions"`
+	Website    string `json:"website"`
+	TotalSeasons int `json:"totalSeasons"`
 }
 
 type OmdbMovieSearch struct {
@@ -94,8 +94,8 @@ type OmdbMovieSearch struct {
 }
 
 type MovieSearch struct {
-	Search []MovieShort `json:"Search"`
-	TotalResults int `json:"TotalResults"`
+	Search []MovieShort `json:"search"`
+	TotalResults int `json:"totalResults"`
 }
 
 func (oms OmdbMovieSearch) MovieSearch() MovieSearch {

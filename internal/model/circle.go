@@ -1,14 +1,10 @@
 package model
 
-import (
-	"gorm.io/gorm"
-)
-
 type Circle struct {
-	gorm.Model
+	GormModel
 	Users []User `gorm:"many2many:user_circle;"`
-	Name string `json:"Name"`
-	Description string `json:"Description"`
+	Name string `json:"name"`
+	Description string `json:"description"`
 }
 
 type UserCircle struct {

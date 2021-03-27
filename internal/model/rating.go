@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"gorm.io/gorm"
 )
 
 const (
@@ -15,11 +14,11 @@ var (
 )
 
 type Rating struct {
-	gorm.Model
-	UserID uint `json:"UserID" gorm:"index:idx_movie_user,unique"`
-	MovieID string `json:"MovieID" gorm:"index:idx_movie_user,unique"`
-	Source string `json:"Source"`
-	Value float64 `json:"Value"`
-	Comment string `json:"Comment"`
-	Username string `json:"Username"`
+	GormModel
+	UserID uint `json:"userId" gorm:"index:idx_movie_user,unique"`
+	MovieID string `json:"movieId" gorm:"index:idx_movie_user,unique"`
+	Source string `json:"source"`
+	Value float64 `json:"value"`
+	Comment string `json:"comment"`
+	Username string `json:"username"`
 }

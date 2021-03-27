@@ -4,7 +4,6 @@ import (
 	"cine-circle/external/omdb"
 	"cine-circle/internal/database"
 	"cine-circle/internal/model"
-	"net/http"
 )
 
 func AddMovieToWatchlist(username, movieId string) model.CustomError {
@@ -20,7 +19,14 @@ func AddMovieToWatchlist(username, movieId string) model.CustomError {
 		return err
 	}
 	defer db.Close()
-	db.DB().Exec("INSERT INTO watchlist(user_id, movie_id) VALUES (?, ?)", user.ID, movieId)
+	watchlist := model.Watchlist{
+		UserID:  user.ID,
+		MovieID: movieId,
+	}
+	err2 := db.DB().Save(&watchlist).Error
+	if err2 != nil {
+		return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode)
+	}
 	return model.NoErr
 }
 
@@ -37,7 +43,10 @@ func RemoveMovieFromWatchlist(username, movieId string) model.CustomError {
 		return err
 	}
 	defer db.Close()
-	db.DB().Exec("DELETE FROM watchlist WHERE user_id = ? AND movie_id = ?", user.ID, movieId)
+	err2 := db.DB().Delete(&model.Watchlist{}, "user_id = ? AND movie_ID = ?", user.ID, movieId).Error
+	if err2 != nil {
+		return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode)
+	}
 	return model.NoErr
 }
 
@@ -51,11 +60,11 @@ func GetMoviesFromWatchlist(username string) (model.CustomError, model.MovieSear
 		return err, model.MovieSearch{}
 	}
 	defer db.Close()
-	var moviesId []string
-	db.DB().Table("watchlist").Select("movie_id").Find(&moviesId, "user_id = ?", user.ID)
+	var watchlists []model.Watchlist
+	db.DB().Find(&watchlists, "user_id = ?", user.ID)
 	var result model.MovieSearch
-	for _, movieId := range moviesId {
-		err, movie := omdb.FindMovieByID(movieId)
+	for _, watchlist := range watchlists {
+		err, movie := omdb.FindMovieByID(watchlist.MovieID)
 		if err.IsNotNil() {
 			return err, model.MovieSearch{}
 		}
@@ -78,10 +87,10 @@ func IsInWatchlist(username, movieId string) (model.CustomError, bool) {
 		return err, false
 	}
 	defer db.Close()
-	var moviesId []string
-	result := db.DB().Table("watchlist").Select("movie_id").Find(&moviesId, "user_id = ? AND movie_id = ?", user.ID, movieId)
+	var watchlists []model.Watchlist
+	result := db.DB().Find(&watchlists, "user_id = ? AND movie_id = ?", user.ID, movieId)
 	if result.Error != nil {
-		return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), false
+		return model.NewCustomError(result.Error, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), false
 	}
 	return model.NoErr, result.RowsAffected == 1
 }
