@@ -294,7 +294,8 @@ func filterUser(needAuthentication bool) func(*restful.Request, *restful.Respons
 		if needAuthentication {
 			logger.Sugar.Debugf("Token will be checked")
 			if err, _ := service.CheckTokenAndGetUsername(req); err.IsNotNil() {
-				res.WriteHeaderAndEntity(err.HttpCode(), err.Error())
+				res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
+				return
 			}
 		}
 		chain.ProcessFilter(req, res)

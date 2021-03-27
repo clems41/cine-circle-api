@@ -2,7 +2,7 @@ package model
 
 type Circle struct {
 	GormModel
-	Users []User `gorm:"many2many:user_circle;"`
+	Users []User `gorm:"many2many:user_circle;" json:"users"`
 	Name string `json:"name"`
 	Description string `json:"description"`
 }
