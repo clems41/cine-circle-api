@@ -2,15 +2,16 @@ package service
 
 import (
 	"cine-circle/internal/model"
+	"cine-circle/internal/typedErrors"
 	"sort"
 	"strings"
 	"time"
 )
 
-func SortMovies(movies []model.Movie, sortParam string) model.CustomError {
+func SortMovies(movies []model.Movie, sortParam string) typedErrors.CustomError {
 	res := strings.Split(sortParam, ":")
 	if len(res) != 2 {
-		return model.ErrInternalApiBadRequest
+		return typedErrors.ErrApiBadRequest
 	}
 	field := res[0]
 	asc := res[1] == "asc"
@@ -35,10 +36,10 @@ func SortMovies(movies []model.Movie, sortParam string) model.CustomError {
 			return firstPostedDate.Before(secondPostedDate) == asc
 		})
 	}
-	return model.NoErr
+	return typedErrors.NoErr
 }
 
-func MergeMovies(movies []model.Movie) (model.CustomError, []model.Movie) {
+func MergeMovies(movies []model.Movie) (typedErrors.CustomError, []model.Movie) {
 	moviesMerged := make(map[string]model.Movie)
 	moviesRatings := make(map[string][]model.Rating)
 	var result []model.Movie
@@ -50,5 +51,5 @@ func MergeMovies(movies []model.Movie) (model.CustomError, []model.Movie) {
 		movieMerged.UserRatings = moviesRatings[movieId]
 		result = append(result, movieMerged)
 	}
-	return model.NoErr, result
+	return typedErrors.NoErr, result
 }

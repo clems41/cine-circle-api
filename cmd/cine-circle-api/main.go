@@ -1,8 +1,8 @@
 package main
 
 import (
-	"cine-circle/internal/api"
-	"cine-circle/internal/database"
+	"cine-circle/internal/repository"
+	"cine-circle/internal/handler"
 	"cine-circle/internal/logger"
 	"cine-circle/internal/model"
 	"context"
@@ -48,8 +48,8 @@ func run(cmd *cobra.Command, args []string) {
 	Signals = make(chan os.Signal, 1)
 	signal.Notify(Signals, os.Interrupt)
 
-	// Try to connect to PostgresSQL database
-	database, err := database.OpenConnection()
+	// Try to connect to PostgresSQL repository
+	database, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		logger.Sugar.Fatalf(err.Error())
 	}
@@ -81,13 +81,17 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
-	for _, ws := range api.DefineRoutes() {
-		restful.DefaultContainer.Add(ws)
-	}
+	restful.DefaultContainer.Add(handler.NewAuthenticationHandler())
+	restful.DefaultContainer.Add(handler.NewCircleHandler())
+	restful.DefaultContainer.Add(handler.NewRootHandler())
+	restful.DefaultContainer.Add(handler.NewMovieHandler())
+	restful.DefaultContainer.Add(handler.NewRecommendationHandler())
+	restful.DefaultContainer.Add(handler.NewUserHandler())
+	restful.DefaultContainer.Add(handler.NewWatchlistHandler())
 
 	config := restfulspec.Config{
 		WebServices: restful.DefaultContainer.RegisteredWebServices(),
-		APIPath:     "/api/swagger.yaml",
+		APIPath:     "/handler/swagger.yaml",
 	}
 	restful.DefaultContainer.Add(restfulspec.NewOpenAPIService(config))
 

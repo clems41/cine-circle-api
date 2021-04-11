@@ -1,17 +1,16 @@
-package database
+package repository
 
 import (
 	"cine-circle/internal/logger"
-	"cine-circle/internal/model"
+	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gormLogger "gorm.io/gorm/logger"
 	"log"
-	"net/http"
 	"os"
 	"time"
-	gormLogger "gorm.io/gorm/logger"
 )
 
 const (
@@ -64,7 +63,7 @@ func (postgresConfig PostgresConfig) DataSourceName() string {
 	return dataSourceName
 }
 
-func OpenConnection() (*Database, model.CustomError) {
+func OpenConnection() (*Database, typedErrors.CustomError) {
 	pgConfig := PostgresConfig{
 		Host:            utils.GetDefaultOrFromEnv(defaultHost, EnvHost),
 		User:            utils.GetDefaultOrFromEnv(defaultUser, EnvUser),
@@ -94,7 +93,7 @@ func OpenConnection() (*Database, model.CustomError) {
 	}
 
 	if database == nil {
-		logger.Sugar.Fatalf(model.ErrInternalDatabaseIsNil.Error())
+		logger.Sugar.Fatalf(typedErrors.ErrRepositoryIsNil.Error())
 	}
 
 	if pgConfig.Debug {
@@ -102,32 +101,32 @@ func OpenConnection() (*Database, model.CustomError) {
 	}
 
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	//database.DB().SetMaxIdleConns(5)
+	//repository.DB().SetMaxIdleConns(5)
 
-	// SetMaxOpenConns sets the maximum number of open connections to the database.
-	//database.DB().SetMaxOpenConns(10)
+	// SetMaxOpenConns sets the maximum number of open connections to the repository.
+	//repository.DB().SetMaxOpenConns(10)
 
 	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	//database.DB().SetConnMaxLifetime(time.Hour)
-	return &Database{db: database}, model.NewCustomError(err, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
+	//repository.DB().SetConnMaxLifetime(time.Hour)
+	return &Database{db: database}, typedErrors.NewRepositoryConnectionFailedError(err)
 }
 
-func (db *Database) Close() model.CustomError {
+func (db *Database) Close() typedErrors.CustomError {
 	if db.db == nil {
-		return model.NoErr
+		return typedErrors.NoErr
 	}
 	sqlDB, err := db.db.DB()
 	if err != nil {
-		return model.NewCustomError(err, model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
+		return typedErrors.NewRepositoryConnectionFailedError(err)
 	}
-	return model.NewCustomError(sqlDB.Close(), model.ErrInternalDatabaseConnectionFailed.HttpCode(), model.ErrInternalDatabaseConnectionFailedCode)
+	return typedErrors.NewRepositoryConnectionFailedError(sqlDB.Close())
 }
 
 func (db *Database) DB() *gorm.DB {
 	return db.db
 }
 
-func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...interface{}) model.CustomError {
+func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...interface{}) typedErrors.CustomError {
 	result := db.db.Take(modelValue, conditions...)
 	if result.RowsAffected == 0 {
 		result = db.db.Create(value)
@@ -135,7 +134,7 @@ func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...
 		result = db.db.Model(modelValue).Updates(value)
 		result = db.db.Take(value, conditions...)
 	}
-	return model.NewCustomError(result.Error, http.StatusInternalServerError, model.ErrInternalDatabaseCreationFailedCode)
+	return typedErrors.NewRepositoryQueryFailedError(result.Error)
 }
 
 func (db *Database) Exists(modelValue interface{}, conditions ...interface{}) bool {

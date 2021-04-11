@@ -2,17 +2,18 @@ package service
 
 import (
 	"cine-circle/external/omdb"
-	"cine-circle/internal/database"
 	"cine-circle/internal/model"
+	"cine-circle/internal/repository"
+	"cine-circle/internal/typedErrors"
 	"sort"
 )
 
-func AddRating(rating model.Rating, movieId, username string) (model.CustomError, model.Rating) {
+func AddRating(rating model.Rating, movieId, username string) (typedErrors.CustomError, model.Rating) {
 	if !omdb.MovieExists(movieId) {
-		return model.ErrInternalDatabaseResourceNotFound, rating
+		return typedErrors.ErrRepositoryResourceNotFound, rating
 	}
 	if rating.Value > model.RatingBoundMax || rating.Value < model.RatingBoundMin {
-		return model.ErrInternalApiUnprocessableEntity, rating
+		return typedErrors.ErrApiUnprocessableEntity, rating
 	}
 	err, user := GetUser("username = ?", username)
 	if err.IsNotNil() {
@@ -22,7 +23,7 @@ func AddRating(rating model.Rating, movieId, username string) (model.CustomError
 	rating.MovieID = movieId
 	rating.Source = model.CineCircleSource
 	rating.Username = user.Username
-	db, err := database.OpenConnection()
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err, rating
 	}
@@ -31,15 +32,15 @@ func AddRating(rating model.Rating, movieId, username string) (model.CustomError
 	return err, rating
 }
 
-func AddUserRatings(username string, movie *model.Movie) model.CustomError {
+func AddUserRatings(username string, movie *model.Movie) typedErrors.CustomError {
 	if username == "" {
-		return model.NoErr
+		return typedErrors.NoErr
 	}
 	var ratings []model.Rating
 	err, user := GetUser("username = ?", username)
 	var circlesId []uint
 	var usersId []uint
-	db, err := database.OpenConnection()
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err
 	}

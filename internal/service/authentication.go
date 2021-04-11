@@ -1,9 +1,10 @@
 package service
 
 import (
-	"cine-circle/internal/database"
 	"cine-circle/internal/logger"
 	"cine-circle/internal/model"
+	"cine-circle/internal/repository"
+	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"encoding/base64"
 	"fmt"
@@ -23,41 +24,41 @@ const (
 	tokenHeader = "Authorization"
 )
 
-func HashAndSaltPassword(password string, user *model.User) model.CustomError {
+func HashAndSaltPassword(password string, user *model.User) typedErrors.CustomError {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
 	if err != nil {
-		return model.NewCustomError(err, model.ErrInternalApiUnprocessableEntity.HttpCode(), model.ErrInternalApiUnprocessableEntityCode)
+		return typedErrors.NewApiUnprocessableEntityError(err)
 	}
 	user.Hash = string(hashedPassword)
 	user.Password = ""
-	return model.NoErr
+	return typedErrors.NoErr
 }
 
-func passwordIsCorrect(hashPassword, password string) (model.CustomError, bool) {
+func passwordIsCorrect(hashPassword, password string) (typedErrors.CustomError, bool) {
 	err := bcrypt.CompareHashAndPassword([]byte(hashPassword), []byte(password))
 	if err != nil {
-		return model.NewCustomError(err, model.ErrInternalApiUserBadCredentials.HttpCode(), model.ErrInternalApiUserBadCredentialsCode), false
+		return typedErrors.NewApiBadCredentialsError(err), false
 	}
-	return model.NoErr, true
+	return typedErrors.NoErr, true
 }
 
-func getHashAndPassword(auth string) (model.CustomError, string, string, string) {
+func getHashAndPassword(auth string) (typedErrors.CustomError, string, string, string) {
 	result := strings.Split(auth, " ")
 	if len(result) != 2 {
-		return model.ErrInternalApiUnprocessableEntity, "", "", ""
+		return typedErrors.ErrApiUnprocessableEntity, "", "", ""
 	}
 	loginPasswordEncoded := result[1]
 	loginPasswordDecoded, err := base64.StdEncoding.DecodeString(loginPasswordEncoded)
 	if err != nil {
-		return model.ErrInternalApiUnprocessableEntity, "", "", ""
+		return typedErrors.ErrApiUnprocessableEntity, "", "", ""
 	}
 	pair := strings.Split(string(loginPasswordDecoded), ":")
 	if len(result) != 2 {
-		return model.ErrInternalApiUnprocessableEntity, "", "", ""
+		return typedErrors.ErrApiUnprocessableEntity, "", "", ""
 	}
 	username := pair[0]
 	password := pair[1]
-	db, err2 := database.OpenConnection()
+	db, err2 := repository.OpenConnection()
 	if err2.IsNotNil() {
 		return err2, "", "", ""
 	}
@@ -65,15 +66,15 @@ func getHashAndPassword(auth string) (model.CustomError, string, string, string)
 	var hashedPassword string
 	res := db.DB().Table("users").Select("hash").Find(&hashedPassword, "username = ?", username)
 	if res.Error != nil {
-		return model.NewCustomError(res.Error, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), "", "", ""
+		return typedErrors.NewRepositoryQueryFailedError(res.Error), "", "", ""
 	}
 	if res.RowsAffected != 1 || hashedPassword == "" {
-		return model.ErrInternalApiUserBadCredentials, "", "", ""
+		return typedErrors.ErrApiUserBadCredentials, "", "", ""
 	}
-	return model.NoErr, hashedPassword, password, username
+	return typedErrors.NoErr, hashedPassword, password, username
 }
 
-func GetTokenFromAuthentication(auth string) (model.CustomError, string) {
+func GetTokenFromAuthentication(auth string) (typedErrors.CustomError, string) {
 	err, hashPassword, password, username := getHashAndPassword(auth)
 	if err.IsNotNil() {
 		return err, ""
@@ -83,7 +84,7 @@ func GetTokenFromAuthentication(auth string) (model.CustomError, string) {
 		return err2, ""
 	}
 	if !same {
-		return model.ErrInternalApiUserBadCredentials, ""
+		return typedErrors.ErrApiUserBadCredentials, ""
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,    jwt.MapClaims{
 		"iss": "cine-circle",
@@ -93,20 +94,20 @@ func GetTokenFromAuthentication(auth string) (model.CustomError, string) {
 	})
 
 	jwtToken, _:= token.SignedString([]byte(utils.GetDefaultOrFromEnv(secretTokenDefault, secretTokenEnv)))
-	return model.NoErr, jwtToken
+	return typedErrors.NoErr, jwtToken
 }
 
-func CheckTokenAndGetUsername(req *restful.Request) (model.CustomError, string) {
+func CheckTokenAndGetUsername(req *restful.Request) (typedErrors.CustomError, string) {
 	token := req.HeaderParameter(tokenHeader)
 	if token == "" {
-		return model.ErrInternalApiUserBadCredentials, ""
+		return typedErrors.ErrApiUserBadCredentials, ""
 	}
 	res := strings.Split(token, " ")
 	if len(res) != 2 {
-		return model.ErrInternalApiUserBadCredentials, ""
+		return typedErrors.ErrApiUserBadCredentials, ""
 	}
 	if res[0] != tokenKind {
-		return model.ErrInternalApiUserBadCredentials, ""
+		return typedErrors.ErrApiUserBadCredentials, ""
 	}
 	tokenStr := res[1]
 	claims := jwt.MapClaims{}
@@ -120,12 +121,12 @@ func CheckTokenAndGetUsername(req *restful.Request) (model.CustomError, string) 
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return model.NewCustomError(err, model.ErrInternalApiUserBadCredentials.HttpCode(), model.ErrInternalApiUserBadCredentialsCode), ""
+			return typedErrors.NewApiBadCredentialsError(err), ""
 		}
 	}
 	if !tkn.Valid {
 		logger.Sugar.Debugf("Error while getting token : Token not valid")
-		return model.ErrInternalApiUserBadCredentials, ""
+		return typedErrors.ErrApiUserBadCredentials, ""
 	}
-	return model.NoErr, fmt.Sprintf("%v", claims["sub"])
+	return typedErrors.NoErr, fmt.Sprintf("%v", claims["sub"])
 }

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cine-circle/internal/typedErrors"
 	"strings"
 )
 
@@ -13,12 +14,12 @@ type User struct {
 	Password	string 		`json:"password" gorm:"-"`
 }
 
-func (user User) IsValid() CustomError {
+func (user User) IsValid() typedErrors.CustomError {
 	if user.Username == "" || user.FullName == "" || user.Email == "" || user.Password == "" {
-		return ErrInternalServiceMissingMandatoryFields
+		return typedErrors.ErrServiceMissingMandatoryFields
 	}
 	if strings.Contains(user.Username, " ") {
-		return ErrInternalServiceBadFormatMandatoryFields
+		return typedErrors.ErrServiceBadFormatMandatoryFields
 	}
-	return NoErr
+	return typedErrors.NoErr
 }

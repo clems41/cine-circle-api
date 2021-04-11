@@ -3,6 +3,7 @@ package omdb
 import (
 	"cine-circle/internal/logger"
 	"cine-circle/internal/model"
+	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"encoding/json"
 	"io/ioutil"
@@ -41,12 +42,12 @@ func init() {
 	omdbPlot = utils.GetDefaultOrFromEnv(defaultPlot, envPlot)
 }
 
-func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
+func getDataFromOpenData(params []QueryParam) (typedErrors.CustomError, []byte) {
 	timeStart := time.Now()
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", omdbUrl, nil)
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalSendRequestCode), nil
+		return typedErrors.NewExternalSendRequestError(err), nil
 	}
 	q := req.URL.Query()
 	for _, param := range params  {
@@ -56,16 +57,16 @@ func getDataFromOpenData(params []QueryParam) (model.CustomError, []byte) {
 	req.URL.RawQuery = q.Encode()
 	res, err := client.Do(req)
 	if err != nil {
-		return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReceiveResponseCode), nil
+		return typedErrors.NewExternalReadBodyError(err), nil
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	logger.Sugar.Debugf("Sending request to %s with query %s took %+v", omdbUrl, req.URL.RawQuery, time.Since(timeStart))
-	return model.NewCustomError(err, http.StatusInternalServerError, model.ErrExternalReadBodyCode), body
+	return typedErrors.NewExternalReadBodyError(err), body
 }
 
-func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie) {
+func finMovieByQueryParams(params []QueryParam) (typedErrors.CustomError, model.Movie) {
 	var omdbMovie model.OmdbMovie
 	err, resp := getDataFromOpenData(params)
 	if err.IsNotNil() {
@@ -73,15 +74,15 @@ func finMovieByQueryParams(params []QueryParam) (model.CustomError, model.Movie)
 	}
 	err2 := json.Unmarshal(resp, &omdbMovie)
 	if err2 != nil {
-		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), model.Movie{}
+		return typedErrors.NewExternalReadBodyError(err2), model.Movie{}
 	}
 	if omdbMovie.Response == "False" {
-		return model.ErrInternalDatabaseResourceNotFound, model.Movie{}
+		return typedErrors.ErrRepositoryResourceNotFound, model.Movie{}
 	}
-	return model.NoErr, omdbMovie.Movie()
+	return typedErrors.NoErr, omdbMovie.Movie()
 }
 
-func FindMovieByID(id string) (model.CustomError, model.Movie) {
+func FindMovieByID(id string) (typedErrors.CustomError, model.Movie) {
 	params := []QueryParam{
 		{
 			Key:   "i",
@@ -95,7 +96,7 @@ func FindMovieByID(id string) (model.CustomError, model.Movie) {
 	return finMovieByQueryParams(params)
 }
 
-func FindMovieBySearch(titleToSearch, mediaType string) (model.CustomError, model.MovieSearch) {
+func FindMovieBySearch(titleToSearch, mediaType string) (typedErrors.CustomError, model.MovieSearch) {
 	params := []QueryParam{
 		{
 			Key:   "s",
@@ -119,12 +120,12 @@ func FindMovieBySearch(titleToSearch, mediaType string) (model.CustomError, mode
 	}
 	err2 := json.Unmarshal(resp, &omdbMovieSearch)
 	if err2 != nil {
-		return model.NewCustomError(err2, http.StatusInternalServerError, model.ErrExternalReadBodyCode), model.MovieSearch{}
+		return typedErrors.NewExternalReadBodyError(err2), model.MovieSearch{}
 	}
 	if omdbMovieSearch.Response == "False" {
-		return model.ErrInternalDatabaseResourceNotFound, model.MovieSearch{}
+		return typedErrors.ErrRepositoryResourceNotFound, model.MovieSearch{}
 	}
-	return model.NoErr, omdbMovieSearch.MovieSearch()
+	return typedErrors.NoErr, omdbMovieSearch.MovieSearch()
 }
 
 func MovieExists(id string) bool {

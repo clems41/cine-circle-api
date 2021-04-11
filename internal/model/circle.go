@@ -1,5 +1,7 @@
 package model
 
+import "cine-circle/internal/typedErrors"
+
 type Circle struct {
 	GormModel
 	Users []User `gorm:"many2many:user_circle;" json:"users"`
@@ -12,6 +14,6 @@ type UserCircle struct {
 	UserID uint
 }
 
-func (c *Circle) IsValid() CustomError {
-	return NoErr
+func (c *Circle) IsValid() typedErrors.CustomError {
+	return typedErrors.NoErr
 }

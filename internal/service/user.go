@@ -2,12 +2,12 @@ package service
 
 import (
 	"cine-circle/external/omdb"
-	"cine-circle/internal/database"
 	"cine-circle/internal/model"
-	"net/http"
+	"cine-circle/internal/repository"
+	"cine-circle/internal/typedErrors"
 )
 
-func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.CustomError, model.User) {
+func CreateOrUpdateUser(user model.User, conditions ...interface{}) (typedErrors.CustomError, model.User) {
 	err := user.IsValid()
 	if err.IsNotNil() {
 		return err, user
@@ -21,7 +21,7 @@ func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.Custo
 	if err.IsNotNil() {
 		return err, user
 	}
-	db, err2 := database.OpenConnection()
+	db, err2 := repository.OpenConnection()
 	if err2.IsNotNil() {
 		return err2, user
 	}
@@ -30,42 +30,42 @@ func CreateOrUpdateUser(user model.User, conditions ...interface{}) (model.Custo
 	return err3, newUser
 }
 
-func DeleteUser(conditions ...interface{}) model.CustomError {
-	db, err := database.OpenConnection()
+func DeleteUser(conditions ...interface{}) typedErrors.CustomError {
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err
 	}
 	defer db.Close()
 	err2 := db.DB().Delete(&model.User{}, conditions...).Error
-	return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode)
+	return typedErrors.NewRepositoryQueryFailedError(err2)
 }
 
-func GetUser(conditions ...interface{}) (model.CustomError, model.User) {
+func GetUser(conditions ...interface{}) (typedErrors.CustomError, model.User) {
 	var user model.User
-	db, err := database.OpenConnection()
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err, user
 	}
 	defer db.Close()
 	result := db.DB().Take(&user, conditions...)
 	if result.RowsAffected == 0 {
-		return model.ErrInternalDatabaseResourceNotFound, user
+		return typedErrors.ErrRepositoryResourceNotFound, user
 	}
-	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), user
+	return typedErrors.NewRepositoryQueryFailedError(result.Error), user
 }
 
 func UserExists(conditions ...interface{}) bool {
 	err, user := GetUser(conditions...)
-	return err != model.ErrInternalDatabaseResourceNotFound && user.ID != 0
+	return err != typedErrors.ErrRepositoryResourceNotFound && user.ID != 0
 }
 
-func GetMoviesByUser(conditions ...interface{}) (model.CustomError, []model.Movie) {
+func GetMoviesByUser(conditions ...interface{}) (typedErrors.CustomError, []model.Movie) {
 	movies := []model.Movie{}
 	err, user := GetUser(conditions...)
 	if err.IsNotNil() {
 		return err, nil
 	}
-	db, err := database.OpenConnection()
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err, nil
 	}
@@ -82,11 +82,11 @@ func GetMoviesByUser(conditions ...interface{}) (model.CustomError, []model.Movi
 			movies = append(movies, movie)
 		}
 	}
-	return model.NewCustomError(result.Error, http.StatusBadRequest, model.ErrInternalDatabaseQueryFailedCode), movies
+	return typedErrors.NewRepositoryQueryFailedError(result.Error), movies
 }
 
-func SearchUsers(username, fullname, email string) (model.CustomError, []model.User) {
-	db, err := database.OpenConnection()
+func SearchUsers(username, fullname, email string) (typedErrors.CustomError, []model.User) {
+	db, err := repository.OpenConnection()
 	if err.IsNotNil() {
 		return err, nil
 	}
@@ -98,7 +98,7 @@ func SearchUsers(username, fullname, email string) (model.CustomError, []model.U
 	err2 := db.DB().Find(&users, "username LIKE ? AND full_name LIKE ? AND email LIKE ?",
 		queryUsername, queryFullname, queryEmail).Error
 	if err2 != nil {
-		return model.NewCustomError(err2, model.ErrInternalDatabaseQueryFailed.HttpCode(), model.ErrInternalDatabaseQueryFailedCode), users
+		return typedErrors.NewRepositoryQueryFailedError(err2), users
 	}
-	return model.NoErr, users
+	return typedErrors.NoErr, users
 }
