@@ -1,10 +1,15 @@
 package main
 
 import (
-	"cine-circle/internal/repository"
+	"cine-circle/internal/domain/authenticationDom"
+	"cine-circle/internal/domain/circleDom"
+	"cine-circle/internal/domain/movieDom"
+	"cine-circle/internal/domain/recommendationDom"
+	"cine-circle/internal/domain/userDom"
+	"cine-circle/internal/domain/watchlistDom"
 	"cine-circle/internal/handler"
 	"cine-circle/internal/logger"
-	"cine-circle/internal/model"
+	"cine-circle/internal/repository"
 	"context"
 	"flag"
 	"github.com/emicklei/go-restful"
@@ -53,16 +58,10 @@ func run(cmd *cobra.Command, args []string) {
 	if err.IsNotNil() {
 		logger.Sugar.Fatalf(err.Error())
 	}
+	defer database.Close()
 
-	// AutoMigrate will create tables, missing foreign keys, constraints, columns and indexes. It will change existing
-	// column’s type if its size, precision, nullable changed.
-	// It WON’T delete unused columns to protect your data.
-	database.DB().AutoMigrate(&model.Rating{}, &model.User{}, &model.Circle{}, &model.Watchlist{})
-
-	err = database.Close()
-	if err.IsNotNil() {
-		logger.Sugar.Fatalf(err.Error())
-	}
+	repositories := repository.NewAllRepositories(database.DB())
+	repositories.Migrate()
 
 	// Add container filter to enable CORS
 	cors := restful.CrossOriginResourceSharing{
@@ -81,13 +80,20 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
-	restful.DefaultContainer.Add(handler.NewAuthenticationHandler())
-	restful.DefaultContainer.Add(handler.NewCircleHandler())
-	restful.DefaultContainer.Add(handler.NewRootHandler())
-	restful.DefaultContainer.Add(handler.NewMovieHandler())
-	restful.DefaultContainer.Add(handler.NewRecommendationHandler())
-	restful.DefaultContainer.Add(handler.NewUserHandler())
-	restful.DefaultContainer.Add(handler.NewWatchlistHandler())
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewAuthenticationHandler(authenticationDom.NewService(repositories.Authentication)))
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewCircleHandler(circleDom.NewService(repositories.Circle)))
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewRootHandler())
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewMovieHandler(movieDom.NewService(repositories.Movie)))
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewRecommendationHandler(recommendationDom.NewService(repositories.Recommendation)))
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewUserHandler(userDom.NewService(repositories.User)))
+	handler.AddWebService(restful.DefaultContainer,
+		handler.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))
 
 	config := restfulspec.Config{
 		WebServices: restful.DefaultContainer.RegisteredWebServices(),

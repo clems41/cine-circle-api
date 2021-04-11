@@ -6,6 +6,14 @@ import (
 	"github.com/emicklei/go-restful"
 )
 
+type handler interface {
+	WebService() *restful.WebService
+}
+
+func AddWebService(container *restful.Container, handler handler) {
+	container.Add(handler.WebService())
+}
+
 // Add filter for getting user infos (token, ID, etc...) in order to authenticate him
 func filterUser(needAuthentication bool) func(*restful.Request, *restful.Response, *restful.FilterChain) {
 	filter := func(req *restful.Request, res *restful.Response, chain *restful.FilterChain) {

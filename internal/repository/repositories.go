@@ -2,142 +2,60 @@ package repository
 
 import (
 	"cine-circle/internal/logger"
-	"cine-circle/internal/typedErrors"
-	"cine-circle/internal/utils"
-	"fmt"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	gormLogger "gorm.io/gorm/logger"
-	"log"
-	"os"
-	"time"
 )
 
-const (
-	defaultHost = "localhost"
-	defaultPort = "5432"
-	defaultUser = "postgres"
-	defaultDbName = "cine-circle"
-	defaultPassword = "postgres"
-	defaultDebug = "true"
-	defaultDetailedLogs = "true"
-)
-
-const (
-	EnvHost = "DB_HOST"
-	EnvPort = "DB_PORT"
-	EnvUser = "DB_USER"
-	EnvDbName = "DB_NAME"
-	EnvPassword = "DB_PASSWORD"
-	EnvDebug = "DB_DEBUG"
-	EnvDetailedLogs = "DB_LOG"
-)
-
-type Database struct {
-	db *gorm.DB
+type DB interface {
+	DB() *gorm.DB
+	PrefixTables(prefix string)
 }
 
-
-type PostgresConfig struct {
-	Host            string
-	User            string
-	Password        string
-	Port            string
-	DbName          string
-	ExtraConfigs    string
-	Debug           bool
-	DetailedLogs    bool
-	ApplicationName string
+type Repository interface {
+	Migrate()
 }
 
-func (postgresConfig PostgresConfig) DataSourceName() string {
-	dataSourceName := fmt.Sprintf("user=%v password=%v host=%v port=%v dbname=%v application_name='%v' %v",
-		postgresConfig.User,
-		postgresConfig.Password,
-		postgresConfig.Host,
-		postgresConfig.Port,
-		postgresConfig.DbName,
-		postgresConfig.ApplicationName,
-		postgresConfig.ExtraConfigs)
+type Repositories struct {
+	List []Repository
 
-	return dataSourceName
+	Authentication				*authenticationRepository
+	Circle						*circleRepository
+	Movie						*movieRepository
+	Recommendation				*recommendationRepository
+	User						*userRepository
+	Watchlist					*watchlistRepository
 }
 
-func OpenConnection() (*Database, typedErrors.CustomError) {
-	pgConfig := PostgresConfig{
-		Host:            utils.GetDefaultOrFromEnv(defaultHost, EnvHost),
-		User:            utils.GetDefaultOrFromEnv(defaultUser, EnvUser),
-		Password:        utils.GetDefaultOrFromEnv(defaultPassword, EnvPassword),
-		Port:            utils.GetDefaultOrFromEnv(defaultPort, EnvPort),
-		DbName:          utils.GetDefaultOrFromEnv(defaultDbName, EnvDbName),
-		Debug:           utils.GetDefaultOrFromEnv(defaultDebug, EnvDebug) == "true",
-		DetailedLogs:    utils.GetDefaultOrFromEnv(defaultDetailedLogs, EnvDetailedLogs) == "true",
-		ExtraConfigs: 	 "sslmode=disable TimeZone=Pacific/Noumea",
-		ApplicationName: "cine-circle-import",
-	}
-	gormCfg := gorm.Config{}
-	if pgConfig.DetailedLogs {
-		newLogger := gormLogger.New(
-			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-			gormLogger.Config{
-				SlowThreshold: time.Second,   // Slow SQL threshold
-				LogLevel:      gormLogger.Silent, // Log level
-				Colorful:      false,         // Disable color
-			},
-		)
-		gormCfg.Logger = newLogger
-	}
-	database, err := gorm.Open(postgres.Open(pgConfig.DataSourceName()), &gormCfg)
-	if err != nil {
-		logger.Sugar.Fatalf(err.Error())
-	}
+func (rs Repositories) Migrate() {
 
-	if database == nil {
-		logger.Sugar.Fatalf(typedErrors.ErrRepositoryIsNil.Error())
+	for _, r := range rs.List {
+		if repo, ok := r.(Repository); ok {
+			repo.Migrate()
+		} else {
+			logger.Sugar.Fatalf("not a repository %s", repo)
+		}
 	}
-
-	if pgConfig.Debug {
-		database = database.Debug()
-	}
-
-	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	//repository.DB().SetMaxIdleConns(5)
-
-	// SetMaxOpenConns sets the maximum number of open connections to the repository.
-	//repository.DB().SetMaxOpenConns(10)
-
-	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	//repository.DB().SetConnMaxLifetime(time.Hour)
-	return &Database{db: database}, typedErrors.NewRepositoryConnectionFailedError(err)
 }
 
-func (db *Database) Close() typedErrors.CustomError {
-	if db.db == nil {
-		return typedErrors.NoErr
-	}
-	sqlDB, err := db.db.DB()
-	if err != nil {
-		return typedErrors.NewRepositoryConnectionFailedError(err)
-	}
-	return typedErrors.NewRepositoryConnectionFailedError(sqlDB.Close())
+func NewAllRepositories(DB *gorm.DB) (r Repositories) {
+
+	r.Authentication = NewAuthenticationRepository(DB)
+	r.List = append(r.List, r.Authentication)
+
+	r.Circle = NewCircleRepository(DB)
+	r.List = append(r.List, r.Circle)
+
+	r.Movie = NewMovieRepository(DB)
+	r.List = append(r.List, r.Movie)
+
+	r.Recommendation = NewRecommendationRepository(DB)
+	r.List = append(r.List, r.Recommendation)
+
+	r.User = NewUserRepository(DB)
+	r.List = append(r.List, r.User)
+
+	r.Watchlist = NewWatchlistRepository(DB)
+	r.List = append(r.List, r.Watchlist)
+
+	return
 }
 
-func (db *Database) DB() *gorm.DB {
-	return db.db
-}
-
-func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...interface{}) typedErrors.CustomError {
-	result := db.db.Take(modelValue, conditions...)
-	if result.RowsAffected == 0 {
-		result = db.db.Create(value)
-	} else {
-		result = db.db.Model(modelValue).Updates(value)
-		result = db.db.Take(value, conditions...)
-	}
-	return typedErrors.NewRepositoryQueryFailedError(result.Error)
-}
-
-func (db *Database) Exists(modelValue interface{}, conditions ...interface{}) bool {
-	result := db.db.Take(modelValue, conditions...)
-	return result.RowsAffected != 0
-}

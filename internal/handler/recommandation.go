@@ -1,14 +1,25 @@
 package handler
 
 import (
-	"cine-circle/internal/typedErrors"
+	"cine-circle/internal/domain/recommendationDom"
 	"cine-circle/internal/model"
 	"cine-circle/internal/service"
+	"cine-circle/internal/typedErrors"
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
 
-func NewRecommendationHandler() *restful.WebService {
+type recommendationHandler struct {
+	service recommendationDom.Service
+}
+
+func NewRecommendationHandler(svc recommendationDom.Service) recommendationHandler {
+	return recommendationHandler{
+		service:    svc,
+	}
+}
+
+func (api recommendationHandler) WebService() *restful.WebService {
 	wsReco := &restful.WebService{}
 	wsReco.Path("/v1/recommendations")
 

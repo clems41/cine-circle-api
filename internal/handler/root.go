@@ -5,7 +5,15 @@ import (
 	"net/http"
 )
 
-func NewRootHandler() *restful.WebService {
+type rootHandler struct {
+}
+
+func NewRootHandler() rootHandler {
+	return rootHandler{
+	}
+}
+
+func (api rootHandler) WebService() *restful.WebService {
 	wsRoot := &restful.WebService{}
 
 	// HEALTH

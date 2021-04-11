@@ -1,14 +1,25 @@
 package handler
 
 import (
-	"cine-circle/internal/typedErrors"
+	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/model"
 	"cine-circle/internal/service"
+	"cine-circle/internal/typedErrors"
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
 
-func NewUserHandler() *restful.WebService {
+type userHandler struct {
+	service userDom.Service
+}
+
+func NewUserHandler(svc userDom.Service) userHandler {
+	return userHandler{
+		service:    svc,
+	}
+}
+
+func (api userHandler) WebService() *restful.WebService {
 	wsUser := &restful.WebService{}
 	wsUser.Path("/v1/users")
 

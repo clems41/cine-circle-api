@@ -1,14 +1,25 @@
 package handler
 
 import (
-	"cine-circle/internal/typedErrors"
+	"cine-circle/internal/domain/watchlistDom"
 	"cine-circle/internal/model"
 	"cine-circle/internal/service"
+	"cine-circle/internal/typedErrors"
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
 
-func NewWatchlistHandler() *restful.WebService {
+type watchlistHandler struct {
+	service watchlistDom.Service
+}
+
+func NewWatchlistHandler(svc watchlistDom.Service) watchlistHandler {
+	return watchlistHandler{
+		service:    svc,
+	}
+}
+
+func (api watchlistHandler) WebService() *restful.WebService {
 	wsWatchlist := &restful.WebService{}
 	wsWatchlist.Path("/v1/watchlist")
 

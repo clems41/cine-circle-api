@@ -1,6 +1,7 @@
 package service
 
 import (
+	"cine-circle/internal/constant"
 	"cine-circle/internal/logger"
 	"cine-circle/internal/model"
 	"cine-circle/internal/repository"
@@ -15,17 +16,8 @@ import (
 	"time"
 )
 
-const (
-	cost = 8
-	expirationDuration = 1 * 24 * time.Hour
-	secretTokenEnv = "SECRET_TOKEN"
-	secretTokenDefault = "secret"
-	tokenKind = "Bearer"
-	tokenHeader = "Authorization"
-)
-
 func HashAndSaltPassword(password string, user *model.User) typedErrors.CustomError {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), constant.Cost)
 	if err != nil {
 		return typedErrors.NewApiUnprocessableEntityError(err)
 	}
@@ -90,15 +82,15 @@ func GetTokenFromAuthentication(auth string) (typedErrors.CustomError, string) {
 		"iss": "cine-circle",
 		"sub":  username,
 		"aud": "any",
-		"exp": time.Now().Add(expirationDuration).Unix(),
+		"exp": time.Now().Add(constant.ExpirationDuration).Unix(),
 	})
 
-	jwtToken, _:= token.SignedString([]byte(utils.GetDefaultOrFromEnv(secretTokenDefault, secretTokenEnv)))
+	jwtToken, _:= token.SignedString([]byte(utils.GetDefaultOrFromEnv(constant.SecretTokenDefault, constant.SecretTokenEnv)))
 	return typedErrors.NoErr, jwtToken
 }
 
 func CheckTokenAndGetUsername(req *restful.Request) (typedErrors.CustomError, string) {
-	token := req.HeaderParameter(tokenHeader)
+	token := req.HeaderParameter(constant.TokenHeader)
 	if token == "" {
 		return typedErrors.ErrApiUserBadCredentials, ""
 	}
@@ -106,7 +98,7 @@ func CheckTokenAndGetUsername(req *restful.Request) (typedErrors.CustomError, st
 	if len(res) != 2 {
 		return typedErrors.ErrApiUserBadCredentials, ""
 	}
-	if res[0] != tokenKind {
+	if res[0] != constant.TokenKind {
 		return typedErrors.ErrApiUserBadCredentials, ""
 	}
 	tokenStr := res[1]
@@ -117,7 +109,7 @@ func CheckTokenAndGetUsername(req *restful.Request) (typedErrors.CustomError, st
 	// if the token is invalid (if it has expired according to the expiry time we set on sign in),
 	// or if the signature does not match
 	tkn, err := jwt.ParseWithClaims(tokenStr, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(utils.GetDefaultOrFromEnv(secretTokenDefault, secretTokenEnv)), nil
+		return []byte(utils.GetDefaultOrFromEnv(constant.SecretTokenDefault, constant.SecretTokenEnv)), nil
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {

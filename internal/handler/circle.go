@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/model"
 	"cine-circle/internal/service"
 	"cine-circle/internal/typedErrors"
@@ -9,7 +10,17 @@ import (
 	"strconv"
 )
 
-func NewCircleHandler() *restful.WebService {
+type circleHandler struct {
+	service circleDom.Service
+}
+
+func NewCircleHandler(svc circleDom.Service) circleHandler {
+	return circleHandler{
+		service:    svc,
+	}
+}
+
+func (api circleHandler) WebService() *restful.WebService {
 	wsCircle := &restful.WebService{}
 	wsCircle.Path("/v1/circles")
 

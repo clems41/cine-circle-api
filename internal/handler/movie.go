@@ -2,6 +2,7 @@ package handler
 
 import (
 	"cine-circle/external/omdb"
+	"cine-circle/internal/domain/movieDom"
 	"cine-circle/internal/model"
 	"cine-circle/internal/service"
 	"cine-circle/internal/typedErrors"
@@ -9,7 +10,17 @@ import (
 	"net/http"
 )
 
-func NewMovieHandler() *restful.WebService {
+type movieHandler struct {
+	service movieDom.Service
+}
+
+func NewMovieHandler(svc movieDom.Service) movieHandler {
+	return movieHandler{
+		service:    svc,
+	}
+}
+
+func (api movieHandler) WebService() *restful.WebService {
 	wsMovie := &restful.WebService{}
 	wsMovie.Path("/v1/movies")
 
