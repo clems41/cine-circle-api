@@ -1,6 +1,9 @@
 package constant
 
-import "time"
+import (
+	"cine-circle/internal/utils"
+	"time"
+)
 
 const (
 	Cost = 8
@@ -9,4 +12,10 @@ const (
 	SecretTokenDefault = "secret"
 	TokenKind = "Bearer"
 	TokenHeader = "Authorization"
+	IssToken = "huco-api"
+	AuthenticationHeaderName = "Authorization"
+)
+
+var (
+	TokenKey = utils.GetDefaultOrFromEnv(SecretTokenDefault, SecretTokenEnv)
 )

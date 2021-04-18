@@ -54,13 +54,18 @@ func run(cmd *cobra.Command, args []string) {
 	signal.Notify(Signals, os.Interrupt)
 
 	// Try to connect to PostgresSQL repository
-	database, err := repository.OpenConnection()
-	if err.IsNotNil() {
+	DB, err := repository.OpenConnection()
+	if err != nil {
 		logger.Sugar.Fatalf(err.Error())
 	}
-	defer database.Close()
+	defer func() {
+		err = repository.CloseConnection(DB)
+		if err != nil {
+			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
+		}
+	}()
 
-	repositories := repository.NewAllRepositories(database.DB())
+	repositories := repository.NewAllRepositories(DB)
 	repositories.Migrate()
 
 	// Add container filter to enable CORS
@@ -80,18 +85,25 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
+	userService := userDom.NewService(repositories.User)
+	handler.CommonHandler = handler.NewCommonHandler(userService)
+
 	handler.AddWebService(restful.DefaultContainer,
-		handler.NewAuthenticationHandler(authenticationDom.NewService(repositories.Authentication)))
+		handler.NewAuthenticationHandler(authenticationDom.NewService(repositories.Authentication, repositories.User)))
+
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewCircleHandler(circleDom.NewService(repositories.Circle)))
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewRootHandler())
+
+	handler.AddWebService(restful.DefaultContainer, handler.NewRootHandler())
+
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewMovieHandler(movieDom.NewService(repositories.Movie)))
+
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewRecommendationHandler(recommendationDom.NewService(repositories.Recommendation)))
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewUserHandler(userDom.NewService(repositories.User)))
+
+	handler.AddWebService(restful.DefaultContainer, handler.NewUserHandler(userService))
+
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))
 
@@ -112,14 +124,18 @@ func run(cmd *cobra.Command, args []string) {
 		<-Signals
 		cancel()
 		logger.Sugar.Infof("Closing http server...")
-		err2 := srv.Close()
-		if err2 != nil {
-			logger.Sugar.Fatalf("Error while trying to close http server... err: %v", err2)
+		err = srv.Close()
+		if err != nil {
+			logger.Sugar.Fatalf("Error while trying to close http server... err: %s", err.Error())
+		}
+		err = repository.CloseConnection(DB)
+		if err != nil {
+			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
 		}
 	}()
 
-	err3 := srv.ListenAndServe()
-	if err3 != nil {
-		logger.Sugar.Fatalf("Error while trying to serving http server... err: %v", err3)
+	err = srv.ListenAndServe()
+	if err != nil {
+		logger.Sugar.Fatalf("Error while trying to serving http server... err: %s", err.Error())
 	}
 }

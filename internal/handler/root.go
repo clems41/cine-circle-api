@@ -8,8 +8,8 @@ import (
 type rootHandler struct {
 }
 
-func NewRootHandler() rootHandler {
-	return rootHandler{
+func NewRootHandler() *rootHandler {
+	return &rootHandler{
 	}
 }
 

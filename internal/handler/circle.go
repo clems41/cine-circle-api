@@ -2,20 +2,15 @@ package handler
 
 import (
 	"cine-circle/internal/domain/circleDom"
-	"cine-circle/internal/model"
-	"cine-circle/internal/service"
-	"cine-circle/internal/typedErrors"
 	"github.com/emicklei/go-restful"
-	"net/http"
-	"strconv"
 )
 
 type circleHandler struct {
 	service circleDom.Service
 }
 
-func NewCircleHandler(svc circleDom.Service) circleHandler {
-	return circleHandler{
+func NewCircleHandler(svc circleDom.Service) *circleHandler {
+	return &circleHandler{
 		service:    svc,
 	}
 }
@@ -24,14 +19,14 @@ func (api circleHandler) WebService() *restful.WebService {
 	wsCircle := &restful.WebService{}
 	wsCircle.Path("/v1/circles")
 
-	wsCircle.Route(wsCircle.POST("/").
+/*	wsCircle.Route(wsCircle.POST("/").
 		Doc("Create new circle").
 		Writes(model.Circle{}).
 		Returns(201, "Created", model.Circle{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(CreateCircle))
 
 	wsCircle.Route(wsCircle.PUT("/{circleId}").
@@ -42,7 +37,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(UpdateCircle))
 
 	wsCircle.Route(wsCircle.GET("/{circleId}").
@@ -51,7 +46,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Writes(model.Circle{}).
 		Returns(200, "Updated", model.Circle{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(GetCircle))
 
 	wsCircle.Route(wsCircle.GET("/").
@@ -62,7 +57,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(GetCircles))
 
 	wsCircle.Route(wsCircle.GET("/{circleId}/movies").
@@ -72,7 +67,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Writes([]model.Movie{}).
 		Returns(200, "OK", []model.Movie{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(GetMoviesOfCircle))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
@@ -83,7 +78,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(DeleteCircle))
 
 	wsCircle.Route(wsCircle.PUT("/{circleId}/{userId}").
@@ -95,7 +90,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
+		Filter(authenticateUser(true)).
 		To(AddUserToCircle))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}/{userId}").
@@ -107,177 +102,8 @@ func (api circleHandler) WebService() *restful.WebService {
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Returns(422, "Not processable, impossible to serialize json to Circle",
 			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(filterUser(true)).
-		To(RemoveUserFromCircle))
+		Filter(authenticateUser(true)).
+		To(RemoveUserFromCircle))*/
 
 	return wsCircle
-}
-
-func CreateCircle(req *restful.Request, res *restful.Response) {
-	_, username := service.CheckTokenAndGetUsername(req)
-	var circle model.Circle
-	err := req.ReadEntity(&circle)
-	if err != nil {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiUnprocessableEntity.HttpCode(),
-			typedErrors.ErrApiUnprocessableEntity.CodeError())
-		return
-	}
-	err2, newCircle := service.CreateCircle(circle, username)
-	if err2.IsNotNil() {
-		res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, newCircle)
-}
-
-func GetCircles(req *restful.Request, res *restful.Response) {
-	name := req.QueryParameter("name")
-	_, username := service.CheckTokenAndGetUsername(req)
-	err, circles := service.GetCircles(username, "name LIKE ?", "%" + name + "%")
-	if err.IsNotNil() {
-		res.WriteHeaderAndEntity(err.HttpCode(), err.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, circles)
-}
-
-func DeleteCircle(req *restful.Request, res *restful.Response) {
-	_, username := service.CheckTokenAndGetUsername(req)
-	circleId := req.PathParameter("circleId")
-	if circleId != "" {
-		err2 := service.DeleteCircle(circleId, username)
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, "")
-}
-
-func UpdateCircle(req *restful.Request, res *restful.Response) {
-	_, username := service.CheckTokenAndGetUsername(req)
-	circleId := req.PathParameter("circleId")
-	var circle model.Circle
-	if circleId != "" {
-		err := req.ReadEntity(&circle)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.ErrApiUnprocessableEntity.HttpCode(),
-				typedErrors.ErrApiUnprocessableEntity.CodeError())
-			return
-		}
-		var err2 typedErrors.CustomError
-		err2, circle = service.UpdateCircle(circle, circleId, username)
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
-}
-
-func GetCircle(req *restful.Request, res *restful.Response) {
-	circleId := req.PathParameter("circleId")
-	var circles []model.Circle
-	_, username := service.CheckTokenAndGetUsername(req)
-	if circleId != "" {
-		var err2 typedErrors.CustomError
-		err2, circles = service.GetCircles(username, "id = ?", circleId)
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	if len(circles) != 1 {
-		res.WriteHeaderAndEntity(typedErrors.ErrRepositoryResourceNotFound.HttpCode(), typedErrors.ErrRepositoryResourceNotFound.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, circles[0])
-}
-
-func AddUserToCircle(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	userIdStr := req.PathParameter("userId")
-	var circle model.Circle
-	if circleIdStr != "" && userIdStr != "" {
-		circleId, err := strconv.Atoi(circleIdStr)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.NewApiBadRequestError(err).HttpCode(), typedErrors.NewApiBadRequestError(err).CodeError())
-			return
-		}
-		userId, err := strconv.Atoi(userIdStr)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.NewApiBadRequestError(err).HttpCode(), typedErrors.NewApiBadRequestError(err).CodeError())
-			return
-		}
-		var err2 typedErrors.CustomError
-		err2, circle = service.AddUserToCircle(uint(circleId), uint(userId))
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
-}
-
-func RemoveUserFromCircle(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	userIdStr := req.PathParameter("userId")
-	var circle model.Circle
-	if circleIdStr != "" && userIdStr != "" {
-		circleId, err := strconv.Atoi(circleIdStr)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.NewApiBadRequestError(err).HttpCode(), typedErrors.NewApiBadRequestError(err).CodeError())
-			return
-		}
-		userId, err := strconv.Atoi(userIdStr)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.NewApiBadRequestError(err).HttpCode(), typedErrors.NewApiBadRequestError(err).CodeError())
-			return
-		}
-		var err2 typedErrors.CustomError
-		err2, circle = service.RemoveUserFromCircle(uint(circleId), uint(userId))
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
-}
-
-func GetMoviesOfCircle(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	sortParameter := req.QueryParameter("sort")
-	var movies []model.Movie
-	if circleIdStr != "" {
-		circleId, err := strconv.Atoi(circleIdStr)
-		if err != nil {
-			res.WriteHeaderAndEntity(typedErrors.NewApiBadRequestError(err).HttpCode(), typedErrors.NewApiBadRequestError(err).CodeError())
-			return
-		}
-		var err2 typedErrors.CustomError
-		err2, movies = service.GetMoviesForCircle(uint(circleId), sortParameter)
-		if err2.IsNotNil() {
-			res.WriteHeaderAndEntity(err2.HttpCode(), err2.CodeError())
-			return
-		}
-	} else {
-		res.WriteHeaderAndEntity(typedErrors.ErrApiBadRequest.HttpCode(), typedErrors.ErrApiBadRequest.CodeError())
-		return
-	}
-	res.WriteHeaderAndEntity(http.StatusOK, movies)
 }

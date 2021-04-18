@@ -18,3 +18,13 @@ func NewAuthenticationRepository(DB *gorm.DB) *authenticationRepository {
 func (r authenticationRepository) Migrate() {
 
 }
+
+func (r authenticationRepository) GetHashedPassword(username string) (hashedPassword string, err error) {
+	var user User
+	err = r.DB.
+		Select("hashed_password").
+		Find(&user, "username = ?", username).
+		Error
+	hashedPassword = user.HashedPassword
+	return
+}

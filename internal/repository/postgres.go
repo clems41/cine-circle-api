@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"fmt"
@@ -65,7 +64,7 @@ func (postgresConfig PostgresConfig) DataSourceName() string {
 
 
 
-func OpenConnection() (*Database, typedErrors.CustomError) {
+func OpenConnection() (db *gorm.DB, err error) {
 	pgConfig := PostgresConfig{
 		Host:            utils.GetDefaultOrFromEnv(defaultHost, EnvHost),
 		User:            utils.GetDefaultOrFromEnv(defaultUser, EnvUser),
@@ -89,57 +88,25 @@ func OpenConnection() (*Database, typedErrors.CustomError) {
 		)
 		gormCfg.Logger = newLogger
 	}
-	database, err := gorm.Open(postgres.Open(pgConfig.DataSourceName()), &gormCfg)
+	db, err = gorm.Open(postgres.Open(pgConfig.DataSourceName()), &gormCfg)
 	if err != nil {
-		logger.Sugar.Fatalf(err.Error())
+		return
 	}
 
-	if database == nil {
-		logger.Sugar.Fatalf(typedErrors.ErrRepositoryIsNil.Error())
+	if db == nil {
+		return nil, typedErrors.ErrRepositoryIsNil
 	}
 
 	if pgConfig.Debug {
-		database = database.Debug()
+		db = db.Debug()
 	}
-
-	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-	//repository.DB().SetMaxIdleConns(5)
-
-	// SetMaxOpenConns sets the maximum number of open connections to the repository.
-	//repository.DB().SetMaxOpenConns(10)
-
-	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-	//repository.DB().SetConnMaxLifetime(time.Hour)
-	return &Database{db: database}, typedErrors.NewRepositoryConnectionFailedError(err)
+	return
 }
 
-func (db *Database) Close() typedErrors.CustomError {
-	if db.db == nil {
-		return typedErrors.NoErr
-	}
-	sqlDB, err := db.db.DB()
+func CloseConnection(DB *gorm.DB) (err error) {
+	db, err := DB.DB()
 	if err != nil {
-		return typedErrors.NewRepositoryConnectionFailedError(err)
+		return
 	}
-	return typedErrors.NewRepositoryConnectionFailedError(sqlDB.Close())
-}
-
-func (db *Database) DB() *gorm.DB {
-	return db.db
-}
-
-func (db *Database) CreateOrUpdate(modelValue, value interface{}, conditions ...interface{}) typedErrors.CustomError {
-	result := db.db.Take(modelValue, conditions...)
-	if result.RowsAffected == 0 {
-		result = db.db.Create(value)
-	} else {
-		result = db.db.Model(modelValue).Updates(value)
-		result = db.db.Take(value, conditions...)
-	}
-	return typedErrors.NewRepositoryQueryFailedError(result.Error)
-}
-
-func (db *Database) Exists(modelValue interface{}, conditions ...interface{}) bool {
-	result := db.db.Take(modelValue, conditions...)
-	return result.RowsAffected != 0
+	return db.Close()
 }

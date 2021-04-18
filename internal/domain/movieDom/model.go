@@ -1,13 +1,11 @@
 package movieDom
 
 import (
-	"cine-circle/internal/domain"
 	"time"
 )
 
 type Result struct {
-	MovieID 		domain.IDType 		`json:"id"`
-	ImdbID 			string 				`json:"imdbId"`
+	ID 				string 				`json:"id"`
 	Title 			string 				`json:"title"`
 	Year 			string 				`json:"year"`
 	Released 		time.Time 			`json:"released"`
@@ -18,6 +16,20 @@ type Result struct {
 	Plot 			string 				`json:"plot"`
 	Countries 		[]string 			`json:"countries"`
 	Poster 			string 				`json:"poster"`
+	Type 			string 			`json:"mediaType"`
+}
+
+type ResultShort struct {
+	ID 				string 				`json:"id"`
+	Title 			string 				`json:"title"`
+	Year 			string 				`json:"year"`
+	Poster 			string 				`json:"poster"`
+	Type 			string 				`json:"mediaType"`
+}
+
+type SearchResult struct {
+	Search 			[]ResultShort		`json:"Search"`
+	TotalResults 	int 				`json:"TotalResults"`
 }
 
 type OmdbRatingView struct {
@@ -52,4 +64,28 @@ type OmdbView struct {
 	Website    		string 				`json:"Website"`
 	Response   		string 				`json:"Response"`
 	TotalSeasons 	string 				`json:"totalSeasons"`
+}
+
+type OmdbShortView struct {
+	Title    		string 				`json:"Title"`
+	Year     		string 				`json:"Year"`
+	Poster   		string 				`json:"Poster"`
+	Imdbid     		string 				`json:"imdbID"`
+	Type       		string 				`json:"Type"`
+}
+
+type OmdbSearchView struct {
+	Search 			[]OmdbShortView 	`json:"Search"`
+	TotalResults 	string 				`json:"totalResults"`
+	Response     	string 				`json:"Response"`
+}
+
+type QueryParam struct {
+	Key string
+	Value string
+}
+
+type Search struct {
+	Title 			string
+	MediaType 		string
 }

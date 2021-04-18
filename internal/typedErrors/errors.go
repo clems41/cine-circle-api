@@ -3,6 +3,7 @@ package typedErrors
 import (
 	"cine-circle/internal/logger"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -25,57 +26,56 @@ const (
 	errServiceMissingMandatoryFieldsCode = "ERR_INTERNAL_SERVICE_MISSING_MANDATORY_FIELDS_CODE"
 	errServiceBadFormatMandatoryFieldsCode = "ERR_INTERNAL_SERVICE_BAD_FORMAT_MANDATORY_FIELDS_CODE"
 	errServiceFieldShouldBeUniqueCode = "ERR_INTERNAL_SERVICE_FIELD_SHOULD_BE_UNIQUE_CODE"
+	errServiceGeneralErrorCode = "ERR_INTERNAL_SERVICE_ERROR_CODE"
 )
 
 var (
-	NoErr = NewCustomError(nil,	http.StatusOK,"")
-
 	ErrRepositoryIsNil = NewCustomError(
-		errors.New("got nil repository when trying to connect"),
 		http.StatusInternalServerError,
-		errRepositoryNilCode)
+		errRepositoryNilCode,
+		errors.New("got nil repository when trying to connect"))
 	ErrRepositoryResourceNotFound = NewCustomError(
-		errors.New("resource cannot be found in repository"),
 		http.StatusNotFound,
-		errRepositoryResourceNotFoundCode)
+		errRepositoryResourceNotFoundCode,
+		errors.New("resource cannot be found in repository"))
 	ErrRepositoryConnectionFailed = NewCustomError(
-		errors.New("connection to repository failed"),
 		http.StatusInternalServerError,
-		errRepositoryConnectionFailedCode)
+		errRepositoryConnectionFailedCode,
+	errors.New("connection to repository failed"))
 	ErrRepositoryQueryFailed = NewCustomError(
-		errors.New("query sent to repository failed"),
 		http.StatusInternalServerError,
-		errRepositoryQueryFailedCode)
+		errRepositoryQueryFailedCode,
+		errors.New("query sent to repository failed"))
 
 	ErrApiBadRequest = NewCustomError(
-		errors.New("request cannot be proceeded"),
 		http.StatusBadRequest,
-		errApiBadRequestCode)
+		errApiBadRequestCode,
+		errors.New("request cannot be proceeded"))
 	ErrApiUnprocessableEntity = NewCustomError(
-		errors.New("cannot process entity"),
 		http.StatusUnprocessableEntity,
-		errApiUnprocessableEntityCode)
+		errApiUnprocessableEntityCode,
+		errors.New("cannot process entity"))
 	ErrApiUserBadCredentials = NewCustomError(
-		errors.New("cannot authenticate user with these credentials"),
 		http.StatusUnauthorized,
-		errApiUserBadCredentialsCode)
+		errApiUserBadCredentialsCode,
+		errors.New("cannot authenticate user with these credentials"))
 	ErrApiUserCredentialsNotFound = NewCustomError(
-		errors.New("user credentials not found"),
 		http.StatusUnauthorized,
-		errApiUserCredentialsNotFoundCode)
+		errApiUserCredentialsNotFoundCode,
+		errors.New("user credentials not found"))
 
 	ErrServiceMissingMandatoryFields = NewCustomError(
-		errors.New("missing mandatory fields for creating resource"),
 		http.StatusUnprocessableEntity,
-		errServiceMissingMandatoryFieldsCode)
+		errServiceMissingMandatoryFieldsCode,
+		errors.New("missing mandatory fields for creating resource"))
 	ErrServiceBadFormatMandatoryFields = NewCustomError(
-		errors.New("bad format for at least one mandatory fields"),
 		http.StatusUnprocessableEntity,
-		errServiceBadFormatMandatoryFieldsCode)
+		errServiceBadFormatMandatoryFieldsCode,
+		errors.New("bad format for at least one mandatory fields"))
 	ErrServiceFieldShouldBeUnique = NewCustomError(
-		errors.New("field should be unique, already used for other resource"),
 		http.StatusUnprocessableEntity,
-		errServiceFieldShouldBeUniqueCode)
+		errServiceFieldShouldBeUniqueCode,
+		errors.New("field should be unique, already used for other resource"))
 )
 
 type codeError struct {
@@ -119,7 +119,15 @@ func (ce CustomError) IsNotNil() bool {
 	return isNotNil
 }
 
-func NewCustomError(err error, httpCode int, code string) CustomError {
+func NewCustomErrorf(httpCode int, code string, format string, args ...interface{}) CustomError {
+	return CustomError{
+		err:      errors.New(fmt.Sprintf(format, args...)),
+		httpCode: httpCode,
+		code: code,
+	}
+}
+
+func NewCustomError(httpCode int, code string, err error) CustomError {
 	return CustomError{
 		err:      err,
 		httpCode: httpCode,
@@ -129,54 +137,57 @@ func NewCustomError(err error, httpCode int, code string) CustomError {
 
 // Repository errors
 
-func NewRepositoryQueryFailedError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errRepositoryQueryFailedCode)
+func NewRepositoryQueryFailedErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryQueryFailedCode, format, args...)
 }
-func NewRepositoryConnectionFailedError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errRepositoryConnectionFailedCode)
+func NewRepositoryConnectionFailedErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryConnectionFailedCode, format, args...)
 }
-func NewRepositoryCreationFailedError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errRepositoryCreationFailedCode)
+func NewRepositoryCreationFailedErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryCreationFailedCode, format, args...)
 }
-func NewRepositoryNilError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errRepositoryNilCode)
+func NewRepositoryNilErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryNilCode, format, args...)
 }
-func NewRepositoryResourceNotFoundError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errRepositoryResourceNotFoundCode)
+func NewRepositoryResourceNotFoundErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryResourceNotFoundCode, format, args...)
 }
 
 // API errors
 
-func NewApiBadCredentialsError(err error) CustomError {
-	return NewCustomError(err, http.StatusBadRequest, errApiUserBadCredentialsCode)
+func NewApiBadCredentialsErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusBadRequest, errApiUserBadCredentialsCode, format, args...)
 }
-func NewApiCredentialsNotFoundError(err error) CustomError {
-	return NewCustomError(err, http.StatusBadRequest, errApiUserCredentialsNotFoundCode)
+func NewApiCredentialsNotFoundErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusBadRequest, errApiUserCredentialsNotFoundCode, format, args...)
 }
-func NewApiBadRequestError(err error) CustomError {
-	return NewCustomError(err, http.StatusBadRequest, errApiBadRequestCode)
+func NewApiBadRequestErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusBadRequest, errApiBadRequestCode, format, args...)
 }
-func NewApiUnprocessableEntityError(err error) CustomError {
-	return NewCustomError(err, http.StatusUnprocessableEntity, errApiUnprocessableEntityCode)
+func NewApiUnprocessableEntityErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusUnprocessableEntity, errApiUnprocessableEntityCode, format, args...)
 }
 
 // Service errors
 
-func NewServiceMissingMandatoryFieldsError(err error) CustomError {
-	return NewCustomError(err, http.StatusBadRequest, errServiceMissingMandatoryFieldsCode)
+func NewServiceMissingMandatoryFieldsErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusBadRequest, errServiceMissingMandatoryFieldsCode, format, args...)
 }
-func NewServiceBadFormatMandatoryFieldsError(err error) CustomError {
-	return NewCustomError(err, http.StatusUnprocessableEntity, errServiceBadFormatMandatoryFieldsCode)
+func NewServiceBadFormatMandatoryFieldsErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusUnprocessableEntity, errServiceBadFormatMandatoryFieldsCode, format, args...)
 }
-func NewServiceFieldsShouldBeUniqueError(err error) CustomError {
-	return NewCustomError(err, http.StatusUnprocessableEntity, errServiceFieldShouldBeUniqueCode)
+func NewServiceFieldsShouldBeUniqueErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusUnprocessableEntity, errServiceFieldShouldBeUniqueCode, format, args...)
+}
+func NewServiceGeneralErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errServiceGeneralErrorCode, format, args...)
 }
 
 // External errors
 
-func NewExternalSendRequestError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errExternalSendRequestCode)
+func NewExternalSendRequestErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errExternalSendRequestCode, format, args...)
 }
-func NewExternalReadBodyError(err error) CustomError {
-	return NewCustomError(err, http.StatusInternalServerError, errExternalReadBodyCode)
+func NewExternalReadBodyErrorf(format string, args ...interface{}) CustomError {
+	return NewCustomErrorf(http.StatusInternalServerError, errExternalReadBodyCode, format, args...)
 }
