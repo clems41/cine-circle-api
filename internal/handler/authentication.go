@@ -60,7 +60,7 @@ func (handler authenticationHandler) CreateUser(req *restful.Request, res *restf
 	var userCreation userDom.Creation
 	err := req.ReadEntity(&userCreation)
 	if err != nil {
-		handleHTTPError(res, err)
+		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
 		return
 	}
 	user, err := handler.service.CreateUser(userCreation)

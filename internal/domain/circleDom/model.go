@@ -2,6 +2,8 @@ package circleDom
 
 import (
 	"cine-circle/internal/domain"
+	"cine-circle/internal/domain/userDom"
+	"cine-circle/internal/typedErrors"
 )
 
 type Creation struct {
@@ -21,14 +23,44 @@ type Delete struct {
 	CircleID		domain.IDType 	`json:"id"`
 }
 
+type Get struct {
+	CircleID		domain.IDType 	`json:"id"`
+}
+
 type Result struct {
 	CircleID		domain.IDType 	`json:"id"`
 	Name 			string 			`json:"name"`
 	Description 	string 			`json:"description"`
-	Users 			[]UserView		`json:"users"`
+	Users 			[]userDom.Result		`json:"users"`
 }
 
-type UserView struct {
-	UserID 			domain.IDType 	`json:"id"`
-	Username 		string 			`json:"username"`
+func (c Creation) Valid() (err error) {
+	if c.Name == "" {
+		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Name should be specified")
+	}
+	return
+}
+
+func (u Update) Valid() (err error) {
+	if u.Name == "" {
+		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Name should be specified")
+	}
+	if u.CircleID == 0 {
+		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("ID should be specified")
+	}
+	return
+}
+
+func (d Delete) Valid() (err error) {
+	if d.CircleID == 0 {
+		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("ID should be specified")
+	}
+	return
+}
+
+func (g Get) Valid() (err error) {
+	if g.CircleID == 0 {
+		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("ID should be specified")
+	}
+	return
 }

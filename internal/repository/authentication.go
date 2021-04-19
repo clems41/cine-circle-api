@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cine-circle/internal/domain/authenticationDom"
+	"cine-circle/internal/typedErrors"
 	"gorm.io/gorm"
 )
 
@@ -25,6 +26,9 @@ func (r authenticationRepository) GetHashedPassword(username string) (hashedPass
 		Select("hashed_password").
 		Find(&user, "username = ?", username).
 		Error
+	if err != nil {
+		return hashedPassword, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
 	hashedPassword = user.HashedPassword
 	return
 }
