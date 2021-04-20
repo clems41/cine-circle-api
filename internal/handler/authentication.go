@@ -63,7 +63,7 @@ func (handler authenticationHandler) CreateUser(req *restful.Request, res *restf
 		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
 		return
 	}
-	user, err := handler.service.CreateUser(userCreation)
+	user, err := handler.service.Create(userCreation)
 	if err != nil {
 		handleHTTPError(res, err)
 		return

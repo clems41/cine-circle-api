@@ -55,7 +55,7 @@ func (api userHandler) WebService() *restful.WebService {
 		Returns(200, "OK", model.User{}).
 		Returns(404, "User not found", typedErrors.ErrRepositoryResourceNotFound.CodeError()).
 		Filter(authenticateUser(true)).
-		To(GetUser))
+		To(Get))
 
 	wsUser.Route(wsUser.GET("/me").
 		Doc("Get user info from token").

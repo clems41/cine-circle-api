@@ -120,8 +120,9 @@ func (ce CustomError) IsNotNil() bool {
 }
 
 func NewCustomErrorf(httpCode int, code string, format string, args ...interface{}) CustomError {
+	newErr := errors.New(fmt.Sprintf(format, args...))
 	return CustomError{
-		err:      errors.New(fmt.Sprintf(format, args...)),
+		err:      fmt.Errorf("decompress %s: %w", newErr.Error(), newErr),
 		httpCode: httpCode,
 		code: code,
 	}

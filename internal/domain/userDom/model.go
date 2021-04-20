@@ -25,8 +25,10 @@ type Get struct {
 }
 
 type UpdatePassword struct {
-	OldPassword 	string			`json:"oldPassword"`
-	NewPassword 	string			`json:"newPassword"`
+	UserID 				domain.IDType 	`json:"id"`
+	OldPassword 		string			`json:"oldPassword"`
+	NewPassword 		string			`json:"newPassword"`
+	NewHashedPassword 	string			`json:"-"`
 }
 
 type Delete struct {
@@ -40,38 +42,61 @@ type Result struct {
 	Email 			string 			`json:"email"`
 }
 
+var (
+	errValidPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Password is empty")
+	errValidEmail = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Email is empty")
+	errValidUsername = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Username is empty")
+	errValidDisplayName = typedErrors.NewServiceMissingMandatoryFieldsErrorf("DisplayName is empty")
+	errValidID = typedErrors.NewServiceMissingMandatoryFieldsErrorf("UserID is empty")
+	errValidOldPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
+	errValidNewPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
+)
+
 func (c Creation) Valid() (err error) {
 	if c.Password != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Password is empty")
+		err = errValidPassword
 	}
 	if c.Email != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Email is empty")
+		err = errValidEmail
 	}
 	if c.Username != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Username is empty")
+		err = errValidUsername
 	}
 	if c.DisplayName != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("DisplayName is empty")
+		err = errValidDisplayName
 	}
 	return
 }
 
 func (u Update) Valid() (err error) {
+	if u.UserID == 0 {
+		err = errValidID
+	}
 	if u.Email != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Email is empty")
+		err = errValidEmail
 	}
 	if u.DisplayName != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("DisplayName is empty")
+		err = errValidDisplayName
+	}
+	return
+}
+
+func (d Delete) Valid() (err error) {
+	if d.UserID == 0 {
+		err = errValidID
 	}
 	return
 }
 
 func (up UpdatePassword) Valid() (err error) {
+	if up.UserID == 0 {
+		err = errValidID
+	}
 	if up.OldPassword != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
+		err = errValidOldPassword
 	}
 	if up.NewPassword != "" {
-		err = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
+		err = errValidNewPassword
 	}
 	return
 }

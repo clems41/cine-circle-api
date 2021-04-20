@@ -4,9 +4,9 @@ import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/typedErrors"
+	"cine-circle/internal/utils"
 	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
 )
@@ -15,7 +15,7 @@ var _ Service = (*service)(nil)
 
 type Service interface {
 	GenerateTokenFromAuthenticationHeader(header string) (token string, err error)
-	CreateUser(creation userDom.Creation) (result userDom.Result, err error)
+	Create(creation userDom.Creation) (result userDom.Result, err error)
 	getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error)
 }
 
@@ -25,7 +25,6 @@ type service struct {
 }
 
 type Repository interface {
-	GetHashedPassword(username string) (hashedPassword string, err error)
 }
 
 func NewService(r Repository, userRepository userDom.Repository) Service {
@@ -41,12 +40,12 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 		return
 	}
 
-	hashedPassword, err := svc.r.GetHashedPassword(username)
+	hashedPassword, err := svc.userRepository.GetHashedPassword(username)
 	if err != nil {
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	err = utils.CompareHashAndPassword(hashedPassword, password)
 	if err != nil {
 		err = typedErrors.NewApiBadCredentialsErrorf(err.Error())
 		return
@@ -62,16 +61,16 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 	return jwtToken.SignedString([]byte(constant.TokenKey))
 }
 
-func (svc *service) CreateUser(creation userDom.Creation) (result userDom.Result, err error) {
+func (svc *service) Create(creation userDom.Creation) (result userDom.Result, err error) {
 	// Hash and salt password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creation.Password), constant.Cost)
+	hashedPassword, err := utils.HashPassword(creation.Password, constant.CostHashFunction)
 	if err != nil {
 		return
 	}
 	// Save hashed and salt password as user's password
 	creation.Password = string(hashedPassword)
 
-	return svc.userRepository.CreateUser(creation)
+	return svc.userRepository.Create(creation)
 }
 
 func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {

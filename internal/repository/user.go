@@ -13,7 +13,7 @@ type User struct {
 	Metadata
 	Username 		string 				`gorm:"uniqueIndex"`
 	DisplayName 	string
-	Email 			string 				`gorm:"index"`
+	Email 			string 				`gorm:"uniqueIndex"`
 	HashedPassword 	string
 }
 
@@ -31,7 +31,7 @@ func (r userRepository) Migrate() {
 
 }
 
-func (r userRepository) CreateUser(creation userDom.Creation) (result userDom.Result, err error) {
+func (r userRepository) Create(creation userDom.Creation) (result userDom.Result, err error) {
 	user := User{
 		Username:       strings.ToLower(creation.Username),
 		DisplayName:    creation.DisplayName,
@@ -55,7 +55,60 @@ func (r userRepository) CreateUser(creation userDom.Creation) (result userDom.Re
 	return
 }
 
-func (r *userRepository) GetUser(get userDom.Get) (result userDom.Result, err error) {
+func (r userRepository) Update(update userDom.Update) (result userDom.Result, err error) {
+	var user User
+	err = r.DB.
+		Take(&user, "id = ?", update.UserID).
+		Error
+	if err != nil {
+		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+	user.Email = update.Email
+	user.DisplayName = update.DisplayName
+
+	err = r.DB.
+		Save(&user).
+		Error
+	if err != nil {
+		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+
+	result = r.toResult(user)
+	return
+}
+
+func (r userRepository) UpdatePassword(updatePassword userDom.UpdatePassword) (result userDom.Result, err error) {
+	var user User
+	err = r.DB.
+		Take(&user, "id = ?", updatePassword.UserID).
+		Error
+	if err != nil {
+		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+	user.HashedPassword = updatePassword.NewHashedPassword
+
+	err = r.DB.
+		Save(&user).
+		Error
+	if err != nil {
+		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+
+	result = r.toResult(user)
+	return
+}
+
+func (r userRepository) Delete(delete userDom.Delete) (err error) {
+	err = r.DB.
+		Delete(&User{}, "id = ?", delete.UserID).
+		Error
+	if err != nil {
+		return typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+	return
+}
+
+func (r *userRepository) Get(get userDom.Get) (result userDom.Result, err error) {
 	var user User
 	if get.UserID != 0 {
 		err = r.DB.
@@ -73,11 +126,28 @@ func (r *userRepository) GetUser(get userDom.Get) (result userDom.Result, err er
 	if err != nil || user.GetID() == 0 {
 		return
 	}
-	result = userDom.Result{
+	result = r.toResult(user)
+	return
+}
+
+func (r userRepository) GetHashedPassword(username string) (hashedPassword string, err error) {
+	var user User
+	err = r.DB.
+		Select("hashed_password").
+		Find(&user, "username = ?", username).
+		Error
+	if err != nil {
+		return hashedPassword, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+	}
+	hashedPassword = user.HashedPassword
+	return
+}
+
+func (r* userRepository) toResult(user User) (result userDom.Result) {
+	return userDom.Result{
 		UserID:      user.GetID(),
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
 		Email:       user.Email,
 	}
-	return
 }

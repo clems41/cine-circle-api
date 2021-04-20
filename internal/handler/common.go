@@ -22,6 +22,11 @@ type handler interface {
 
 func AddWebService(container *restful.Container, handler handler) {
 	container.Add(handler.WebService())
+
+	logger.Sugar.Infof("Routes for : %s", handler.WebService().RootPath())
+	for _, route := range handler.WebService().Routes() {
+		logger.Sugar.Infof("%+v", route)
+	}
 }
 
 type commonHandler struct {
@@ -41,7 +46,7 @@ func (handler *commonHandler) WhoAmI(req *restful.Request) (user userDom.Result,
 	}
 	username := fmt.Sprintf("%v", claims["sub"])
 	get := userDom.Get{Username: username}
-	return handler.userService.GetUser(get)
+	return handler.userService.Get(get)
 }
 
 func handleHTTPError(res *restful.Response, err error) {
