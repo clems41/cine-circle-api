@@ -1,6 +1,10 @@
 package utils
 
-import "cine-circle/internal/domain"
+import (
+	"cine-circle/internal/domain"
+	"cine-circle/internal/typedErrors"
+	"strconv"
+)
 
 // ContainsID return true if value is in slice
 func ContainsID(slice []domain.IDType, value domain.IDType) bool {
@@ -10,4 +14,15 @@ func ContainsID(slice []domain.IDType, value domain.IDType) bool {
 		}
 	}
 	return false
+}
+
+//StrToID convert string to domain.IDType
+func StrToID(str string) (id domain.IDType, err error) {
+	integer, err := strconv.Atoi(str)
+	if err != nil {
+		err = typedErrors.NewApiBadRequestErrorf(err.Error())
+		return
+	}
+	id = domain.IDType(integer)
+	return
 }

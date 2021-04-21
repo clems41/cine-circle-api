@@ -40,7 +40,7 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 		return
 	}
 
-	hashedPassword, err := svc.userRepository.GetHashedPassword(username)
+	hashedPassword, err := svc.userRepository.GetHashedPassword(userDom.Get{Username: username})
 	if err != nil {
 		return
 	}

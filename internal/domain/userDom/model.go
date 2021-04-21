@@ -13,26 +13,26 @@ type Creation struct {
 }
 
 type Update struct {
-	UserID 			domain.IDType 	`json:"id"`
+	UserID 			domain.IDType 	`json:"-"`
 	DisplayName 	string 			`json:"displayName"`
 	Email 			string 			`json:"email"`
 }
 
 type Get struct {
-	UserID 			domain.IDType 	`json:"id"`
+	UserID 			domain.IDType 	`json:"-"`
 	Username 		string 			`json:"username"`
 	Email 			string 			`json:"email"`
 }
 
 type UpdatePassword struct {
-	UserID 				domain.IDType 	`json:"id"`
+	UserID 				domain.IDType 	`json:"-"`
 	OldPassword 		string			`json:"oldPassword"`
 	NewPassword 		string			`json:"newPassword"`
 	NewHashedPassword 	string			`json:"-"`
 }
 
 type Delete struct {
-	UserID 			domain.IDType 	`json:"id"`
+	UserID 			domain.IDType 	`json:"-"`
 }
 
 type Result struct {
@@ -53,16 +53,16 @@ var (
 )
 
 func (c Creation) Valid() (err error) {
-	if c.Password != "" {
+	if c.Password == "" {
 		err = errValidPassword
 	}
-	if c.Email != "" {
+	if c.Email == "" {
 		err = errValidEmail
 	}
-	if c.Username != "" {
+	if c.Username == "" {
 		err = errValidUsername
 	}
-	if c.DisplayName != "" {
+	if c.DisplayName == "" {
 		err = errValidDisplayName
 	}
 	return
@@ -72,10 +72,10 @@ func (u Update) Valid() (err error) {
 	if u.UserID == 0 {
 		err = errValidID
 	}
-	if u.Email != "" {
+	if u.Email == "" {
 		err = errValidEmail
 	}
-	if u.DisplayName != "" {
+	if u.DisplayName == "" {
 		err = errValidDisplayName
 	}
 	return
@@ -92,10 +92,10 @@ func (up UpdatePassword) Valid() (err error) {
 	if up.UserID == 0 {
 		err = errValidID
 	}
-	if up.OldPassword != "" {
+	if up.OldPassword == "" {
 		err = errValidOldPassword
 	}
-	if up.NewPassword != "" {
+	if up.NewPassword == "" {
 		err = errValidNewPassword
 	}
 	return

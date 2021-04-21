@@ -139,7 +139,7 @@ func NewCustomError(httpCode int, code string, err error) CustomError {
 // Repository errors
 
 func NewRepositoryQueryFailedErrorf(format string, args ...interface{}) CustomError {
-	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryQueryFailedCode, format, args...)
+	return NewCustomErrorf(http.StatusNotFound, errRepositoryQueryFailedCode, format, args...)
 }
 func NewRepositoryConnectionFailedErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryConnectionFailedCode, format, args...)

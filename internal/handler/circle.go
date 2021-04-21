@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"cine-circle/internal/domain"
 	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"github.com/emicklei/go-restful"
 	"net/http"
-	"strconv"
 )
 
 type circleHandler struct {
@@ -104,10 +102,9 @@ func (api circleHandler) Create(req *restful.Request, res *restful.Response) {
 }
 
 func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	circleId, err := strconv.Atoi(circleIdStr)
+	circleId, err := utils.StrToID(req.PathParameter("circleId"))
 	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		handleHTTPError(res, err)
 		return
 	}
 
@@ -130,7 +127,7 @@ func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
 		update.UsersID = append(update.UsersID, user.UserID)
 	}
 
-	update.CircleID = domain.IDType(circleId)
+	update.CircleID = circleId
 
 	circle, err := api.service.Update(update)
 	if err != nil {
@@ -142,14 +139,13 @@ func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
 }
 
 func (api circleHandler) Delete(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	circleId, err := strconv.Atoi(circleIdStr)
+	circleId, err := utils.StrToID(req.PathParameter("circleId"))
 	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		handleHTTPError(res, err)
 		return
 	}
 
-	deleteCircle := circleDom.Delete{CircleID: domain.IDType(circleId)}
+	deleteCircle := circleDom.Delete{CircleID: circleId}
 	err = api.service.Delete(deleteCircle)
 	if err != nil {
 		handleHTTPError(res, err)
@@ -160,14 +156,13 @@ func (api circleHandler) Delete(req *restful.Request, res *restful.Response) {
 }
 
 func (api circleHandler) Get(req *restful.Request, res *restful.Response) {
-	circleIdStr := req.PathParameter("circleId")
-	circleId, err := strconv.Atoi(circleIdStr)
+	circleId, err := utils.StrToID(req.PathParameter("circleId"))
 	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		handleHTTPError(res, err)
 		return
 	}
 
-	get := circleDom.Get{CircleID: domain.IDType(circleId)}
+	get := circleDom.Get{CircleID: circleId}
 	circle, err := api.service.Get(get)
 	if err != nil {
 		handleHTTPError(res, err)

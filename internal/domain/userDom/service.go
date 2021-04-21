@@ -26,7 +26,7 @@ type Repository interface {
 	UpdatePassword(updatePassword UpdatePassword) (result Result, err error)
 	Delete(delete Delete) (rr error)
 	Get(get Get) (result Result, err error)
-	GetHashedPassword(username string) (hashedPassword string, err error)
+	GetHashedPassword(get Get) (hashedPassword string, err error)
 }
 
 func NewService(r Repository) Service {
@@ -57,12 +57,7 @@ func (svc *service) UpdatePassword(updatePassword UpdatePassword) (result Result
 		return
 	}
 
-	user, err := svc.r.Get(Get{UserID: updatePassword.UserID})
-	if err != nil {
-		return
-	}
-
-	hashedPassword, err := svc.r.GetHashedPassword(user.Username)
+	hashedPassword, err := svc.r.GetHashedPassword(Get{UserID: updatePassword.UserID})
 	if err != nil {
 		return
 	}

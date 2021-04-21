@@ -2,7 +2,10 @@ package handler
 
 import (
 	"cine-circle/internal/domain/userDom"
+	"cine-circle/internal/typedErrors"
+	"cine-circle/internal/utils"
 	"github.com/emicklei/go-restful"
+	"net/http"
 )
 
 type userHandler struct {
@@ -19,25 +22,51 @@ func (api userHandler) WebService() *restful.WebService {
 	wsUser := &restful.WebService{}
 	wsUser.Path("/v1/users")
 
-/*	wsUser.Route(wsUser.PUT("/{userId}").
+	wsUser.Route(wsUser.PUT("/{userId}").
 		Doc("Update existing user").
-		Writes(model.User{}).
-		Returns(200, "OK", model.User{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
-		Returns(422, "Not processable, impossible to serialize json to User",
-			typedErrors.ErrApiUnprocessableEntity.CodeError()).
-		Filter(authenticateUser(true)).
-		To(UpdateUser))
+		Writes(userDom.Update{}).
+		Returns(200, "OK", userDom.Result{}).
+		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
+		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
+		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Filter(logRequest()).
+		Filter(authenticateUser()).
+		To(api.Update))
+
+	wsUser.Route(wsUser.PUT("/{userId}/password").
+		Doc("Update existing user's password").
+		Writes(userDom.UpdatePassword{}).
+		Returns(200, "OK", userDom.Result{}).
+		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
+		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
+		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Filter(logRequest()).
+		Filter(authenticateUser()).
+		To(api.UpdatePassword))
 
 	wsUser.Route(wsUser.DELETE("/{userId}").
 		Doc("Delete existing user").
 		Writes("").
 		Returns(200, "OK", "").
-		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
-		Filter(authenticateUser(true)).
-		To(DeleteUser))
+		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
+		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
+		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Filter(logRequest()).
+		Filter(authenticateUser()).
+		To(api.Delete))
 
-	wsUser.Route(wsUser.GET("/").
+	wsUser.Route(wsUser.GET("/{userId}").
+		Doc("Get existing user").
+		Writes("").
+		Returns(200, "OK", userDom.Result{}).
+		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
+		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
+		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Filter(logRequest()).
+		Filter(authenticateUser()).
+		To(api.Get))
+
+	/*	wsUser.Route(wsUser.GET("/").
 		Doc("Search for user(s)").
 		Param(wsUser.QueryParameter("username", "search user by username").DataType("string")).
 		Param(wsUser.QueryParameter("email", "search user by email").DataType("string")).
@@ -84,4 +113,86 @@ func (api userHandler) WebService() *restful.WebService {
 		To(GetMoviesByUser))*/
 
 	return wsUser
+}
+
+func (api userHandler) Update(req *restful.Request, res *restful.Response) {
+	userID, err := utils.StrToID(req.PathParameter("userId"))
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	var update userDom.Update
+	err = req.ReadEntity(&update)
+	if err != nil {
+		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		return
+	}
+
+	update.UserID = userID
+
+	user, err := api.service.Update(update)
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	res.WriteHeaderAndEntity(http.StatusOK, user)
+}
+
+func (api userHandler) UpdatePassword(req *restful.Request, res *restful.Response) {
+	userID, err := utils.StrToID(req.PathParameter("userId"))
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	var updatePassword userDom.UpdatePassword
+	err = req.ReadEntity(&updatePassword)
+	if err != nil {
+		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		return
+	}
+
+	updatePassword.UserID = userID
+
+	user, err := api.service.UpdatePassword(updatePassword)
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	res.WriteHeaderAndEntity(http.StatusOK, user)
+}
+
+func (api userHandler) Delete(req *restful.Request, res *restful.Response) {
+	userID, err := utils.StrToID(req.PathParameter("userId"))
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	err = api.service.Delete(userDom.Delete{UserID: userID})
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	res.WriteHeaderAndEntity(http.StatusOK, "")
+}
+
+func (api userHandler) Get(req *restful.Request, res *restful.Response) {
+	userID, err := utils.StrToID(req.PathParameter("userId"))
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	user, err := api.service.Get(userDom.Get{UserID: userID})
+	if err != nil {
+		handleHTTPError(res, err)
+		return
+	}
+
+	res.WriteHeaderAndEntity(http.StatusOK, user)
 }

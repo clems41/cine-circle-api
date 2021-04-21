@@ -103,12 +103,9 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
 	}
 
-	circle.Name = update.Name
-	circle.Description = update.Description
-	circle.Users = users
-
 	err = r.DB.
-		Save(&circle).
+		Model(&circle).
+		Updates(Circle{Name: update.Name, Description: update.Description, Users: users}).
 		Error
 	if err != nil {
 		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
@@ -120,12 +117,16 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 }
 
 func (r circleRepository) Delete(delete circleDom.Delete) (err error){
+	var circle Circle
 	err = r.DB.
-		Delete(&Circle{}, "id = ?", delete.CircleID).
+		Take(&circle, "id = ?", delete.CircleID).
 		Error
 	if err != nil {
 		return typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
 	}
+	err = r.DB.
+		Delete(&circle).
+		Error
 	return
 }
 

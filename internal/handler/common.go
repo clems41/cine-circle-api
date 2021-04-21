@@ -23,7 +23,11 @@ type handler interface {
 func AddWebService(container *restful.Container, handler handler) {
 	container.Add(handler.WebService())
 
-	logger.Sugar.Infof("Routes for : %s", handler.WebService().RootPath())
+	rootPath := handler.WebService().RootPath()
+	if rootPath == "" {
+		rootPath = "/"
+	}
+	logger.Sugar.Infof("Routes for : %s", rootPath)
 	for _, route := range handler.WebService().Routes() {
 		logger.Sugar.Infof("%+v", route)
 	}
@@ -116,7 +120,7 @@ func checkToken(req *restful.Request) (claims jwt.MapClaims, err error) {
 			return claims, typedErrors.NewApiBadCredentialsErrorf(err.Error())
 		}
 	}
-	if !tkn.Valid {
+	if tkn == nil || !tkn.Valid {
 		logger.Sugar.Debugf("Error while getting token : Token not valid")
 		return claims, typedErrors.ErrApiUserBadCredentials
 	}

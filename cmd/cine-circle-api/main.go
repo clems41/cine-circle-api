@@ -88,13 +88,14 @@ func run(cmd *cobra.Command, args []string) {
 	userService := userDom.NewService(repositories.User)
 	handler.CommonHandler = handler.NewCommonHandler(userService)
 
+	// Adding all new handlers here
+	handler.AddWebService(restful.DefaultContainer, handler.NewRootHandler())
+
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewAuthenticationHandler(authenticationDom.NewService(repositories.Authentication, repositories.User)))
 
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewCircleHandler(circleDom.NewService(repositories.Circle)))
-
-	handler.AddWebService(restful.DefaultContainer, handler.NewRootHandler())
 
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewMovieHandler(movieDom.NewService(repositories.Movie)))
