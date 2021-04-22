@@ -15,7 +15,7 @@ var _ Service = (*service)(nil)
 
 type Service interface {
 	GenerateTokenFromAuthenticationHeader(header string) (token string, err error)
-	Create(creation userDom.Creation) (result userDom.Result, err error)
+	CreateUser(creation userDom.Creation) (result userDom.Result, err error)
 	getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error)
 }
 
@@ -61,15 +61,7 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 	return jwtToken.SignedString([]byte(constant.TokenKey))
 }
 
-func (svc *service) Create(creation userDom.Creation) (result userDom.Result, err error) {
-	// Hash and salt password
-	hashedPassword, err := utils.HashPassword(creation.Password, constant.CostHashFunction)
-	if err != nil {
-		return
-	}
-	// Save hashed and salt password as user's password
-	creation.Password = string(hashedPassword)
-
+func (svc *service) CreateUser(creation userDom.Creation) (result userDom.Result, err error) {
 	return svc.userRepository.Create(creation)
 }
 

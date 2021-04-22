@@ -50,6 +50,7 @@ var (
 	errValidID = typedErrors.NewServiceMissingMandatoryFieldsErrorf("UserID is empty")
 	errValidOldPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
 	errValidNewPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
+	errValidGet = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to get user")
 )
 
 func (c Creation) Valid() (err error) {
@@ -84,6 +85,13 @@ func (u Update) Valid() (err error) {
 func (d Delete) Valid() (err error) {
 	if d.UserID == 0 {
 		err = errValidID
+	}
+	return
+}
+
+func (g Get) Valid() (err error) {
+	if g.UserID == 0 && g.Username == "" && g.Email == "" {
+		err = errValidGet
 	}
 	return
 }

@@ -40,6 +40,13 @@ func (svc *service) Create(creation Creation) (result Result, err error) {
 	if err != nil {
 		return
 	}
+	// Hash and salt password
+	hashedPassword, err := utils.HashAndSaltPassword(creation.Password, constant.CostHashFunction)
+	if err != nil {
+		return
+	}
+	// Save hashed and salt password as user's password
+	creation.Password = hashedPassword
 	return svc.r.Create(creation)
 }
 
@@ -67,7 +74,7 @@ func (svc *service) UpdatePassword(updatePassword UpdatePassword) (result Result
 		return result, typedErrors.NewApiBadRequestErrorf(err.Error())
 	}
 
-	updatePassword.NewHashedPassword, err = utils.HashPassword(updatePassword.NewPassword, constant.CostHashFunction)
+	updatePassword.NewHashedPassword, err = utils.HashAndSaltPassword(updatePassword.NewPassword, constant.CostHashFunction)
 	return svc.r.UpdatePassword(updatePassword)
 }
 
@@ -80,5 +87,9 @@ func (svc *service) Delete(delete Delete) (err error) {
 }
 
 func (svc *service) Get(get Get) (result Result, err error) {
+	err = get.Valid()
+	if err != nil {
+		return
+	}
 	return svc.r.Get(get)
 }

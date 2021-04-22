@@ -2,8 +2,8 @@ package typedErrors
 
 import (
 	"cine-circle/internal/logger"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -108,7 +108,7 @@ func (ce CustomError) HttpCode() int {
 }
 
 func (ce CustomError) Print() {
-	logger.Sugar.Errorf("Erorr occurs : %s", ce.Error())
+	logger.Sugar.Errorf("Erorr occurs : %s", errors.Unwrap(ce.err).Error())
 }
 
 func (ce CustomError) IsNotNil() bool {
@@ -120,9 +120,8 @@ func (ce CustomError) IsNotNil() bool {
 }
 
 func NewCustomErrorf(httpCode int, code string, format string, args ...interface{}) CustomError {
-	newErr := errors.New(fmt.Sprintf(format, args...))
 	return CustomError{
-		err:      fmt.Errorf("decompress %s: %w", newErr.Error(), newErr),
+		err:      errors.WithStack(fmt.Errorf(format, args...)),
 		httpCode: httpCode,
 		code: code,
 	}
@@ -130,7 +129,7 @@ func NewCustomErrorf(httpCode int, code string, format string, args ...interface
 
 func NewCustomError(httpCode int, code string, err error) CustomError {
 	return CustomError{
-		err:      err,
+		err:      errors.WithStack(err),
 		httpCode: httpCode,
 		code: code,
 	}

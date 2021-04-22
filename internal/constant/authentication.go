@@ -14,6 +14,11 @@ const (
 	TokenHeader = "Authorization"
 	IssToken = "huco-api"
 	AuthenticationHeaderName = "Authorization"
+	PasswordMinCharacter = 8
+	PasswordMaxCharacter = 20
+	PasswordAllowUpper = true
+	PasswordAllowNumber = true
+	PasswordAllowSpecial = true
 )
 
 var (

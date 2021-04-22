@@ -32,6 +32,10 @@ const (
 	EnvDetailedLogs = "DB_LOG"
 )
 
+var (
+	DatabaseName = utils.GetDefaultOrFromEnv(defaultDbName, EnvDbName)
+)
+
 type Database struct {
 	db *gorm.DB
 }
@@ -64,17 +68,20 @@ func (postgresConfig PostgresConfig) DataSourceName() string {
 
 
 
-func OpenConnection() (db *gorm.DB, err error) {
+func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 	pgConfig := PostgresConfig{
 		Host:            utils.GetDefaultOrFromEnv(defaultHost, EnvHost),
 		User:            utils.GetDefaultOrFromEnv(defaultUser, EnvUser),
 		Password:        utils.GetDefaultOrFromEnv(defaultPassword, EnvPassword),
 		Port:            utils.GetDefaultOrFromEnv(defaultPort, EnvPort),
-		DbName:          utils.GetDefaultOrFromEnv(defaultDbName, EnvDbName),
+		DbName:          DatabaseName,
 		Debug:           utils.GetDefaultOrFromEnv(defaultDebug, EnvDebug) == "true",
 		DetailedLogs:    utils.GetDefaultOrFromEnv(defaultDetailedLogs, EnvDetailedLogs) == "true",
 		ExtraConfigs: 	 "sslmode=disable TimeZone=Pacific/Noumea",
 		ApplicationName: "cine-circle-import",
+	}
+	if len(databaseName) > 0 {
+		pgConfig.DbName = databaseName[0]
 	}
 	gormCfg := gorm.Config{}
 	if pgConfig.DetailedLogs {
