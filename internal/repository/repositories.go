@@ -17,7 +17,6 @@ type Repository interface {
 type Repositories struct {
 	List []Repository
 
-	Authentication				*authenticationRepository
 	Circle						*circleRepository
 	Movie						*movieRepository
 	Recommendation				*recommendationRepository
@@ -37,9 +36,6 @@ func (rs Repositories) Migrate() {
 }
 
 func NewAllRepositories(DB *gorm.DB) (r Repositories) {
-
-	r.Authentication = NewAuthenticationRepository(DB)
-	r.List = append(r.List, r.Authentication)
 
 	r.Circle = NewCircleRepository(DB)
 	r.List = append(r.List, r.Circle)

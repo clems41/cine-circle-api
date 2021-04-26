@@ -20,7 +20,7 @@ func ContainsID(slice []domain.IDType, value domain.IDType) bool {
 func StrToID(str string) (id domain.IDType, err error) {
 	integer, err := strconv.Atoi(str)
 	if err != nil {
-		err = typedErrors.NewApiBadRequestErrorf(err.Error())
+		err = typedErrors.NewApiBadRequestError(err)
 		return
 	}
 	id = domain.IDType(integer)

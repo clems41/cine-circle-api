@@ -76,7 +76,7 @@ func (api circleHandler) Create(req *restful.Request, res *restful.Response) {
 	var creation circleDom.Creation
 	err := req.ReadEntity(&creation)
 	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
 		return
 	}
 
@@ -111,7 +111,7 @@ func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
 	var update circleDom.Update
 	err = req.ReadEntity(&update)
 	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestErrorf(err.Error()))
+		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
 		return
 	}
 

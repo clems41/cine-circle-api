@@ -3,6 +3,7 @@ package repository
 import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/domain/movieDom"
+	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -38,7 +39,10 @@ func NewMovieRepository(DB *gorm.DB) *movieRepository {
 }
 
 func (r movieRepository) Migrate() {
-	r.DB.AutoMigrate(&Movie{})
+	err := r.DB.AutoMigrate(&Movie{})
+	if err != nil {
+		logger.Sugar.Fatalf("Error occurs when migrating movieRepository : %s", err.Error())
+	}
 }
 
 func (r movieRepository) GetMovie(movieId string) (result movieDom.Result, err error) {
@@ -46,7 +50,7 @@ func (r movieRepository) GetMovie(movieId string) (result movieDom.Result, err e
 	response := r.DB.
 		Find(&movie, "imdb_id = ?", movieId)
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	if response.RowsAffected == 0 {
 		return result, typedErrors.ErrRepositoryResourceNotFound
@@ -59,12 +63,12 @@ func (r movieRepository) GetMovie(movieId string) (result movieDom.Result, err e
 func (r movieRepository) SaveMovie(movieView movieDom.OmdbView) (result movieDom.Result, err error) {
 	releasedTime, err := time.Parse(constant.ReleasedLayout, movieView.Released)
 	if err != nil {
-		return result, typedErrors.NewServiceGeneralErrorf(err.Error())
+		return result, typedErrors.NewServiceGeneralError(err)
 	}
 
 	runTime, err := strconv.Atoi(strings.Replace(movieView.Runtime, constant.RunTimeUnit, "", -1))
 	if err != nil {
-		return result, typedErrors.NewServiceGeneralErrorf(err.Error())
+		return result, typedErrors.NewServiceGeneralError(err)
 	}
 
 	genres := strings.Split(movieView.Genre, constant.StringArraySeparator)
@@ -92,7 +96,7 @@ func (r movieRepository) SaveMovie(movieView movieDom.OmdbView) (result movieDom
 		Error
 
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = r.movieToResult(movie)

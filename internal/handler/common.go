@@ -117,7 +117,7 @@ func checkToken(req *restful.Request) (claims jwt.MapClaims, err error) {
 	})
 	if err != nil {
 		if err == jwt.ErrSignatureInvalid {
-			return claims, typedErrors.NewApiBadCredentialsErrorf(err.Error())
+			return claims, typedErrors.NewApiBadCredentialsError(err)
 		}
 	}
 	if tkn == nil || !tkn.Valid {

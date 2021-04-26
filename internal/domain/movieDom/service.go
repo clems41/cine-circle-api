@@ -69,7 +69,7 @@ func (svc *service) getMovieFromExternal(movieId string) (result Result, err err
 	var externalMovie OmdbView
 	err = json.Unmarshal(resp, &externalMovie)
 	if err != nil {
-		return result, typedErrors.NewExternalReadBodyErrorf(err.Error())
+		return result, typedErrors.NewExternalReadBodyError(err)
 	}
 
 	// Check if Response from External API is correct
@@ -108,7 +108,7 @@ func (svc *service) searchMovieFromExternal(search Search) (searchResult SearchR
 	var externalSearch OmdbSearchView
 	err = json.Unmarshal(resp, &externalSearch)
 	if err != nil {
-		return searchResult, typedErrors.NewExternalReadBodyErrorf(err.Error())
+		return searchResult, typedErrors.NewExternalReadBodyError(err)
 	}
 
 	// Check if Response from External API is correct
@@ -139,7 +139,7 @@ func (svc *service) sendRequestToExternal(params []QueryParam) (response []byte,
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", constant.ExternalApiUrl, nil)
 	if err != nil {
-		return response, typedErrors.NewExternalSendRequestErrorf(err.Error())
+		return response, typedErrors.NewExternalSendRequestError(err)
 	}
 	q := req.URL.Query()
 	for _, param := range params  {
@@ -153,17 +153,17 @@ func (svc *service) sendRequestToExternal(params []QueryParam) (response []byte,
 	// Send request
 	res, err := client.Do(req)
 	if err != nil {
-		return response, typedErrors.NewExternalSendRequestErrorf(err.Error())
+		return response, typedErrors.NewExternalSendRequestError(err)
 	}
 
 	// Returning response for getting movie(s)
 	response, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return response, typedErrors.NewExternalReadBodyErrorf(err.Error())
+		return response, typedErrors.NewExternalReadBodyError(err)
 	}
 	err = res.Body.Close()
 	if err != nil {
-		return response, typedErrors.NewExternalReadBodyErrorf(err.Error())
+		return response, typedErrors.NewExternalReadBodyError(err)
 	}
 
 	// Print how long request took time

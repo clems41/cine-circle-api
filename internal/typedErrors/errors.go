@@ -140,6 +140,9 @@ func NewCustomError(httpCode int, code string, err error) CustomError {
 func NewRepositoryQueryFailedErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusNotFound, errRepositoryQueryFailedCode, format, args...)
 }
+func NewRepositoryQueryFailedError(err error) CustomError {
+	return NewCustomError(http.StatusNotFound, errRepositoryQueryFailedCode, err)
+}
 func NewRepositoryConnectionFailedErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusInternalServerError, errRepositoryConnectionFailedCode, format, args...)
 }
@@ -158,11 +161,17 @@ func NewRepositoryResourceNotFoundErrorf(format string, args ...interface{}) Cus
 func NewApiBadCredentialsErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusBadRequest, errApiUserBadCredentialsCode, format, args...)
 }
+func NewApiBadCredentialsError(err error) CustomError {
+	return NewCustomError(http.StatusBadRequest, errApiUserBadCredentialsCode, err)
+}
 func NewApiCredentialsNotFoundErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusBadRequest, errApiUserCredentialsNotFoundCode, format, args...)
 }
 func NewApiBadRequestErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusBadRequest, errApiBadRequestCode, format, args...)
+}
+func NewApiBadRequestError(err error) CustomError {
+	return NewCustomError(http.StatusBadRequest, errApiBadRequestCode, err)
 }
 func NewApiUnprocessableEntityErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusUnprocessableEntity, errApiUnprocessableEntityCode, format, args...)
@@ -182,12 +191,21 @@ func NewServiceFieldsShouldBeUniqueErrorf(format string, args ...interface{}) Cu
 func NewServiceGeneralErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusInternalServerError, errServiceGeneralErrorCode, format, args...)
 }
+func NewServiceGeneralError(err error) CustomError {
+	return NewCustomError(http.StatusInternalServerError, errServiceGeneralErrorCode, err)
+}
 
 // External errors
 
 func NewExternalSendRequestErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusInternalServerError, errExternalSendRequestCode, format, args...)
 }
+func NewExternalSendRequestError(err error) CustomError {
+	return NewCustomError(http.StatusInternalServerError, errExternalSendRequestCode, err)
+}
 func NewExternalReadBodyErrorf(format string, args ...interface{}) CustomError {
 	return NewCustomErrorf(http.StatusInternalServerError, errExternalReadBodyCode, format, args...)
+}
+func NewExternalReadBodyError(err error) CustomError {
+	return NewCustomError(http.StatusInternalServerError, errExternalReadBodyCode, err)
 }

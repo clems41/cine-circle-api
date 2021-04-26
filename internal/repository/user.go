@@ -2,6 +2,7 @@ package repository
 
 import (
 	"cine-circle/internal/domain/userDom"
+	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
 	"gorm.io/gorm"
 	"strings"
@@ -27,7 +28,10 @@ func NewUserRepository(DB *gorm.DB) *userRepository {
 
 func (r userRepository) Migrate() {
 
-	r.DB.AutoMigrate(&User{})
+	err := r.DB.AutoMigrate(&User{})
+	if err != nil {
+		logger.Sugar.Fatalf("Error occurs when migrating userRepository : %s", err.Error())
+	}
 
 }
 
@@ -43,7 +47,7 @@ func (r userRepository) Create(creation userDom.Creation) (result userDom.Result
 		Create(&user).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = userDom.Result{
@@ -61,7 +65,7 @@ func (r userRepository) Update(update userDom.Update) (result userDom.Result, er
 		Take(&user, "id = ?", update.UserID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	err = r.DB.
@@ -69,7 +73,7 @@ func (r userRepository) Update(update userDom.Update) (result userDom.Result, er
 		Updates(User{Email: update.Email, DisplayName: update.DisplayName}).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = r.toResult(user)
@@ -82,7 +86,7 @@ func (r userRepository) UpdatePassword(updatePassword userDom.UpdatePassword) (r
 		Take(&user, "id = ?", updatePassword.UserID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	user.HashedPassword = updatePassword.NewHashedPassword
 
@@ -91,7 +95,7 @@ func (r userRepository) UpdatePassword(updatePassword userDom.UpdatePassword) (r
 		Updates(User{HashedPassword: updatePassword.NewHashedPassword}).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = r.toResult(user)
@@ -104,7 +108,7 @@ func (r userRepository) Delete(delete userDom.Delete) (err error) {
 		Take(&user, "id = ?", delete.UserID).
 		Error
 	if err != nil {
-		return typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	err = r.DB.
 		Delete(&user).
@@ -119,6 +123,24 @@ func (r *userRepository) Get(get userDom.Get) (result userDom.Result, err error)
 	}
 
 	result = r.toResult(user)
+	return
+}
+
+func (r *userRepository) Search(filters userDom.Filters) (result []userDom.Result, err error) {
+	var users []User
+
+	keyword := "%" + filters.Keyword + "%"
+
+	err = r.DB.
+		Where("username ILIKE ?", keyword).
+		Or("email ILIKE ?", keyword).
+		Or("display_name ILIKE ?", keyword).
+		Find(&users).
+		Error
+
+	for _, user := range users {
+		result = append(result, r.toResult(user))
+	}
 	return
 }
 
@@ -159,7 +181,7 @@ func (r* userRepository) getUser(get userDom.Get) (user User, err error) {
 		Error
 
 	if err != nil {
-		err = typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		err = typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	return
 }

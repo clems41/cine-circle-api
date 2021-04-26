@@ -27,20 +27,23 @@ func NewCircleRepository(DB *gorm.DB) *circleRepository {
 
 func (r circleRepository) Migrate() {
 
-	r.DB.AutoMigrate(&Circle{})
+	err := r.DB.AutoMigrate(&Circle{})
+	if err != nil {
+		logger.Sugar.Fatalf("Error occurs when migrating circleRepository : %s", err.Error())
+	}
 
-	err := r.DB.
+	err = r.DB.
 		Exec("CREATE INDEX IF NOT EXISTS circle_user_circle_idx ON circle_user (circle)").
 		Error
 	if err != nil {
-		logger.Sugar.Errorf("Error while creating index : %s", err.Error())
+		logger.Sugar.Fatalf("Error while creating index : %s", err.Error())
 	}
 
 	err = r.DB.
 		Exec("CREATE INDEX IF NOT EXISTS circle_user_user_idx ON circle_user (user)").
 		Error
 	if err != nil {
-		logger.Sugar.Errorf("Error while creating index : %s", err.Error())
+		logger.Sugar.Fatalf("Error while creating index : %s", err.Error())
 	}
 
 }
@@ -56,7 +59,7 @@ func (r circleRepository) Create(creation circleDom.Creation) (result circleDom.
 		Find(&users, "id IN (?)", creation.UsersID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	if len(users) != len(creation.UsersID) {
 		return result, typedErrors.NewRepositoryResourceNotFoundErrorf("Not all users has been found, got only %d", len(users))
@@ -67,7 +70,7 @@ func (r circleRepository) Create(creation circleDom.Creation) (result circleDom.
 		Create(&circle).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = r.toResult(circle)
@@ -80,7 +83,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		Take(&circle, "id = ?", update.CircleID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	var users []User
@@ -88,7 +91,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		Find(&users, "id IN (?)", update.UsersID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	if len(users) != len(update.UsersID) {
 		return result, typedErrors.NewRepositoryResourceNotFoundErrorf("Not all users has been found, got only %d", len(users))
@@ -100,7 +103,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		Association("Users").
 		Clear()
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	err = r.DB.
@@ -108,7 +111,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		Updates(Circle{Name: update.Name, Description: update.Description, Users: users}).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
 	result = r.toResult(circle)
@@ -122,7 +125,7 @@ func (r circleRepository) Delete(delete circleDom.Delete) (err error){
 		Take(&circle, "id = ?", delete.CircleID).
 		Error
 	if err != nil {
-		return typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	err = r.DB.
 		Delete(&circle).
@@ -137,7 +140,7 @@ func (r circleRepository) Get(get circleDom.Get) (result circleDom.Result,err er
 		Take(&circle, "id = ?", get.CircleID).
 		Error
 	if err != nil {
-		return result, typedErrors.NewRepositoryQueryFailedErrorf(err.Error())
+		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 	result = r.toResult(circle)
 	return

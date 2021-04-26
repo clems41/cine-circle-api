@@ -1,7 +1,6 @@
 package test
 
 import (
-	"cine-circle/internal/constant"
 	"cine-circle/internal/domain"
 	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/repository"
@@ -23,8 +22,7 @@ func TestUser_Create(t *testing.T) {
 	// Fields for creation
 	username := fake.UserName()
 	displayName := fake.FullName()
-	password := fake.Password(constant.PasswordMinCharacter, constant.PasswordMaxCharacter, constant.PasswordAllowUpper,
-		constant.PasswordAllowNumber, constant.PasswordAllowSpecial)
+	password := getFakePassword()
 	email := fake.EmailAddress()
 
 	// Expected Result when creation is ok
@@ -174,10 +172,8 @@ func TestUser_UpdatePassword(t *testing.T) {
 	sampler := newSampler(t, db, false)
 
 	// New fields to update user with
-	oldPassword := fake.Password(constant.PasswordMinCharacter, constant.PasswordMaxCharacter, constant.PasswordAllowUpper,
-		constant.PasswordAllowNumber, constant.PasswordAllowSpecial)
-	newPassword := fake.Password(constant.PasswordMinCharacter, constant.PasswordMaxCharacter, constant.PasswordAllowUpper,
-		constant.PasswordAllowNumber, constant.PasswordAllowSpecial)
+	oldPassword := getFakePassword()
+	newPassword := getFakePassword()
 
 	// Add existing user to database
 	userSample := sampler.getUserSampleWithSpecificPassword(oldPassword)
@@ -398,3 +394,5 @@ func TestUser_Get(t *testing.T) {
 	require.NoError(t, err, "Should not return error but got %v", err)
 	require.Equal(t, expectedResult, result)
 }
+
+// TODO add tests for searching users

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"cine-circle/internal/domain/authenticationDom"
 	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/domain/movieDom"
 	"cine-circle/internal/domain/recommendationDom"
@@ -39,8 +38,8 @@ func main() {
 	// include standard flags
 	apiCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
 
-	flag := apiCmd.Flags()
-	flag.StringVar(&bind, "bind", ":8080", "HTTP bind specification")
+	flags := apiCmd.Flags()
+	flags.StringVar(&bind, "bind", ":8080", "HTTP bind specification")
 
 	if err := apiCmd.Execute(); err != nil {
 		logger.Sugar.Fatal(err)
@@ -90,9 +89,6 @@ func run(cmd *cobra.Command, args []string) {
 
 	// Adding all new handlers here
 	handler.AddWebService(restful.DefaultContainer, handler.NewRootHandler())
-
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewAuthenticationHandler(authenticationDom.NewService(repositories.Authentication, repositories.User)))
 
 	handler.AddWebService(restful.DefaultContainer,
 		handler.NewCircleHandler(circleDom.NewService(repositories.Circle)))
