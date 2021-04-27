@@ -31,13 +31,21 @@ func newSampler(t *testing.T, DB *gorm.DB, populateDatabase bool) (sampler Sampl
 // populateDatabase inserts some random resources into database
 func (sampler *Sampler) populateDatabase() {
 	// populateDatabase with some users
-
+	sampler.getUsersSample(NumberOfUsersToPopulateDatabase)
 }
 
 func (sampler *Sampler) getUserSample() (user *repository.User) {
 	// HashAndSalt password for user
 	password := getFakePassword()
 	return sampler.getUserSampleWithSpecificPassword(password)
+}
+
+func (sampler *Sampler) getUsersSample(numberOfUsers int) (users []repository.User) {
+	// HashAndSalt password for user
+	for i := 0; i < numberOfUsers; i++ {
+		users = append(users, *sampler.getUserSample())
+	}
+	return
 }
 
 func (sampler *Sampler) getUserSampleWithSpecificPassword(password string) (user *repository.User) {

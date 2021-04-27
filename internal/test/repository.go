@@ -25,6 +25,14 @@ func OpenDatabase(t *testing.T) (DB *gorm.DB, closeFunction func()) {
 	testingDatabaseName := fmt.Sprintf("%s%d", TestingDatabaseNamePrefix, DatabaseIndexName)
 	DatabaseIndexName++
 
+	// Deleting testing database if already exists before creating new one from template
+	err = realDB.
+		Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testingDatabaseName)).
+		Error
+	if err != nil {
+		logger.Sugar.Fatalf(err.Error())
+	}
+
 	err = realDB.
 		Exec(fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s", testingDatabaseName, TemplateDatabaseName)).
 		Error

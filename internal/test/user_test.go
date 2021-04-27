@@ -395,4 +395,102 @@ func TestUser_Get(t *testing.T) {
 	require.Equal(t, expectedResult, result)
 }
 
-// TODO add tests for searching users
+func TestUser_Search(t *testing.T) {
+	db, clean := OpenDatabase(t)
+	defer clean()
+
+	userRepository := repository.NewUserRepository(db)
+	userService := userDom.NewService(userRepository)
+
+	// Variables used for searching on username
+	commonUsernamePart := fake.UserName()[:3]
+	matchingUsername1 := fake.UserName() + commonUsernamePart + fake.UserName()
+	matchingUsername2 := commonUsernamePart + fake.UserName()
+	matchingUsername3 := fake.UserName() + commonUsernamePart
+
+	// Variables used for searching on email
+	commonEmailPart := fake.EmailAddress()[2:6]
+	matchingEmail1 := fake.EmailAddress() + commonEmailPart + fake.EmailAddress()
+	matchingEmail2 := commonEmailPart + fake.EmailAddress()
+	matchingEmail3 := fake.EmailAddress() + commonEmailPart
+
+	// Variables used for searching on displayName
+	commonDisplayNamePart := fake.FullName()[3:9]
+	matchingDisplayName1 := fake.FullName() + commonDisplayNamePart + fake.FullName()
+	matchingDisplayName2 := commonDisplayNamePart + fake.FullName()
+	matchingDisplayName3 := fake.FullName() + commonDisplayNamePart
+
+	// Create some users using matching and not matching fields
+	users := []repository.User {
+		{
+			Username:       matchingUsername2,
+			DisplayName:    matchingDisplayName3,
+			Email:          fake.EmailAddress(),
+		},
+		{
+			Username:       matchingUsername1,
+			DisplayName:    fake.FullName(),
+			Email:          matchingEmail3,
+		},
+		{
+			Username:       fake.UserName(),
+			DisplayName:    matchingDisplayName1,
+			Email:          matchingEmail1,
+		},
+		{
+			Username:       matchingUsername3,
+			DisplayName:    matchingDisplayName2,
+			Email:          matchingEmail2,
+		},
+		{
+			Username:       fake.UserName(),
+			DisplayName:    fake.FullName(),
+			Email:          fake.EmailAddress(),
+		},
+	}
+	// Save users into database
+	err := db.Create(&users).Error
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// Check with wrong length of keyword (<3) : should return error
+	Filters := userDom.Filters{
+		Keyword: "a",
+	}
+	result, err := userService.Search(Filters)
+	require.Error(t, err, "Should return error because keyword is too small")
+	require.Len(t, result, 0)
+
+	// Check with keyword matching nothing : should return not error and length of 0
+	Filters = userDom.Filters{
+		Keyword: fake.UserName(),
+	}
+	result, err = userService.Search(Filters)
+	require.NoError(t, err, "Should return not error")
+	require.Len(t, result, 0)
+
+	// Check with keyword matching username : should return not error and length of 3
+	Filters = userDom.Filters{
+		Keyword: commonUsernamePart,
+	}
+	result, err = userService.Search(Filters)
+	require.NoError(t, err, "Should return not error")
+	require.Len(t, result, 3)
+
+	// Check with keyword matching email : should return not error and length of 3
+	Filters = userDom.Filters{
+		Keyword: commonEmailPart,
+	}
+	result, err = userService.Search(Filters)
+	require.NoError(t, err, "Should return not error")
+	require.Len(t, result, 3)
+
+	// Check with keyword matching displayName : should return not error and length of 3
+	Filters = userDom.Filters{
+		Keyword: commonDisplayNamePart,
+	}
+	result, err = userService.Search(Filters)
+	require.NoError(t, err, "Should return not error")
+	require.Len(t, result, 3)
+}
