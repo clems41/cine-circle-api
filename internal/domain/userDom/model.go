@@ -20,8 +20,8 @@ type Update struct {
 
 type Get struct {
 	UserID   domain.IDType `json:"-"`
-	Username string        `json:"username"`
-	Email    string        `json:"email"`
+	Username string        `json:"-"`
+	Email    string        `json:"-"`
 }
 
 type UpdatePassword struct {
@@ -39,7 +39,6 @@ type Result struct {
 	UserID      domain.IDType `json:"id"`
 	Username    string        `json:"username"`
 	DisplayName string        `json:"displayName"`
-	Email       string        `json:"email"`
 }
 
 type Filters struct {
@@ -55,6 +54,7 @@ var (
 	errValidOldPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
 	errValidNewPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
 	errValidGet         = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to get user")
+	errValidUpdate      = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to update user")
 	errValidKeyword     = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least 3 chars for searching for users")
 )
 
@@ -78,11 +78,8 @@ func (u Update) Valid() (err error) {
 	if u.UserID == 0 {
 		err = errValidID
 	}
-	if u.Email == "" {
-		err = errValidEmail
-	}
-	if u.DisplayName == "" {
-		err = errValidDisplayName
+	if u.Email == "" && u.DisplayName == "" {
+		err = errValidUpdate
 	}
 	return
 }

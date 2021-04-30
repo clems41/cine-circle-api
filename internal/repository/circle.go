@@ -33,14 +33,14 @@ func (r circleRepository) Migrate() {
 	}
 
 	err = r.DB.
-		Exec("CREATE INDEX IF NOT EXISTS circle_user_circle_idx ON circle_user (circle)").
+		Exec("CREATE INDEX IF NOT EXISTS idx_circle_user_circle ON circle_user (circle_id)").
 		Error
 	if err != nil {
 		logger.Sugar.Fatalf("Error while creating index : %s", err.Error())
 	}
 
 	err = r.DB.
-		Exec("CREATE INDEX IF NOT EXISTS circle_user_user_idx ON circle_user (user)").
+		Exec("CREATE INDEX IF NOT EXISTS idx_circle_user_user ON circle_user (user_id)").
 		Error
 	if err != nil {
 		logger.Sugar.Fatalf("Error while creating index : %s", err.Error())
@@ -159,7 +159,6 @@ func (r circleRepository) toResult(circle Circle) (result circleDom.Result){
 			UserID:      user.GetID(),
 			Username:    user.Username,
 			DisplayName: user.DisplayName,
-			Email:       user.Email,
 		})
 	}
 	return

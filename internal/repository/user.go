@@ -33,6 +33,11 @@ func (r userRepository) Migrate() {
 		logger.Sugar.Fatalf("Error occurs when migrating userRepository : %s", err.Error())
 	}
 
+	err = r.DB.Exec("CREATE INDEX IF NOT EXISTS idx_users_username_display_name ON users USING GIST ((username || display_name) gist_trgm_ops)").Error
+	if err != nil {
+		logger.Sugar.Fatalf("Error occurs when creating index : %s", err.Error())
+	}
+
 }
 
 func (r userRepository) Create(creation userDom.Creation) (result userDom.Result, err error) {
@@ -54,7 +59,6 @@ func (r userRepository) Create(creation userDom.Creation) (result userDom.Result
 		UserID:      user.GetID(),
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
-		Email:       user.Email,
 	}
 	return
 }
@@ -132,9 +136,7 @@ func (r *userRepository) Search(filters userDom.Filters) (result []userDom.Resul
 	keyword := "%" + filters.Keyword + "%"
 
 	err = r.DB.
-		Where("username ILIKE ?", keyword).
-		Or("email ILIKE ?", keyword).
-		Or("display_name ILIKE ?", keyword).
+		Where("concat(username || display_name) ILIKE ?", keyword).
 		Find(&users).
 		Error
 
@@ -159,7 +161,6 @@ func (r* userRepository) toResult(user User) (result userDom.Result) {
 		UserID:      user.GetID(),
 		Username:    user.Username,
 		DisplayName: user.DisplayName,
-		Email:       user.Email,
 	}
 }
 

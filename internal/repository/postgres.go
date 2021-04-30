@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"fmt"
@@ -90,7 +91,7 @@ func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 			gormLogger.Config{
 				SlowThreshold: time.Second,   // Slow SQL threshold
 				LogLevel:      gormLogger.Silent, // Log level
-				Colorful:      false,         // Disable color
+				Colorful:      true,         // Disable color
 			},
 		)
 		gormCfg.Logger = newLogger
@@ -98,6 +99,20 @@ func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 	db, err = gorm.Open(postgres.Open(pgConfig.DataSourceName()), &gormCfg)
 	if err != nil {
 		return
+	}
+
+	extensions := []string{
+		"CREATE EXTENSION IF NOT EXISTS unaccent",
+		"CREATE EXTENSION IF NOT EXISTS fuzzystrmatch",
+		"CREATE EXTENSION IF NOT EXISTS pg_trgm",
+		"CREATE EXTENSION IF NOT EXISTS hstore",
+	}
+
+	for _, extension := range extensions {
+		if err = db.Exec(extension).Error; err != nil {
+			logger.Sugar.Errorf("Impossible to create extension '%s': %v", extension, err)
+			return
+		}
 	}
 
 	if db == nil {

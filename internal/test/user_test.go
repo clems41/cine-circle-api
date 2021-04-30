@@ -29,7 +29,6 @@ func TestUser_Create(t *testing.T) {
 	expectedResult := userDom.Result{
 		Username:    strings.ToLower(username),
 		DisplayName: displayName,
-		Email:       email,
 	}
 
 	// test creation with missing mandatory field : Username
@@ -117,7 +116,6 @@ func TestUser_Update(t *testing.T) {
 		UserID:      userSample.GetID(),
 		Username:    userSample.Username,
 		DisplayName: displayName,
-		Email:       email,
 	}
 
 	// test update with missing mandatory field : UserID
@@ -129,28 +127,19 @@ func TestUser_Update(t *testing.T) {
 	result, err := userService.Update(update)
 	require.Error(t, err, "Should return error but got nil")
 
-	// test update with missing mandatory field : DisplayName
+	// test update with missing mandatory field : DisplayName and Email
 	update = userDom.Update{
 		UserID:      userSample.GetID(),
 		DisplayName: "",
-		Email:       email,
-	}
-	result, err = userService.Update(update)
-	require.Error(t, err, "Should return error but got nil")
-
-	// test update with missing mandatory field : Email
-	update = userDom.Update{
-		UserID:      userSample.GetID(),
-		DisplayName: displayName,
 		Email:       "",
 	}
 	result, err = userService.Update(update)
 	require.Error(t, err, "Should return error but got nil")
 
-	// test update with all correct fields
+	// test update with only email
 	update = userDom.Update{
 		UserID:      userSample.GetID(),
-		DisplayName: displayName,
+		DisplayName: "",
 		Email:       email,
 	}
 
@@ -158,7 +147,31 @@ func TestUser_Update(t *testing.T) {
 	result, err = userService.Update(update)
 	require.NoError(t, err, "Should not return error but got %v", err)
 
-	// check if result is like expected
+	// Expected Result when update is ok
+	expectedResult = userDom.Result{
+		UserID:      userSample.GetID(),
+		Username:    userSample.Username,
+		DisplayName: userSample.DisplayName,
+	}
+	require.Equal(t, expectedResult, result)
+
+	// test update with only displayName
+	update = userDom.Update{
+		UserID:      userSample.GetID(),
+		DisplayName: displayName,
+		Email:       "",
+	}
+
+	// check if return no err
+	result, err = userService.Update(update)
+	require.NoError(t, err, "Should not return error but got %v", err)
+
+	// Expected Result when update is ok
+	expectedResult = userDom.Result{
+		UserID:      userSample.GetID(),
+		Username:    userSample.Username,
+		DisplayName: displayName,
+	}
 	require.Equal(t, expectedResult, result)
 }
 
@@ -183,7 +196,6 @@ func TestUser_UpdatePassword(t *testing.T) {
 		UserID:      userSample.GetID(),
 		Username:    userSample.Username,
 		DisplayName: userSample.DisplayName,
-		Email:       userSample.Email,
 	}
 
 	// test updatePassword with missing mandatory field : UserID
@@ -262,26 +274,26 @@ func TestUser_Delete(t *testing.T) {
 	require.NoError(t, err, "Should not return error but got %v", err)
 
 	// test update with missing mandatory field : UserID
-	delete := userDom.Delete{
+	deleteForm := userDom.Delete{
 		UserID:      0,
 	}
-	err = userService.Delete(delete)
+	err = userService.Delete(deleteForm)
 	require.Error(t, err, "Should return error but got nil")
 
 	// test update with wrong mandatory field : UserID
-	delete = userDom.Delete{
+	deleteForm = userDom.Delete{
 		UserID:      domain.IDType(99999999999999),
 	}
-	err = userService.Delete(delete)
+	err = userService.Delete(deleteForm)
 	require.Error(t, err, "Should return error but got nil")
 
 	// test update with all correct fields
-	delete = userDom.Delete{
+	deleteForm = userDom.Delete{
 		UserID:      userSample.GetID(),
 	}
 
 	// check if return no err
-	err = userService.Delete(delete)
+	err = userService.Delete(deleteForm)
 	require.NoError(t, err, "Should not return error but got %v", err)
 	_, err = userService.Get(userDom.Get{UserID: userSample.GetID()})
 	require.Error(t, err, "Should return error because record must be deleted but got nil", err)
@@ -304,7 +316,6 @@ func TestUser_Get(t *testing.T) {
 		UserID:      userSample.GetID(),
 		Username:    userSample.Username,
 		DisplayName: userSample.DisplayName,
-		Email:       userSample.Email,
 	}
 
 	// test update with all missing mandatory fields
@@ -408,12 +419,6 @@ func TestUser_Search(t *testing.T) {
 	matchingUsername2 := commonUsernamePart + fake.UserName()
 	matchingUsername3 := fake.UserName() + commonUsernamePart
 
-	// Variables used for searching on email
-	commonEmailPart := fake.EmailAddress()[2:6]
-	matchingEmail1 := fake.EmailAddress() + commonEmailPart + fake.EmailAddress()
-	matchingEmail2 := commonEmailPart + fake.EmailAddress()
-	matchingEmail3 := fake.EmailAddress() + commonEmailPart
-
 	// Variables used for searching on displayName
 	commonDisplayNamePart := fake.FullName()[3:9]
 	matchingDisplayName1 := fake.FullName() + commonDisplayNamePart + fake.FullName()
@@ -430,17 +435,17 @@ func TestUser_Search(t *testing.T) {
 		{
 			Username:       matchingUsername1,
 			DisplayName:    fake.FullName(),
-			Email:          matchingEmail3,
+			Email:          fake.EmailAddress(),
 		},
 		{
 			Username:       fake.UserName(),
 			DisplayName:    matchingDisplayName1,
-			Email:          matchingEmail1,
+			Email:          fake.EmailAddress(),
 		},
 		{
 			Username:       matchingUsername3,
 			DisplayName:    matchingDisplayName2,
-			Email:          matchingEmail2,
+			Email:          fake.EmailAddress(),
 		},
 		{
 			Username:       fake.UserName(),
@@ -470,17 +475,17 @@ func TestUser_Search(t *testing.T) {
 	require.NoError(t, err, "Should return not error")
 	require.Len(t, result, 0)
 
-	// Check with keyword matching username : should return not error and length of 3
+	// Check that search on email is not working : should return not error and length of 0
 	Filters = userDom.Filters{
-		Keyword: commonUsernamePart,
+		Keyword: users[2].Email,
 	}
 	result, err = userService.Search(Filters)
 	require.NoError(t, err, "Should return not error")
-	require.Len(t, result, 3)
+	require.Len(t, result, 0)
 
-	// Check with keyword matching email : should return not error and length of 3
+	// Check with keyword matching username : should return not error and length of 3
 	Filters = userDom.Filters{
-		Keyword: commonEmailPart,
+		Keyword: commonUsernamePart,
 	}
 	result, err = userService.Search(Filters)
 	require.NoError(t, err, "Should return not error")
