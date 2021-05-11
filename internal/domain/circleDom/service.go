@@ -1,6 +1,6 @@
 package circleDom
 
-var _ Service = (*service)(nil)
+/*var _ Service = (*service)(nil)
 
 type Service interface {
 	Create(creation Creation) (result Result, err error)
@@ -56,4 +56,4 @@ func (svc *service) Get(get Get) (result Result, err error) {
 		return
 	}
 	return svc.r.Get(get)
-}
+}*/

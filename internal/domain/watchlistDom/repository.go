@@ -1,11 +1,10 @@
-package repository
+package watchlistDom
 
 import (
-	"cine-circle/internal/domain/watchlistDom"
 	"gorm.io/gorm"
 )
 
-var _ watchlistDom.Repository = (*watchlistRepository)(nil)
+var _ Repository = (*watchlistRepository)(nil)
 
 type watchlistRepository struct {
 	DB *gorm.DB

@@ -2,20 +2,22 @@ package userDom
 
 import (
 	"cine-circle/internal/domain"
-	"cine-circle/internal/typedErrors"
 )
 
-type Creation struct {
-	Username    string `json:"username"`
+type CommonFields struct {
 	DisplayName string `json:"displayName"`
-	Password    string `json:"password"`
 	Email       string `json:"email"`
 }
 
+type Creation struct {
+	CommonFields
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Update struct {
-	UserID      domain.IDType `json:"-"`
-	DisplayName string        `json:"displayName"`
-	Email       string        `json:"email"`
+	UserID domain.IDType `json:"-"`
+	CommonFields
 }
 
 type Get struct {
@@ -25,63 +27,57 @@ type Get struct {
 }
 
 type UpdatePassword struct {
-	UserID            domain.IDType `json:"-"`
-	OldPassword       string        `json:"oldPassword"`
-	NewPassword       string        `json:"newPassword"`
-	NewHashedPassword string        `json:"-"`
+	UserID      domain.IDType `json:"-"`
+	OldPassword string        `json:"oldPassword"`
+	NewPassword string        `json:"newPassword"`
 }
 
 type Delete struct {
 	UserID domain.IDType `json:"-"`
 }
 
-type Result struct {
+type View struct {
 	UserID      domain.IDType `json:"id"`
 	Username    string        `json:"username"`
 	DisplayName string        `json:"displayName"`
+}
+
+type ViewMe struct {
+	UserID      domain.IDType `json:"id"`
+	Username    string        `json:"username"`
+	DisplayName string        `json:"displayName"`
+	Email       string        `json:"email"`
 }
 
 type Filters struct {
 	Keyword string
 }
 
-var (
-	errValidPassword    = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Password is empty")
-	errValidEmail       = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Email is empty")
-	errValidUsername    = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Username is empty")
-	errValidDisplayName = typedErrors.NewServiceMissingMandatoryFieldsErrorf("DisplayName is empty")
-	errValidID          = typedErrors.NewServiceMissingMandatoryFieldsErrorf("UserID is empty")
-	errValidOldPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
-	errValidNewPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
-	errValidGet         = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to get user")
-	errValidUpdate      = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to update user")
-	errValidKeyword     = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least 3 chars for searching for users")
-)
+func (c CommonFields) Valid() (err error) {
+	if c.Email == "" {
+		return errValidEmail
+	}
+	if c.DisplayName == "" {
+		return errValidDisplayName
+	}
+	return nil
+}
 
 func (c Creation) Valid() (err error) {
 	if c.Password == "" {
-		err = errValidPassword
-	}
-	if c.Email == "" {
-		err = errValidEmail
+		return errValidPassword
 	}
 	if c.Username == "" {
-		err = errValidUsername
+		return errValidUsername
 	}
-	if c.DisplayName == "" {
-		err = errValidDisplayName
-	}
-	return
+	return c.CommonFields.Valid()
 }
 
 func (u Update) Valid() (err error) {
 	if u.UserID == 0 {
-		err = errValidID
+		return errValidID
 	}
-	if u.Email == "" && u.DisplayName == "" {
-		err = errValidUpdate
-	}
-	return
+	return u.CommonFields.Valid()
 }
 
 func (d Delete) Valid() (err error) {

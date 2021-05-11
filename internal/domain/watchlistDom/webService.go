@@ -1,15 +1,14 @@
-package handler
+package watchlistDom
 
 import (
-	"cine-circle/internal/domain/watchlistDom"
 	"github.com/emicklei/go-restful"
 )
 
 type watchlistHandler struct {
-	service watchlistDom.Service
+	service Service
 }
 
-func NewWatchlistHandler(svc watchlistDom.Service) *watchlistHandler {
+func NewWatchlistHandler(svc Service) *watchlistHandler {
 	return &watchlistHandler{
 		service:    svc,
 	}

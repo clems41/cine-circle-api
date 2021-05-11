@@ -1,21 +1,6 @@
-package repository
+package circleDom
 
-import (
-	"cine-circle/internal/domain/circleDom"
-	"cine-circle/internal/domain/userDom"
-	"cine-circle/internal/logger"
-	"cine-circle/internal/typedErrors"
-	"gorm.io/gorm"
-)
-
-var _ circleDom.Repository = (*circleRepository)(nil)
-
-type Circle struct {
-	Metadata
-	Name 			string
-	Description 	string
-	Users 			[]User 		`gorm:"many2many:circle_user;"`
-}
+/*var _ Repository = (*circleRepository)(nil)
 
 type circleRepository struct {
 	DB *gorm.DB
@@ -48,13 +33,13 @@ func (r circleRepository) Migrate() {
 
 }
 
-func (r circleRepository) Create(creation circleDom.Creation) (result circleDom.Result, err error) {
+func (r circleRepository) Create(creation Creation) (result Result, err error) {
 	circle := Circle{
 		Name:        creation.Name,
 		Description: creation.Description,
 	}
 
-	var users []User
+	var users []userDom.User
 	err = r.DB.
 		Find(&users, "id IN (?)", creation.UsersID).
 		Error
@@ -77,7 +62,7 @@ func (r circleRepository) Create(creation circleDom.Creation) (result circleDom.
 	return
 }
 
-func (r circleRepository) Update(update circleDom.Update) (result circleDom.Result, err error){
+func (r circleRepository) Update(update Update) (result Result, err error){
 	var circle Circle
 	err = r.DB.
 		Take(&circle, "id = ?", update.CircleID).
@@ -86,7 +71,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 		return result, typedErrors.NewRepositoryQueryFailedError(err)
 	}
 
-	var users []User
+	var users []userDom.User
 	err = r.DB.
 		Find(&users, "id IN (?)", update.UsersID).
 		Error
@@ -119,7 +104,7 @@ func (r circleRepository) Update(update circleDom.Update) (result circleDom.Resu
 
 }
 
-func (r circleRepository) Delete(delete circleDom.Delete) (err error){
+func (r circleRepository) Delete(delete Delete) (err error){
 	var circle Circle
 	err = r.DB.
 		Take(&circle, "id = ?", delete.CircleID).
@@ -133,7 +118,7 @@ func (r circleRepository) Delete(delete circleDom.Delete) (err error){
 	return
 }
 
-func (r circleRepository) Get(get circleDom.Get) (result circleDom.Result,err error){
+func (r circleRepository) Get(get Get) (result Result,err error){
 	var circle Circle
 	err = r.DB.
 		Preload("Users").
@@ -146,8 +131,8 @@ func (r circleRepository) Get(get circleDom.Get) (result circleDom.Result,err er
 	return
 }
 
-func (r circleRepository) toResult(circle Circle) (result circleDom.Result){
-	result = circleDom.Result{
+func (r circleRepository) toResult(circle Circle) (result Result){
+	result = Result{
 		CircleID:    circle.GetID(),
 		Name:        circle.Name,
 		Description: circle.Description,
@@ -162,4 +147,4 @@ func (r circleRepository) toResult(circle Circle) (result circleDom.Result){
 		})
 	}
 	return
-}
+}*/

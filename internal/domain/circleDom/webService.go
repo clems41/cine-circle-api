@@ -1,18 +1,10 @@
-package handler
+package circleDom
 
-import (
-	"cine-circle/internal/domain/circleDom"
-	"cine-circle/internal/typedErrors"
-	"cine-circle/internal/utils"
-	"github.com/emicklei/go-restful"
-	"net/http"
-)
-
-type circleHandler struct {
-	service circleDom.Service
+/*type circleHandler struct {
+	service Service
 }
 
-func NewCircleHandler(svc circleDom.Service) *circleHandler {
+func NewCircleHandler(svc Service) *circleHandler {
 	return &circleHandler{
 		service:    svc,
 	}
@@ -24,8 +16,8 @@ func (api circleHandler) WebService() *restful.WebService {
 
 	wsCircle.Route(wsCircle.POST("/").
 		Doc("Create new circle").
-		Writes(circleDom.Creation{}).
-		Returns(201, "Created", circleDom.Result{}).
+		Writes(Creation{}).
+		Returns(201, "Created", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
@@ -36,8 +28,8 @@ func (api circleHandler) WebService() *restful.WebService {
 	wsCircle.Route(wsCircle.PUT("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Update existing circle").
-		Writes(circleDom.Update{}).
-		Returns(200, "OK", circleDom.Result{}).
+		Writes(Update{}).
+		Returns(200, "OK", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
@@ -49,7 +41,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Get existing circle").
 		Writes(nil).
-		Returns(200, "OK", circleDom.Result{}).
+		Returns(200, "OK", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
@@ -61,7 +53,7 @@ func (api circleHandler) WebService() *restful.WebService {
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).
 		Doc("Delete existing circle").
 		Writes(nil).
-		Returns(200, "OK", circleDom.Result{}).
+		Returns(200, "OK", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
@@ -73,7 +65,7 @@ func (api circleHandler) WebService() *restful.WebService {
 }
 
 func (api circleHandler) Create(req *restful.Request, res *restful.Response) {
-	var creation circleDom.Creation
+	var creation Creation
 	err := req.ReadEntity(&creation)
 	if err != nil {
 		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
@@ -81,7 +73,7 @@ func (api circleHandler) Create(req *restful.Request, res *restful.Response) {
 	}
 
 	// get current user from token
-	user, err := CommonHandler.WhoAmI(req)
+	user, err := webService.CommonHandler.WhoAmI(req)
 	if err != nil {
 		handleHTTPError(res, err)
 		return
@@ -108,7 +100,7 @@ func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	var update circleDom.Update
+	var update Update
 	err = req.ReadEntity(&update)
 	if err != nil {
 		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
@@ -116,7 +108,7 @@ func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
 	}
 
 	// get current user from token
-	user, err := CommonHandler.WhoAmI(req)
+	user, err := webService.CommonHandler.WhoAmI(req)
 	if err != nil {
 		handleHTTPError(res, err)
 		return
@@ -145,7 +137,7 @@ func (api circleHandler) Delete(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	deleteCircle := circleDom.Delete{CircleID: circleId}
+	deleteCircle := Delete{CircleID: circleId}
 	err = api.service.Delete(deleteCircle)
 	if err != nil {
 		handleHTTPError(res, err)
@@ -162,7 +154,7 @@ func (api circleHandler) Get(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	get := circleDom.Get{CircleID: circleId}
+	get := Get{CircleID: circleId}
 	circle, err := api.service.Get(get)
 	if err != nil {
 		handleHTTPError(res, err)
@@ -171,3 +163,4 @@ func (api circleHandler) Get(req *restful.Request, res *restful.Response) {
 
 	res.WriteHeaderAndEntity(http.StatusOK, circle)
 }
+*/

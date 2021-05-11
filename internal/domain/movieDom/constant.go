@@ -1,4 +1,4 @@
-package constant
+package movieDom
 
 import "cine-circle/internal/utils"
 

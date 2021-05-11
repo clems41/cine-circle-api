@@ -1,21 +1,22 @@
 package main
 
 import (
-	"cine-circle/internal/logger"
 	"cine-circle/internal/repository"
+	"cine-circle/internal/repository/postgres"
 	"cine-circle/internal/test"
+	logger "cine-circle/pkg/logger"
 	"fmt"
 )
 
 func main() {
 	logger.InitLogger()
 	// Try to connect to PostgresSQL repository
-	DB, err := repository.OpenConnection()
+	DB, err := postgres.OpenConnection()
 	if err != nil {
 		logger.Sugar.Fatalf(err.Error())
 	}
 	closeFunction := func() {
-		err = repository.CloseConnection(DB)
+		err = postgres.CloseConnection(DB)
 		if err != nil {
 			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
 		}
@@ -47,12 +48,12 @@ func main() {
 
 	// Close and open connection on new testing database
 	closeFunction()
-	DB, err = repository.OpenConnection(test.TemplateDatabaseName)
+	DB, err = postgres.OpenConnection(test.TemplateDatabaseName)
 	if err != nil {
 		logger.Sugar.Fatalf(err.Error())
 	}
 	defer func() {
-		err = repository.CloseConnection(DB)
+		err = postgres.CloseConnection(DB)
 		if err != nil {
 			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
 		}

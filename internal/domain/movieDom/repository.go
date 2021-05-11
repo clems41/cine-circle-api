@@ -1,10 +1,9 @@
-package repository
+package movieDom
 
 import (
-	"cine-circle/internal/constant"
-	"cine-circle/internal/domain/movieDom"
-	"cine-circle/internal/logger"
+	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/typedErrors"
+	logger "cine-circle/pkg/logger"
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"strconv"
@@ -12,10 +11,10 @@ import (
 	"time"
 )
 
-var _ movieDom.Repository = (*movieRepository)(nil)
+var _ Repository = (*movieRepository)(nil)
 
 type Movie struct {
-	Metadata
+	repositoryModel.Metadata
 	ImdbID 			string 				`gorm:"uniqueIndex"`
 	Title 			string				`gorm:"index"`
 	Year 			string
@@ -45,7 +44,7 @@ func (r movieRepository) Migrate() {
 	}
 }
 
-func (r movieRepository) GetMovie(movieId string) (result movieDom.Result, err error) {
+func (r movieRepository) GetMovie(movieId string) (result Result, err error) {
 	var movie Movie
 	response := r.DB.
 		Find(&movie, "imdb_id = ?", movieId)
@@ -60,21 +59,21 @@ func (r movieRepository) GetMovie(movieId string) (result movieDom.Result, err e
 	return
 }
 
-func (r movieRepository) SaveMovie(movieView movieDom.OmdbView) (result movieDom.Result, err error) {
-	releasedTime, err := time.Parse(constant.ReleasedLayout, movieView.Released)
+func (r movieRepository) SaveMovie(movieView OmdbView) (result Result, err error) {
+	releasedTime, err := time.Parse(ReleasedLayout, movieView.Released)
 	if err != nil {
 		return result, typedErrors.NewServiceGeneralError(err)
 	}
 
-	runTime, err := strconv.Atoi(strings.Replace(movieView.Runtime, constant.RunTimeUnit, "", -1))
+	runTime, err := strconv.Atoi(strings.Replace(movieView.Runtime, RunTimeUnit, "", -1))
 	if err != nil {
 		return result, typedErrors.NewServiceGeneralError(err)
 	}
 
-	genres := strings.Split(movieView.Genre, constant.StringArraySeparator)
-	directors := strings.Split(movieView.Director, constant.StringArraySeparator)
-	actors := strings.Split(movieView.Actors, constant.StringArraySeparator)
-	countries := strings.Split(movieView.Country, constant.StringArraySeparator)
+	genres := strings.Split(movieView.Genre, StringArraySeparator)
+	directors := strings.Split(movieView.Director, StringArraySeparator)
+	actors := strings.Split(movieView.Actors, StringArraySeparator)
+	countries := strings.Split(movieView.Country, StringArraySeparator)
 
 	movie := Movie{
 		ImdbID:    movieView.Imdbid,
@@ -103,8 +102,8 @@ func (r movieRepository) SaveMovie(movieView movieDom.OmdbView) (result movieDom
 	return
 }
 
-func (r movieRepository) movieToResult(movie Movie) (result movieDom.Result) {
-	result = movieDom.Result{
+func (r movieRepository) movieToResult(movie Movie) (result Result) {
+	result = Result{
 		ID:        movie.ImdbID,
 		Title:     movie.Title,
 		Year:      movie.Year,

@@ -1,9 +1,10 @@
 package typedErrors
 
 import (
-	"cine-circle/internal/logger"
+	logger "cine-circle/pkg/logger"
 	"fmt"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -128,11 +129,15 @@ func NewCustomErrorf(httpCode int, code string, format string, args ...interface
 }
 
 func NewCustomError(httpCode int, code string, err error) CustomError {
-	return CustomError{
+	ce := CustomError{
 		err:      errors.WithStack(err),
 		httpCode: httpCode,
 		code: code,
 	}
+	if err == gorm.ErrRecordNotFound {
+		ce.httpCode = http.StatusNotFound
+	}
+	return ce
 }
 
 // Repository errors
@@ -159,16 +164,16 @@ func NewRepositoryResourceNotFoundErrorf(format string, args ...interface{}) Cus
 // API errors
 
 func NewApiBadCredentialsErrorf(format string, args ...interface{}) CustomError {
-	return NewCustomErrorf(http.StatusBadRequest, errApiUserBadCredentialsCode, format, args...)
+	return NewCustomErrorf(http.StatusUnauthorized, errApiUserBadCredentialsCode, format, args...)
 }
 func NewApiBadCredentialsError(err error) CustomError {
-	return NewCustomError(http.StatusBadRequest, errApiUserBadCredentialsCode, err)
+	return NewCustomError(http.StatusUnauthorized, errApiUserBadCredentialsCode, err)
 }
 func NewApiCredentialsNotFoundErrorf(format string, args ...interface{}) CustomError {
-	return NewCustomErrorf(http.StatusBadRequest, errApiUserCredentialsNotFoundCode, format, args...)
+	return NewCustomErrorf(http.StatusUnauthorized, errApiUserCredentialsNotFoundCode, format, args...)
 }
 func NewApiBadRequestErrorf(format string, args ...interface{}) CustomError {
-	return NewCustomErrorf(http.StatusBadRequest, errApiBadRequestCode, format, args...)
+	return NewCustomErrorf(http.StatusUnauthorized, errApiBadRequestCode, format, args...)
 }
 func NewApiBadRequestError(err error) CustomError {
 	return NewCustomError(http.StatusBadRequest, errApiBadRequestCode, err)

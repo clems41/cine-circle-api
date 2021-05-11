@@ -1,19 +1,18 @@
-package handler
+package rootDom
 
 import (
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
 
-type rootHandler struct {
+type webService struct {
 }
 
-func NewRootHandler() *rootHandler {
-	return &rootHandler{
-	}
+func NewWebService() *webService {
+	return &webService{}
 }
 
-func (api rootHandler) WebService() *restful.WebService {
+func (api webService) Routes() *restful.WebService {
 	wsRoot := &restful.WebService{}
 
 	// HEALTH

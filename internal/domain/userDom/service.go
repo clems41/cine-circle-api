@@ -2,48 +2,41 @@ package userDom
 
 import (
 	"cine-circle/internal/constant"
+	"cine-circle/internal/domain"
+	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"encoding/base64"
-	"github.com/dgrijalva/jwt-go"
+	"gorm.io/gorm"
 	"strings"
-	"time"
 )
 
 var _ Service = (*service)(nil)
 
 type Service interface {
-	Create(creation Creation) (result Result, err error)
-	Update(update Update) (result Result, err error)
-	UpdatePassword(updatePassword UpdatePassword) (result Result, err error)
+	Create(creation Creation) (view View, err error)
+	Update(update  Update) (view View, err error)
+	UpdatePassword(updatePassword UpdatePassword) (view View, err error)
 	Delete(delete Delete) (err error)
-	Get(get Get) (result Result, err error)
-	Search(filters Filters) (result []Result, err error)
+	Get(get Get) (view View, err error)
+	GetOwnInfo(userID domain.IDType) (view ViewMe, err error)
+	Search(filters Filters) (views []View, err error)
 	GenerateTokenFromAuthenticationHeader(header string) (token string, err error)
 	getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error)
 }
 
 type service struct {
-	r Repository
+	r repository
 }
 
-type Repository interface {
-	Create(creation Creation) (result Result, err error)
-	Update(update Update) (result Result, err error)
-	UpdatePassword(updatePassword UpdatePassword) (result Result, err error)
-	Delete(delete Delete) (rr error)
-	Get(get Get) (result Result, err error)
-	Search(filters Filters) (result []Result, err error)
-	GetHashedPassword(get Get) (hashedPassword string, err error)
-}
-
-func NewService(r Repository) Service {
+func NewService(r repository) Service {
 	return &service{
-		r:                              r,
+		r: r,
 	}
 }
 
-func (svc *service) Create(creation Creation) (result Result, err error) {
+func (svc *service) Create(creation Creation) (view View, err error) {
+	// Validate fields
 	err = creation.Valid()
 	if err != nil {
 		return
@@ -55,62 +48,134 @@ func (svc *service) Create(creation Creation) (result Result, err error) {
 	}
 	// Save hashed and salt password as user's password
 	creation.Password = hashedPassword
-	return svc.r.Create(creation)
+
+	username := strings.ToLower(creation.Username)
+
+	user := repositoryModel.User{
+		Username:       &username,
+		DisplayName:    creation.DisplayName,
+		Email:          creation.Email,
+		HashedPassword: creation.Password,
+	}
+
+	err = svc.r.Create(&user)
+	if err != nil {
+		return
+	}
+
+	view = svc.toView(user)
+	return
 }
 
-func (svc *service) Update(update Update) (result Result, err error) {
+func (svc *service) Update(update Update) (view View, err error) {
+	// Validate fields
 	err = update.Valid()
 	if err != nil {
 		return
 	}
-	return svc.r.Update(update)
+
+	// Get old user from DB
+	user, err := svc.r.Get(Get{UserID: update.UserID})
+	if err != nil {
+		return view, typedErrors.NewRepositoryQueryFailedError(err)
+	}
+
+	// Update specific fields
+	user.DisplayName = update.DisplayName
+	user.Email = update.Email
+
+	// Save new user info
+	err = svc.r.Save(&user)
+	if err != nil {
+		return
+	}
+
+	view = svc.toView(user)
+	return
 }
 
-func (svc *service) UpdatePassword(updatePassword UpdatePassword) (result Result, err error) {
+func (svc *service) UpdatePassword(updatePassword UpdatePassword) (view View, err error) {
+	// Validate fields
 	err = updatePassword.Valid()
 	if err != nil {
 		return
 	}
 
-	hashedPassword, err := svc.r.GetHashedPassword(Get{UserID: updatePassword.UserID})
+	// Get old user from DB
+	user, err := svc.r.Get(Get{UserID: updatePassword.UserID})
+	if err != nil {
+		return view, typedErrors.NewRepositoryQueryFailedError(err)
+	}
+
+	err = utils.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
+	if err != nil {
+		return view, errBadLoginPassword
+	}
+
+	newHashedPassword, err := utils.HashAndSaltPassword(updatePassword.NewPassword, constant.CostHashFunction)
+	if err != nil {
+		return view, typedErrors.NewApiBadRequestError(err)
+	}
+	// Save new user info
+	user.HashedPassword = newHashedPassword
+	err = svc.r.Save(&user)
 	if err != nil {
 		return
 	}
 
-	err = utils.CompareHashAndPassword(hashedPassword, updatePassword.OldPassword)
-	if err != nil {
-		return result, typedErrors.NewApiBadRequestError(err)
-	}
-
-	updatePassword.NewHashedPassword, err = utils.HashAndSaltPassword(updatePassword.NewPassword, constant.CostHashFunction)
-	if err != nil {
-		return result, typedErrors.NewApiBadRequestError(err)
-	}
-	return svc.r.UpdatePassword(updatePassword)
+	view = svc.toView(user)
+	return
 }
 
 func (svc *service) Delete(delete Delete) (err error) {
+	// Validate fields
 	err = delete.Valid()
 	if err != nil {
 		return
 	}
-	return svc.r.Delete(delete)
+
+	return svc.r.Delete(delete.UserID)
 }
 
-func (svc *service) Get(get Get) (result Result, err error) {
+func (svc *service) Get(get Get) (view View, err error) {
+	// Validate fields
 	err = get.Valid()
 	if err != nil {
 		return
 	}
-	return svc.r.Get(get)
+	user, err := svc.r.Get(get)
+	if err != nil {
+		return view, typedErrors.NewRepositoryQueryFailedError(err)
+	}
+
+	view = svc.toView(user)
+	return
 }
 
-func (svc *service) Search(filters Filters) (result []Result, err error) {
+func (svc *service) GetOwnInfo(userID domain.IDType) (view ViewMe, err error) {
+	user, err := svc.r.Get(Get{UserID: userID})
+	if err != nil {
+		return
+	}
+
+	view = svc.toViewMe(user)
+	return
+}
+
+func (svc *service) Search(filters Filters) (views []View, err error) {
 	err = filters.Valid()
 	if err != nil {
 		return
 	}
-	return svc.r.Search(filters)
+	users, err := svc.r.Search(filters)
+	if err != nil {
+		return
+	}
+
+	for _, user := range users {
+		views = append(views, svc.toView(user))
+	}
+	return
 }
 
 func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token string, err error) {
@@ -119,29 +184,24 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 		return
 	}
 
-	hashedPassword, err := svc.r.GetHashedPassword(Get{Username: username})
+	user, err := svc.r.Get(Get{Username: username})
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return token, errBadLoginPassword
+		}
 		return
 	}
 
-	err = utils.CompareHashAndPassword(hashedPassword, password)
+	err = utils.CompareHashAndPassword(user.HashedPassword, password)
 	if err != nil {
-		err = typedErrors.NewApiBadCredentialsError(err)
-		return
+		return token, errBadLoginPassword
 	}
 
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": constant.IssToken,
-		"sub": username,
-		"aud": "any",
-		"exp": time.Now().Add(constant.ExpirationDuration).Unix(),
-	})
-
-	return jwtToken.SignedString([]byte(constant.TokenKey))
+	return utils.GenerateTokenWithUserID(user.GetID())
 }
 
 func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {
-	result := strings.Split(header, " ")
+	result := strings.Split(header, constant.BearerTokenDelimiterForHeader)
 	if len(result) != 2 {
 		err = typedErrors.NewApiBadCredentialsErrorf("Header format is not correct")
 		return
@@ -152,12 +212,35 @@ func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string
 		err = typedErrors.NewApiBadCredentialsError(err)
 		return
 	}
-	pair := strings.Split(string(loginPasswordDecoded), ":")
+	pair := strings.Split(string(loginPasswordDecoded), constant.UsernamePasswordDelimiterForHeader)
 	if len(result) != 2 {
 		err = typedErrors.NewApiBadCredentialsErrorf("Encoded login:password is not correct")
 		return
 	}
 	username = pair[0]
 	password = pair[1]
+	return
+}
+
+func (svc *service) toView(user repositoryModel.User) (view View) {
+	view = View {
+		UserID:      user.GetID(),
+		DisplayName: user.DisplayName,
+	}
+	if user.Username != nil {
+		view.Username = *user.Username
+	}
+	return
+}
+
+func (svc *service) toViewMe(user repositoryModel.User) (view ViewMe) {
+	view = ViewMe {
+		UserID:      user.GetID(),
+		DisplayName: user.DisplayName,
+	}
+	if user.Username != nil {
+		view.Username = *user.Username
+	}
+	view.Email = user.Email
 	return
 }

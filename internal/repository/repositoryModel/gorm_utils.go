@@ -1,4 +1,4 @@
-package repository
+package repositoryModel
 
 import (
 	"cine-circle/internal/domain"

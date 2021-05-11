@@ -1,23 +1,16 @@
-package handler
-
-import (
-	"cine-circle/internal/domain/movieDom"
-	"cine-circle/internal/typedErrors"
-	"github.com/emicklei/go-restful"
-	"net/http"
-)
+package movieDom
 
 type movieHandler struct {
-	service movieDom.Service
+	service Service
 }
 
-func NewMovieHandler(svc movieDom.Service) *movieHandler {
+func NewMovieHandler(svc Service) *movieHandler {
 	return &movieHandler{
 		service:    svc,
 	}
 }
 
-func (api movieHandler) WebService() *restful.WebService {
+/*func (api movieHandler) WebService() *restful.WebService {
 	wsMovie := &restful.WebService{}
 	wsMovie.Path("/v1/movies")
 
@@ -26,7 +19,7 @@ func (api movieHandler) WebService() *restful.WebService {
 		Param(wsMovie.QueryParameter("title", "Get movie or series by title").DataType("string")).
 		Param(wsMovie.QueryParameter("type", "Type of media to search (movie, series, episode)").DataType("string")).
 		Writes(nil).
-		Returns(200, "OK", movieDom.SearchResult{}).
+		Returns(200, "OK", SearchResult{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).
@@ -38,7 +31,7 @@ func (api movieHandler) WebService() *restful.WebService {
 		Doc("Get movie by ID").
 		Param(wsMovie.PathParameter("id", "Get movie by ID (based on IMDb ids)").DataType("string")).
 		Writes(nil).
-		Returns(200, "OK", movieDom.Result{}).
+		Returns(200, "OK", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).
@@ -52,7 +45,7 @@ func (api movieHandler) WebService() *restful.WebService {
 func (api movieHandler) SearchMovie(req *restful.Request, res *restful.Response) {
 	title := req.QueryParameter("title")
 	mediaType := req.QueryParameter("type")
-	search := movieDom.Search{
+	search := Search{
 		Title:     title,
 		MediaType: mediaType,
 	}
@@ -72,4 +65,4 @@ func (api movieHandler) GetMovie(req *restful.Request, res *restful.Response) {
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, movie)
-}
+}*/

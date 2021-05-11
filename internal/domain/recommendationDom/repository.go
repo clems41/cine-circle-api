@@ -1,11 +1,10 @@
-package repository
+package recommendationDom
 
 import (
-	"cine-circle/internal/domain/recommendationDom"
 	"gorm.io/gorm"
 )
 
-var _ recommendationDom.Repository = (*recommendationRepository)(nil)
+var _ Repository = (*recommendationRepository)(nil)
 
 type recommendationRepository struct {
 	DB *gorm.DB

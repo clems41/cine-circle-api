@@ -19,14 +19,14 @@ docker run --rm -d --name pg-cine-circle \
 ### Build
 Simple way of building API on local
 ```bash
-docker build . -t cine-circle-handler
+docker build . -t cine-circle-webService
 ```
 
 ### Run
 Simple way to run API on local (to be used with PostgresSQl instance !)  
 **(!) (Don't forget to replace value in `<>`)**
 ```bash
-docker run -d --rm --name cine-circle-handler \
+docker run -d --rm --name cine-circle-webService \
   --link pg-cine-circle \
   -e DB_HOST=pg-cine-circle \
   -e DB_USER=<postgres_user> \
@@ -34,15 +34,15 @@ docker run -d --rm --name cine-circle-handler \
   -e DB_NAME=<database_name> \
   -e DB_PORT=<postgres_port> \
   -p 8080:8080 \
-  cine-circle-handler
+  cine-circle-webService
 ```
 If you want to use default values (see below), simply run :
 ```bash
-docker run -d --rm --name cine-circle-handler \
+docker run -d --rm --name cine-circle-webService \
   --link pg-cine-circle \
   -e DB_HOST=pg-cine-circle \
   -p 8080:8080 \
-  cine-circle-handler
+  cine-circle-webService
 ```
 Default values :
 - `DB_HOST = localhost`

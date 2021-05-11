@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"cine-circle/internal/logger"
+	"cine-circle/internal/domain/userDom"
+	logger "cine-circle/pkg/logger"
 	"gorm.io/gorm"
 )
 
@@ -17,11 +18,11 @@ type Repository interface {
 type Repositories struct {
 	List []Repository
 
-	Circle						*circleRepository
-	Movie						*movieRepository
-	Recommendation				*recommendationRepository
-	User						*userRepository
-	Watchlist					*watchlistRepository
+/*	Circle						*circleDom.circleRepository
+	Movie						*movieDom.movieRepository
+	Recommendation				*recommendationDom.recommendationRepository*/
+	User						*userDom.Repository
+	//Watchlist					*watchlistDom.watchlistRepository
 }
 
 func (rs Repositories) Migrate() {
@@ -37,20 +38,20 @@ func (rs Repositories) Migrate() {
 
 func NewAllRepositories(DB *gorm.DB) (r Repositories) {
 
-	r.Circle = NewCircleRepository(DB)
+/*	r.Circle = circleDom.NewCircleRepository(DB)
 	r.List = append(r.List, r.Circle)
 
-	r.Movie = NewMovieRepository(DB)
+	r.Movie = movieDom.NewMovieRepository(DB)
 	r.List = append(r.List, r.Movie)
 
-	r.Recommendation = NewRecommendationRepository(DB)
-	r.List = append(r.List, r.Recommendation)
+	r.Recommendation = recommendationDom.NewRecommendationRepository(DB)
+	r.List = append(r.List, r.Recommendation)*/
 
-	r.User = NewUserRepository(DB)
+	r.User = userDom.NewRepository(DB)
 	r.List = append(r.List, r.User)
 
-	r.Watchlist = NewWatchlistRepository(DB)
-	r.List = append(r.List, r.Watchlist)
+/*	r.Watchlist = watchlistDom.NewWatchlistRepository(DB)
+	r.List = append(r.List, r.Watchlist)*/
 
 	return
 }

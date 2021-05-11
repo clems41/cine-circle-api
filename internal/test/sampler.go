@@ -2,7 +2,7 @@ package test
 
 import (
 	"cine-circle/internal/constant"
-	"cine-circle/internal/repository"
+	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/utils"
 	"github.com/icrowley/fake"
 	"gorm.io/gorm"
@@ -15,8 +15,8 @@ type Sampler struct {
 	DB *gorm.DB
 }
 
-// newSampler instantiates a new sampler object able to generate random resources for testing purpose
-func newSampler(t *testing.T, DB *gorm.DB, populateDatabase bool) (sampler Sampler) {
+// NewSampler instantiates a new sampler object able to generate random resources for testing purpose
+func NewSampler(t *testing.T, DB *gorm.DB, populateDatabase bool) (sampler Sampler) {
 
 	sampler.t = t
 	sampler.DB = DB
@@ -31,24 +31,24 @@ func newSampler(t *testing.T, DB *gorm.DB, populateDatabase bool) (sampler Sampl
 // populateDatabase inserts some random resources into database
 func (sampler *Sampler) populateDatabase() {
 	// populateDatabase with some users
-	sampler.getUsersSample(NumberOfUsersToPopulateDatabase)
+	sampler.GetUsersSample(NumberOfUsersToPopulateDatabase)
 }
 
-func (sampler *Sampler) getUserSample() (user *repository.User) {
+func (sampler *Sampler) GetUserSample() (user *repositoryModel.User) {
 	// HashAndSalt password for user
-	password := getFakePassword()
-	return sampler.getUserSampleWithSpecificPassword(password)
+	password := FakePassword()
+	return sampler.GetUserSampleWithSpecificPassword(password)
 }
 
-func (sampler *Sampler) getUsersSample(numberOfUsers int) (users []repository.User) {
+func (sampler *Sampler) GetUsersSample(numberOfUsers int) (users []repositoryModel.User) {
 	// HashAndSalt password for user
 	for i := 0; i < numberOfUsers; i++ {
-		users = append(users, *sampler.getUserSample())
+		users = append(users, *sampler.GetUserSample())
 	}
 	return
 }
 
-func (sampler *Sampler) getUserSampleWithSpecificPassword(password string) (user *repository.User) {
+func (sampler *Sampler) GetUserSampleWithSpecificPassword(password string) (user *repositoryModel.User) {
 
 	hashedPassword, err := utils.HashAndSaltPassword(password, constant.CostHashFunction)
 
@@ -56,8 +56,9 @@ func (sampler *Sampler) getUserSampleWithSpecificPassword(password string) (user
 	if err != nil {
 		sampler.t.Fatalf(err.Error())
 	}
-	user = &repository.User{
-		Username:       strings.ToLower(fake.UserName()),
+	username := strings.ToLower(fake.UserName())
+	user = &repositoryModel.User{
+		Username:       &username,
 		DisplayName:    fake.FullName(),
 		Email:          fake.EmailAddress(),
 		HashedPassword: hashedPassword,

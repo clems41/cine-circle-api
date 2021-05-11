@@ -1,9 +1,8 @@
 package movieDom
 
 import (
-	"cine-circle/internal/constant"
-	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
+	logger "cine-circle/pkg/logger"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -58,7 +57,7 @@ func (svc *service) getMovieFromExternal(movieId string) (result Result, err err
 		},
 		{
 			Key:   "plot",
-			Value: constant.PlotValue,
+			Value: PlotValue,
 		},
 	}
 
@@ -91,10 +90,10 @@ func (svc *service) searchMovieFromExternal(search Search) (searchResult SearchR
 		},
 		{
 			Key:   "plot",
-			Value: constant.PlotValue,
+			Value: PlotValue,
 		},
 	}
-	if search.MediaType == constant.MovieMedia || search.MediaType == constant.SeriesMedia {
+	if search.MediaType == MovieMedia || search.MediaType == SeriesMedia {
 		params = append(params, QueryParam{
 			Key:   "type",
 			Value: search.MediaType,
@@ -137,7 +136,7 @@ func (svc *service) sendRequestToExternal(params []QueryParam) (response []byte,
 	timeStart := time.Now()
 	// Prepare request to send with queryParams
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", constant.ExternalApiUrl, nil)
+	req, err := http.NewRequest("GET", ExternalApiUrl, nil)
 	if err != nil {
 		return response, typedErrors.NewExternalSendRequestError(err)
 	}
@@ -147,7 +146,7 @@ func (svc *service) sendRequestToExternal(params []QueryParam) (response []byte,
 	}
 
 	// Adding API key to the request (mandatory)
-	q.Add("apikey", constant.ExternalApiKey)
+	q.Add("apikey", ExternalApiKey)
 	req.URL.RawQuery = q.Encode()
 
 	// Send request
@@ -167,6 +166,6 @@ func (svc *service) sendRequestToExternal(params []QueryParam) (response []byte,
 	}
 
 	// Print how long request took time
-	logger.Sugar.Debugf("Sending request to %s with queryParameters %s took %+v", constant.ExternalApiUrl, req.URL.RawQuery, time.Since(timeStart))
+	logger.Sugar.Debugf("Sending request to %s with queryParameters %s took %+v", ExternalApiUrl, req.URL.RawQuery, time.Since(timeStart))
 	return
 }

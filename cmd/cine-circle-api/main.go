@@ -1,14 +1,11 @@
 package main
 
 import (
-	"cine-circle/internal/domain/circleDom"
-	"cine-circle/internal/domain/movieDom"
-	"cine-circle/internal/domain/recommendationDom"
 	"cine-circle/internal/domain/userDom"
-	"cine-circle/internal/domain/watchlistDom"
-	"cine-circle/internal/handler"
-	"cine-circle/internal/logger"
 	"cine-circle/internal/repository"
+	"cine-circle/internal/repository/postgres"
+	"cine-circle/internal/webService"
+	logger "cine-circle/pkg/logger"
 	"context"
 	"flag"
 	"github.com/emicklei/go-restful"
@@ -53,12 +50,12 @@ func run(cmd *cobra.Command, args []string) {
 	signal.Notify(Signals, os.Interrupt)
 
 	// Try to connect to PostgresSQL repository
-	DB, err := repository.OpenConnection()
+	DB, err := postgres.OpenConnection()
 	if err != nil {
 		logger.Sugar.Fatalf(err.Error())
 	}
 	defer func() {
-		err = repository.CloseConnection(DB)
+		err = postgres.CloseConnection(DB)
 		if err != nil {
 			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
 		}
@@ -84,29 +81,29 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
-	userService := userDom.NewService(repositories.User)
-	handler.CommonHandler = handler.NewCommonHandler(userService)
-
 	// Adding all new handlers here
-	handler.AddWebService(restful.DefaultContainer, handler.NewRootHandler())
+/*	webService.AddWebService(restful_utils.DefaultContainer, webService.NewRootHandler())
 
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewCircleHandler(circleDom.NewService(repositories.Circle)))
+	webService.AddWebService(restful_utils.DefaultContainer,
+		webService.NewCircleHandler(circleDom.NewService(repositories.Circle)))
 
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewMovieHandler(movieDom.NewService(repositories.Movie)))
+	webService.AddWebService(restful_utils.DefaultContainer,
+		webService.NewMovieHandler(movieDom.NewService(repositories.Movie)))
 
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewRecommendationHandler(recommendationDom.NewService(repositories.Recommendation)))
+	webService.AddWebService(restful_utils.DefaultContainer,
+		webService.NewRecommendationHandler(recommendationDom.NewService(repositories.Recommendation)))
 
-	handler.AddWebService(restful.DefaultContainer, handler.NewUserHandler(userService))
+	webService.AddWebService(restful_utils.DefaultContainer, userDom.NewUserHandler(userService))
 
-	handler.AddWebService(restful.DefaultContainer,
-		handler.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))
+	webService.AddWebService(restful_utils.DefaultContainer,
+		webService.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))*/
+
+	webService.AddHandler(restful.DefaultContainer,
+		userDom.NewHandler(userDom.NewService(userDom.NewRepository(DB))))
 
 	config := restfulspec.Config{
 		WebServices: restful.DefaultContainer.RegisteredWebServices(),
-		APIPath:     "/handler/swagger.yaml",
+		APIPath:     "/webService/swagger.yaml",
 	}
 	restful.DefaultContainer.Add(restfulspec.NewOpenAPIService(config))
 
@@ -125,7 +122,7 @@ func run(cmd *cobra.Command, args []string) {
 		if err != nil {
 			logger.Sugar.Fatalf("Error while trying to close http server... err: %s", err.Error())
 		}
-		err = repository.CloseConnection(DB)
+		err = postgres.CloseConnection(DB)
 		if err != nil {
 			logger.Sugar.Fatalf("Error while trying to close database connection... err: %s", err.Error())
 		}

@@ -1,15 +1,14 @@
-package handler
+package recommendationDom
 
 import (
-	"cine-circle/internal/domain/recommendationDom"
 	"github.com/emicklei/go-restful"
 )
 
 type recommendationHandler struct {
-	service recommendationDom.Service
+	service Service
 }
 
-func NewRecommendationHandler(svc recommendationDom.Service) *recommendationHandler {
+func NewRecommendationHandler(svc Service) *recommendationHandler {
 	return &recommendationHandler{
 		service:    svc,
 	}

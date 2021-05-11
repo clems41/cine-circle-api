@@ -3,6 +3,7 @@ package utils
 import (
 	"cine-circle/internal/domain"
 	"cine-circle/internal/typedErrors"
+	"fmt"
 	"strconv"
 )
 
@@ -25,4 +26,9 @@ func StrToID(str string) (id domain.IDType, err error) {
 	}
 	id = domain.IDType(integer)
 	return
+}
+
+//IDToStr convert domain.IDType to string
+func IDToStr(id domain.IDType) string {
+	return fmt.Sprintf("%d", id)
 }

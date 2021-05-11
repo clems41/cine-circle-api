@@ -2,7 +2,6 @@ package circleDom
 
 import (
 	"cine-circle/internal/domain"
-	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/typedErrors"
 )
 
@@ -27,11 +26,17 @@ type Get struct {
 	CircleID		domain.IDType 	`json:"id"`
 }
 
-type Result struct {
+type View struct {
 	CircleID		domain.IDType 	`json:"id"`
 	Name 			string 			`json:"name"`
 	Description 	string 			`json:"description"`
-	Users 			[]userDom.Result		`json:"users"`
+	Users 			[]UserView		`json:"users"`
+}
+
+type UserView struct {
+	UserID      domain.IDType `json:"id"`
+	Username    string        `json:"username"`
+	DisplayName string        `json:"displayName"`
 }
 
 func (c Creation) Valid() (err error) {

@@ -1,9 +1,9 @@
-package repository
+package postgres
 
 import (
-	"cine-circle/internal/logger"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
+	logger "cine-circle/pkg/logger"
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -78,7 +78,7 @@ func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 		DbName:          DatabaseName,
 		Debug:           utils.GetDefaultOrFromEnv(defaultDebug, EnvDebug) == "true",
 		DetailedLogs:    utils.GetDefaultOrFromEnv(defaultDetailedLogs, EnvDetailedLogs) == "true",
-		ExtraConfigs: 	 "sslmode=disable TimeZone=Pacific/Noumea",
+		ExtraConfigs:    "sslmode=disable TimeZone=Pacific/Noumea",
 		ApplicationName: "cine-circle-import",
 	}
 	if len(databaseName) > 0 {
