@@ -1,9 +1,9 @@
 package userDom
 
 import (
-	"cine-circle/internal/domain"
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/pkg/logger"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +12,7 @@ var _ repository = (*Repository)(nil)
 type repository interface {
 	Create(user *repositoryModel.User) (err error)
 	Save(user *repositoryModel.User) (err error)
-	Delete(userID domain.IDType) (err error)
+	Delete(userID uint) (err error)
 	Get(get Get) (user repositoryModel.User, err error)
 	Search(filters Filters) (result []repositoryModel.User, err error)
 }
@@ -40,21 +40,24 @@ func (r *Repository) Migrate() {
 }
 
 func (r *Repository) Create(user *repositoryModel.User) (err error) {
-	return r.DB.
+	return errors.WithStack(
+		r.DB.
 		Create(&user).
-		Error
+		Error)
 }
 
 func (r *Repository) Save(user *repositoryModel.User) (err error) {
-	return r.DB.
+	return errors.WithStack(
+		r.DB.
 		Save(&user).
-		Error
+		Error)
 }
 
-func (r *Repository) Delete(userID domain.IDType) (rr error) {
-	return r.DB.
+func (r *Repository) Delete(userID uint) (err error) {
+	return errors.WithStack(
+		r.DB.
 		Delete(&repositoryModel.User{}, "id = ?", userID).
-		Error
+		Error)
 }
 
 func (r *Repository) Get(get Get) (user repositoryModel.User, err error) {
@@ -70,6 +73,9 @@ func (r *Repository) Search(filters Filters) (users []repositoryModel.User, err 
 		Find(&users).
 		Error
 
+	if err != nil {
+		return users, errors.WithStack(err)
+	}
 	return
 }
 
@@ -89,6 +95,10 @@ func (r *Repository) getUser(get Get) (user repositoryModel.User, err error) {
 	err = query.
 		Take(&user).
 		Error
+
+	if err != nil {
+		return user, errors.WithStack(err)
+	}
 
 	return
 }

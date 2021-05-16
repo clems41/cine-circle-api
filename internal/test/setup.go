@@ -87,6 +87,8 @@ func OpenDatabase(t *testing.T) (DB *gorm.DB, closeFunction func()) {
 		}
 	}
 
+	webService.ActualUserHandler = webService.NewActualUserHandler(testingDB)
+
 	return testingDB, closeFunction
 }
 
@@ -109,10 +111,10 @@ func NewTestingHTTPServer(t *testing.T, handlers ...webService.Handler) (server 
 
 func (httpServer *TestingHTTPServer) AuthenticateUserPermanently(user *repositoryModel.User) (err error) {
 	if user == nil {
-		return typedErrors.NewApiBadCredentialsErrorf("cannot authenticate user : user is nil")
+		return typedErrors.NewAuthenticationErrorf("cannot authenticate user : user is nil")
 	}
 	if user.Username == nil {
-		return typedErrors.NewApiBadCredentialsErrorf("cannot authenticate user : username is nil for user id %d", user.GetID())
+		return typedErrors.NewAuthenticationErrorf("cannot authenticate user : username is nil for user id %d", user.GetID())
 	}
 	token, err := utils.GenerateTokenWithUserID(user.GetID())
 	if err != nil {

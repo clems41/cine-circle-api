@@ -1,7 +1,6 @@
 package repositoryModel
 
 import (
-	"cine-circle/internal/domain"
 	"gorm.io/gorm"
 	"strconv"
 	"time"
@@ -10,8 +9,8 @@ import (
 type Metadata gorm.Model
 
 // GetID Return the ID
-func (mtd *Metadata) GetID() domain.IDType {
-	return domain.IDType(mtd.ID)
+func (mtd *Metadata) GetID() uint {
+	return mtd.ID
 }
 
 // GetIDAsString Return the ID in string format
@@ -20,8 +19,8 @@ func (mtd *Metadata) GetIDAsString() string {
 }
 
 // SetID Set the ID like a string
-func (mtd *Metadata) SetID(id domain.IDType) {
-	mtd.ID = uint(id)
+func (mtd *Metadata) SetID(id uint) {
+	mtd.ID = id
 }
 
 func (mtd *Metadata) CreatedAtNow() {

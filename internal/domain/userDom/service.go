@@ -2,11 +2,11 @@ package userDom
 
 import (
 	"cine-circle/internal/constant"
-	"cine-circle/internal/domain"
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"encoding/base64"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -19,7 +19,7 @@ type Service interface {
 	UpdatePassword(updatePassword UpdatePassword) (view View, err error)
 	Delete(delete Delete) (err error)
 	Get(get Get) (view View, err error)
-	GetOwnInfo(userID domain.IDType) (view ViewMe, err error)
+	GetOwnInfo(userID uint) (view ViewMe, err error)
 	Search(filters Filters) (views []View, err error)
 	GenerateTokenFromAuthenticationHeader(header string) (token string, err error)
 	getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error)
@@ -77,7 +77,7 @@ func (svc *service) Update(update Update) (view View, err error) {
 	// Get old user from DB
 	user, err := svc.r.Get(Get{UserID: update.UserID})
 	if err != nil {
-		return view, typedErrors.NewRepositoryQueryFailedError(err)
+		return
 	}
 
 	// Update specific fields
@@ -104,7 +104,7 @@ func (svc *service) UpdatePassword(updatePassword UpdatePassword) (view View, er
 	// Get old user from DB
 	user, err := svc.r.Get(Get{UserID: updatePassword.UserID})
 	if err != nil {
-		return view, typedErrors.NewRepositoryQueryFailedError(err)
+		return
 	}
 
 	err = utils.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
@@ -114,7 +114,7 @@ func (svc *service) UpdatePassword(updatePassword UpdatePassword) (view View, er
 
 	newHashedPassword, err := utils.HashAndSaltPassword(updatePassword.NewPassword, constant.CostHashFunction)
 	if err != nil {
-		return view, typedErrors.NewApiBadRequestError(err)
+		return view, err
 	}
 	// Save new user info
 	user.HashedPassword = newHashedPassword
@@ -145,14 +145,14 @@ func (svc *service) Get(get Get) (view View, err error) {
 	}
 	user, err := svc.r.Get(get)
 	if err != nil {
-		return view, typedErrors.NewRepositoryQueryFailedError(err)
+		return
 	}
 
 	view = svc.toView(user)
 	return
 }
 
-func (svc *service) GetOwnInfo(userID domain.IDType) (view ViewMe, err error) {
+func (svc *service) GetOwnInfo(userID uint) (view ViewMe, err error) {
 	user, err := svc.r.Get(Get{UserID: userID})
 	if err != nil {
 		return
@@ -186,7 +186,7 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 
 	user, err := svc.r.Get(Get{Username: username})
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return token, errBadLoginPassword
 		}
 		return
@@ -203,18 +203,18 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {
 	result := strings.Split(header, constant.BearerTokenDelimiterForHeader)
 	if len(result) != 2 {
-		err = typedErrors.NewApiBadCredentialsErrorf("Header format is not correct")
+		err = typedErrors.NewAuthenticationErrorf("Header format is not correct")
 		return
 	}
 	loginPasswordEncoded := result[1]
 	loginPasswordDecoded, err := base64.StdEncoding.DecodeString(loginPasswordEncoded)
 	if err != nil {
-		err = typedErrors.NewApiBadCredentialsError(err)
+		err = typedErrors.NewAuthenticationErrorf(err.Error())
 		return
 	}
 	pair := strings.Split(string(loginPasswordDecoded), constant.UsernamePasswordDelimiterForHeader)
 	if len(result) != 2 {
-		err = typedErrors.NewApiBadCredentialsErrorf("Encoded login:password is not correct")
+		err = typedErrors.NewAuthenticationErrorf("Encoded login:password is not correct")
 		return
 	}
 	username = pair[0]

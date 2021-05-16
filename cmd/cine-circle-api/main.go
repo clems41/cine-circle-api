@@ -5,7 +5,7 @@ import (
 	"cine-circle/internal/repository"
 	"cine-circle/internal/repository/postgres"
 	"cine-circle/internal/webService"
-	logger "cine-circle/pkg/logger"
+	"cine-circle/pkg/logger"
 	"context"
 	"flag"
 	"github.com/emicklei/go-restful"
@@ -81,6 +81,8 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
+	webService.ActualUserHandler = webService.NewActualUserHandler(DB)
+
 	// Adding all new handlers here
 /*	webService.AddWebService(restful_utils.DefaultContainer, webService.NewRootHandler())
 
@@ -98,7 +100,7 @@ func run(cmd *cobra.Command, args []string) {
 	webService.AddWebService(restful_utils.DefaultContainer,
 		webService.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))*/
 
-	webService.AddHandler(restful.DefaultContainer,
+	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		userDom.NewHandler(userDom.NewService(userDom.NewRepository(DB))))
 
 	config := restfulspec.Config{

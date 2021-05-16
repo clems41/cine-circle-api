@@ -1,40 +1,39 @@
 package circleDom
 
 import (
-	"cine-circle/internal/domain"
 	"cine-circle/internal/typedErrors"
 )
 
 type Creation struct {
 	Name 			string 			`json:"name"`
 	Description 	string 			`json:"description"`
-	UsersID 		[]domain.IDType	`json:"usersId"`
+	UsersID 		[]uint	`json:"usersId"`
 }
 
 type Update struct {
-	CircleID		domain.IDType 	`json:"id"`
+	CircleID		uint 	`json:"id"`
 	Name 			string 			`json:"name"`
 	Description 	string 			`json:"description"`
-	UsersID 		[]domain.IDType	`json:"usersId"`
+	UsersID 		[]uint	`json:"usersId"`
 }
 
 type Delete struct {
-	CircleID		domain.IDType 	`json:"id"`
+	CircleID		uint 	`json:"id"`
 }
 
 type Get struct {
-	CircleID		domain.IDType 	`json:"id"`
+	CircleID		uint 	`json:"id"`
 }
 
 type View struct {
-	CircleID		domain.IDType 	`json:"id"`
+	CircleID		uint 	`json:"id"`
 	Name 			string 			`json:"name"`
 	Description 	string 			`json:"description"`
 	Users 			[]UserView		`json:"users"`
 }
 
 type UserView struct {
-	UserID      domain.IDType `json:"id"`
+	UserID      uint `json:"id"`
 	Username    string        `json:"username"`
 	DisplayName string        `json:"displayName"`
 }

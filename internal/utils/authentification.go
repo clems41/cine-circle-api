@@ -2,8 +2,8 @@ package utils
 
 import (
 	"cine-circle/internal/constant"
-	"cine-circle/internal/domain"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -11,6 +11,9 @@ import (
 // HashAndSaltPassword hash and salt password using bcrypt
 func HashAndSaltPassword(password string, cost int) (hashedPassword string, err error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	if err != nil {
+		return hashedPassword, errors.WithStack(err)
+	}
 	hashedPassword = string(bytes)
 	return
 }
@@ -20,7 +23,7 @@ func CompareHashAndPassword(hashedPassword, password string) (err error) {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func GenerateTokenWithUserID(userID domain.IDType) (string, error) {
+func GenerateTokenWithUserID(userID uint) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss": constant.IssToken,
 		"sub": userID,

@@ -7,6 +7,8 @@ import (
 	webServicePkg "cine-circle/internal/webService"
 	"cine-circle/pkg/logger"
 	"github.com/emicklei/go-restful"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -155,7 +157,7 @@ func (ws handler) CreateUser(req *restful.Request, res *restful.Response) {
 	var userCreation Creation
 	err := req.ReadEntity(&userCreation)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
 	view, err := ws.service.Create(userCreation)
@@ -170,16 +172,16 @@ func (ws handler) Update(req *restful.Request, res *restful.Response) {
 	var update Update
 	err := req.ReadEntity(&update)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, errors.WithStack(err))
 		return
 	}
 
-	userID, err := webServicePkg.WhoAmI(req)
+	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	update.UserID = userID
+	update.UserID = user.ID
 
 	view, err := ws.service.Update(update)
 	if err != nil {
@@ -194,16 +196,16 @@ func (ws handler) UpdatePassword(req *restful.Request, res *restful.Response) {
 	var updatePassword UpdatePassword
 	err := req.ReadEntity(&updatePassword)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, errors.WithStack(err))
 		return
 	}
 
-	userID, err := webServicePkg.WhoAmI(req)
+	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	updatePassword.UserID = userID
+	updatePassword.UserID = user.ID
 
 	view, err := ws.service.UpdatePassword(updatePassword)
 	if err != nil {
@@ -216,12 +218,12 @@ func (ws handler) UpdatePassword(req *restful.Request, res *restful.Response) {
 
 func (ws handler) Delete(req *restful.Request, res *restful.Response) {
 	var deletion Delete
-	userID, err := webServicePkg.WhoAmI(req)
+	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewApiBadRequestError(err))
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	deletion.UserID = userID
+	deletion.UserID = user.ID
 
 	err = ws.service.Delete(deletion)
 	if err != nil {
@@ -249,13 +251,13 @@ func (ws handler) Get(req *restful.Request, res *restful.Response) {
 }
 
 func (ws handler) GetOwnUserInfo(req *restful.Request, res *restful.Response) {
-	userID, err := webServicePkg.WhoAmI(req)
+	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
 
-	view, err := ws.service.GetOwnInfo(userID)
+	view, err := ws.service.GetOwnInfo(user.ID)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -272,7 +274,9 @@ func (ws handler) UsernameExists(req *restful.Request, res *restful.Response) {
 	var exists bool
 	if err != nil {
 		exists = false
-		logger.Sugar.Errorf("Cannot check if username exists, got error : %s", err.Error())
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Sugar.Errorf("Cannot check if username exists, got error : %s", err.Error())
+		}
 	} else {
 		exists = user.Username == username
 	}

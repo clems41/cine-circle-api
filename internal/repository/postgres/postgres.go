@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	logger "cine-circle/pkg/logger"
 	"fmt"
+	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
@@ -116,7 +116,7 @@ func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 	}
 
 	if db == nil {
-		return nil, typedErrors.ErrRepositoryIsNil
+		return nil, errors.New("database pointer is nil")
 	}
 
 	if pgConfig.Debug {

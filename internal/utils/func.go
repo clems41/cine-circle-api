@@ -1,14 +1,13 @@
 package utils
 
 import (
-	"cine-circle/internal/domain"
-	"cine-circle/internal/typedErrors"
 	"fmt"
+	"github.com/pkg/errors"
 	"strconv"
 )
 
 // ContainsID return true if value is in slice
-func ContainsID(slice []domain.IDType, value domain.IDType) bool {
+func ContainsID(slice []uint, value uint) bool {
 	for _, elem := range slice {
 		if elem == value {
 			return true
@@ -17,18 +16,17 @@ func ContainsID(slice []domain.IDType, value domain.IDType) bool {
 	return false
 }
 
-//StrToID convert string to domain.IDType
-func StrToID(str string) (id domain.IDType, err error) {
+//StrToID convert string to uint
+func StrToID(str string) (id uint, err error) {
 	integer, err := strconv.Atoi(str)
 	if err != nil {
-		err = typedErrors.NewApiBadRequestError(err)
-		return
+		return id, errors.WithStack(err)
 	}
-	id = domain.IDType(integer)
+	id = uint(integer)
 	return
 }
 
-//IDToStr convert domain.IDType to string
-func IDToStr(id domain.IDType) string {
+//IDToStr convert uint to string
+func IDToStr(id uint) string {
 	return fmt.Sprintf("%d", id)
 }

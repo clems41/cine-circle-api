@@ -1,9 +1,5 @@
 package userDom
 
-import (
-	"cine-circle/internal/domain"
-)
-
 type CommonFields struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email"`
@@ -16,37 +12,37 @@ type Creation struct {
 }
 
 type Update struct {
-	UserID domain.IDType `json:"-"`
+	UserID uint `json:"-"`
 	CommonFields
 }
 
 type Get struct {
-	UserID   domain.IDType `json:"-"`
-	Username string        `json:"-"`
-	Email    string        `json:"-"`
+	UserID   uint   `json:"-"`
+	Username string `json:"-"`
+	Email    string `json:"-"`
 }
 
 type UpdatePassword struct {
-	UserID      domain.IDType `json:"-"`
-	OldPassword string        `json:"oldPassword"`
-	NewPassword string        `json:"newPassword"`
+	UserID      uint   `json:"-"`
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
 }
 
 type Delete struct {
-	UserID domain.IDType `json:"-"`
+	UserID uint `json:"-"`
 }
 
 type View struct {
-	UserID      domain.IDType `json:"id"`
-	Username    string        `json:"username"`
-	DisplayName string        `json:"displayName"`
+	UserID      uint   `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
 }
 
 type ViewMe struct {
-	UserID      domain.IDType `json:"id"`
-	Username    string        `json:"username"`
-	DisplayName string        `json:"displayName"`
-	Email       string        `json:"email"`
+	UserID      uint   `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	Email       string `json:"email"`
 }
 
 type Filters struct {

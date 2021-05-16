@@ -2,16 +2,28 @@ package userDom
 
 import "cine-circle/internal/typedErrors"
 
+const (
+	errValidPasswordCode    = "PASSWORD_EMPTY"
+	errValidEmailCode       = "EMAIL_EMPTY"
+	errValidUsernameCode    = "USERNAME_EMPTY"
+	errValidDisplayNameCode = "DISPLAY_NAME_EMPTY"
+	errValidIDCode          = "ID_NULL"
+	errValidOldPasswordCode = "OLD_PASSWORD_EMPTY"
+	errValidNewPasswordCode = "NEW_PASSWORD_EMPTY"
+	errValidGetCode         = "ALL_FIELDS_EMPTY"
+	errValidKeywordCode     = "KEYWORD_IS_TOO_SHORT"
+	errBadLoginPasswordCode = "BAD_LOGIN_PASSWORD"
+)
+
 var (
-	errValidPassword    = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Password is empty")
-	errValidEmail       = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Email is empty")
-	errValidUsername    = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Username is empty")
-	errValidDisplayName = typedErrors.NewServiceMissingMandatoryFieldsErrorf("DisplayName is empty")
-	errValidID          = typedErrors.NewServiceMissingMandatoryFieldsErrorf("UserID is empty")
-	errValidOldPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("OldPassword is empty")
-	errValidNewPassword = typedErrors.NewServiceMissingMandatoryFieldsErrorf("NewPassword is empty")
-	errValidGet         = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to get user")
-	errValidUpdate      = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least one field to update user")
-	errValidKeyword     = typedErrors.NewServiceMissingMandatoryFieldsErrorf("Need at least 3 chars for searching for users")
-	errBadLoginPassword = typedErrors.NewApiBadCredentialsErrorf("wrong login/password")
+	errValidPassword    = typedErrors.NewBadRequestWithCode(errValidPasswordCode)
+	errValidEmail       = typedErrors.NewBadRequestWithCode(errValidEmailCode)
+	errValidUsername    = typedErrors.NewBadRequestWithCode(errValidUsernameCode)
+	errValidDisplayName = typedErrors.NewBadRequestWithCode(errValidDisplayNameCode)
+	errValidID          = typedErrors.NewBadRequestWithCode(errValidIDCode)
+	errValidOldPassword = typedErrors.NewBadRequestWithCode(errValidOldPasswordCode)
+	errValidNewPassword = typedErrors.NewBadRequestWithCode(errValidNewPasswordCode)
+	errValidGet         = typedErrors.NewBadRequestWithCode(errValidGetCode)
+	errValidKeyword     = typedErrors.NewBadRequestWithCode(errValidKeywordCode)
+	errBadLoginPassword = typedErrors.NewAuthenticationErrorf(errBadLoginPasswordCode)
 )
