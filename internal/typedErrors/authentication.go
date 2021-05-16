@@ -9,3 +9,7 @@ var AuthenticationError = NewCustomError("JWT - Authentication error", http.Stat
 func NewAuthenticationErrorf(format string, args ...interface{}) error {
 	return Wrapf(AuthenticationError, format, args...)
 }
+
+func NewAuthenticationErrorWithCode(code string) error {
+	return WrapCode(AuthenticationError, code)
+}

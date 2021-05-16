@@ -31,7 +31,7 @@ func (api watchlistHandler) WebService() *restful.WebService {
 		Param(wsWatchlist.PathParameter("movieId", "ID of the movie to remove from watchlist").DataType("int")).
 		Doc("remove movie from users' watchlist").
 		Writes("").
-		Returns(200, "OK", "").
+		Returns(http.StatusOK, "OK", "").
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Filter(authenticateUser(true)).
 		To(RemoveFromWatchlist))
@@ -39,7 +39,7 @@ func (api watchlistHandler) WebService() *restful.WebService {
 	wsWatchlist.Route(wsWatchlist.GET("/").
 		Doc("get movies from users' watchlist").
 		Writes(model.MovieSearch{}).
-		Returns(200, "OK", model.MovieSearch{}).
+		Returns(http.StatusOK, "OK", model.MovieSearch{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Filter(authenticateUser(true)).
 		To(GetWatchlist))
@@ -48,7 +48,7 @@ func (api watchlistHandler) WebService() *restful.WebService {
 		Param(wsWatchlist.PathParameter("movieId", "ID of the movie to check").DataType("int")).
 		Doc("Know if movie is already in user's watchlist").
 		Writes([]model.Movie{}).
-		Returns(200, "OK", []model.Movie{}).
+		Returns(http.StatusOK, "OK", []model.Movie{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.ErrApiBadRequest.CodeError()).
 		Filter(authenticateUser(true)).
 		To(IsInWatchlist))*/

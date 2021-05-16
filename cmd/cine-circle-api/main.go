@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/repository"
 	"cine-circle/internal/repository/postgres"
@@ -81,28 +82,18 @@ func run(cmd *cobra.Command, args []string) {
 	// gzip if accepted
 	restful.DefaultContainer.EnableContentEncoding(true)
 
+	// Define common handler used for getting actual user from token
 	webService.ActualUserHandler = webService.NewActualUserHandler(DB)
 
 	// Adding all new handlers here
-/*	webService.AddWebService(restful_utils.DefaultContainer, webService.NewRootHandler())
-
-	webService.AddWebService(restful_utils.DefaultContainer,
-		webService.NewCircleHandler(circleDom.NewService(repositories.Circle)))
-
-	webService.AddWebService(restful_utils.DefaultContainer,
-		webService.NewMovieHandler(movieDom.NewService(repositories.Movie)))
-
-	webService.AddWebService(restful_utils.DefaultContainer,
-		webService.NewRecommendationHandler(recommendationDom.NewService(repositories.Recommendation)))
-
-	webService.AddWebService(restful_utils.DefaultContainer, userDom.NewUserHandler(userService))
-
-	webService.AddWebService(restful_utils.DefaultContainer,
-		webService.NewWatchlistHandler(watchlistDom.NewService(repositories.Watchlist)))*/
-
 	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		userDom.NewHandler(userDom.NewService(userDom.NewRepository(DB))))
 
+	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+		circleDom.NewHandler(circleDom.NewService(circleDom.NewRepository(DB))))
+
+
+	// Configure and run HTTP server
 	config := restfulspec.Config{
 		WebServices: restful.DefaultContainer.RegisteredWebServices(),
 		APIPath:     "/webService/swagger.yaml",

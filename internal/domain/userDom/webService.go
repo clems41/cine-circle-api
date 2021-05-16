@@ -33,20 +33,18 @@ func (ws handler) WebServices() (handlers []*restful.WebService) {
 	wsAuthentication.Route(wsAuthentication.POST("/sign-up").
 		Doc("Create new user (signup)").
 		Writes(Creation{}).
-		Returns(201, "Created", View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Returns(http.StatusCreated, "Created", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		To(ws.CreateUser))
 
 	wsAuthentication.Route(wsAuthentication.POST("/sign-in").
 		Doc("Generate token from username and password (basic authentication)").
 		Writes(nil).
-		Returns(200, "OK", "").
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Returns(http.StatusOK, "OK", "token").
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		To(ws.GenerateToken))
 
@@ -56,10 +54,10 @@ func (ws handler) WebServices() (handlers []*restful.WebService) {
 	wsUser.Route(wsUser.PUT("/").
 		Doc("update actual user from token").
 		Writes(Update{}).
-		Returns(200, "OK", View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Returns(http.StatusOK, "OK", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.Update))
@@ -67,43 +65,40 @@ func (ws handler) WebServices() (handlers []*restful.WebService) {
 	wsUser.Route(wsUser.PUT("/password").
 		Doc("update existing user's password").
 		Writes(UpdatePassword{}).
-		Returns(200, "OK", View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Returns(http.StatusOK, "OK", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.UpdatePassword))
 
 	wsUser.Route(wsUser.DELETE("/").
 		Doc("Delete existing user").
-		Writes("").
-		Returns(200, "OK", "").
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Writes(nil).
+		Returns(http.StatusNoContent, "Deleted", nil).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.Delete))
 
 	wsUser.Route(wsUser.GET("/{userId}").
 		Doc("Get existing user").
-		Writes("").
-		Returns(200, "OK", View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Writes(nil).
+		Returns(http.StatusFound, "OK", View{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.Get))
 
 	wsUser.Route(wsUser.GET("/me").
 		Doc("Get user info from token").
-		Writes("").
-		Returns(200, "OK", View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Writes(nil).
+		Returns(http.StatusOK, "OK", View{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.GetOwnUserInfo))
@@ -111,22 +106,20 @@ func (ws handler) WebServices() (handlers []*restful.WebService) {
 	wsUser.Route(wsUser.GET("/{username}/exists").
 		Doc("Know if username is already taken").
 		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
-		Writes("").
-		Returns(200, "OK", true).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Writes(nil).
+		Returns(http.StatusFound, "OK", true).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		To(ws.UsernameExists))
 
 	wsUser.Route(wsUser.GET("/").
 		Doc("Search for user(s)").
 		Param(wsUser.QueryParameter("search", "search user using keyword (will match username, email and displayName").DataType("string")).
-		Writes("").
-		Returns(200, "OK", []View{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
+		Writes(nil).
+		Returns(http.StatusOK, "OK", []View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).
 		Filter(webServicePkg.AuthenticateUser()).
 		To(ws.SearchUsers))
@@ -135,7 +128,7 @@ func (ws handler) WebServices() (handlers []*restful.WebService) {
 		Doc("Get all movies that user had rated").
 		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
 		Writes(model.MovieSearch{}).
-		Returns(200, "OK", model.MovieSearch{}).
+		Returns(http.StatusOK, "OK", model.MovieSearch{}).
 		Returns(404, "User not found", typedErrors.ErrRepositoryResourceNotFound.CodeError()).
 		Filter(AuthenticateUser(true)).
 		To(GetMoviesByUser))*/
@@ -157,7 +150,7 @@ func (ws handler) CreateUser(req *restful.Request, res *restful.Response) {
 	var userCreation Creation
 	err := req.ReadEntity(&userCreation)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webServicePkg.HandleHTTPError(req, res, typedErrors.NewUnprocessableEntityErrorf(err.Error()))
 		return
 	}
 	view, err := ws.service.Create(userCreation)
@@ -172,7 +165,7 @@ func (ws handler) Update(req *restful.Request, res *restful.Response) {
 	var update Update
 	err := req.ReadEntity(&update)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, errors.WithStack(err))
+		webServicePkg.HandleHTTPError(req, res, typedErrors.NewUnprocessableEntityErrorf(err.Error()))
 		return
 	}
 
@@ -196,7 +189,7 @@ func (ws handler) UpdatePassword(req *restful.Request, res *restful.Response) {
 	var updatePassword UpdatePassword
 	err := req.ReadEntity(&updatePassword)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, errors.WithStack(err))
+		webServicePkg.HandleHTTPError(req, res, typedErrors.NewUnprocessableEntityErrorf(err.Error()))
 		return
 	}
 

@@ -1,166 +1,88 @@
 package circleDom
 
-/*type circleHandler struct {
+import (
+	webServicePkg "cine-circle/internal/webService"
+	"github.com/emicklei/go-restful"
+	"net/http"
+)
+
+type handler struct {
 	service Service
 }
 
-func NewCircleHandler(svc Service) *circleHandler {
-	return &circleHandler{
+func NewHandler(svc Service) *handler {
+	return &handler{
 		service:    svc,
 	}
 }
 
-func (api circleHandler) WebService() *restful.WebService {
+func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsCircle := &restful.WebService{}
+	handlers = append(handlers, wsCircle)
+
 	wsCircle.Path("/v1/circles")
 
 	wsCircle.Route(wsCircle.POST("/").
 		Doc("Create new circle").
 		Writes(Creation{}).
-		Returns(201, "Created", Result{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
+		Returns(http.StatusCreated, "Created", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
 		To(api.Create))
 
 	wsCircle.Route(wsCircle.PUT("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Update existing circle").
 		Writes(Update{}).
-		Returns(200, "OK", Result{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
+		Returns(http.StatusOK, "OK", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
 		To(api.Update))
 
 	wsCircle.Route(wsCircle.GET("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Get existing circle").
 		Writes(nil).
-		Returns(200, "OK", Result{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
+		Returns(http.StatusFound, "OK", View{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
 		To(api.Get))
 
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).
 		Doc("Delete existing circle").
 		Writes(nil).
-		Returns(200, "OK", Result{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json", typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
+		Returns(http.StatusNoContent, "Deleted", nil).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
 		To(api.Delete))
 
-	return wsCircle
+	return
 }
 
-func (api circleHandler) Create(req *restful.Request, res *restful.Response) {
-	var creation Creation
-	err := req.ReadEntity(&creation)
-	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
-		return
-	}
-
-	// get current user from token
-	user, err := webService.CommonHandler.WhoAmI(req)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	// add current user if not already in circle's users
-	if !utils.ContainsID(creation.UsersID, user.UserID) {
-		creation.UsersID = append(creation.UsersID, user.UserID)
-	}
-
-	circle, err := api.service.Create(creation)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
+func (api handler) Create(req *restful.Request, res *restful.Response) {
 }
 
-func (api circleHandler) Update(req *restful.Request, res *restful.Response) {
-	circleId, err := utils.StrToID(req.PathParameter("circleId"))
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
+func (api handler) Update(req *restful.Request, res *restful.Response) {
 
-	var update Update
-	err = req.ReadEntity(&update)
-	if err != nil {
-		handleHTTPError(res, typedErrors.NewApiBadRequestError(err))
-		return
-	}
-
-	// get current user from token
-	user, err := webService.CommonHandler.WhoAmI(req)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	// add current user if not already in circle's users
-	if !utils.ContainsID(update.UsersID, user.UserID) {
-		update.UsersID = append(update.UsersID, user.UserID)
-	}
-
-	update.CircleID = circleId
-
-	circle, err := api.service.Update(update)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
 }
 
-func (api circleHandler) Delete(req *restful.Request, res *restful.Response) {
-	circleId, err := utils.StrToID(req.PathParameter("circleId"))
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
+func (api handler) Delete(req *restful.Request, res *restful.Response) {
 
-	deleteCircle := Delete{CircleID: circleId}
-	err = api.service.Delete(deleteCircle)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	res.WriteHeaderAndEntity(http.StatusOK, "")
 }
 
-func (api circleHandler) Get(req *restful.Request, res *restful.Response) {
-	circleId, err := utils.StrToID(req.PathParameter("circleId"))
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
+func (api handler) Get(req *restful.Request, res *restful.Response) {
 
-	get := Get{CircleID: circleId}
-	circle, err := api.service.Get(get)
-	if err != nil {
-		handleHTTPError(res, err)
-		return
-	}
-
-	res.WriteHeaderAndEntity(http.StatusOK, circle)
 }
-*/
+

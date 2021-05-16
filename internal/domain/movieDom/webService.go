@@ -19,7 +19,7 @@ func NewMovieHandler(svc Service) *movieHandler {
 		Param(wsMovie.QueryParameter("title", "Get movie or series by title").DataType("string")).
 		Param(wsMovie.QueryParameter("type", "Type of media to search (movie, series, episode)").DataType("string")).
 		Writes(nil).
-		Returns(200, "OK", SearchResult{}).
+		Returns(http.StatusOK, "OK", SearchResult{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).
@@ -31,7 +31,7 @@ func NewMovieHandler(svc Service) *movieHandler {
 		Doc("Get movie by ID").
 		Param(wsMovie.PathParameter("id", "Get movie by ID (based on IMDb ids)").DataType("string")).
 		Writes(nil).
-		Returns(200, "OK", Result{}).
+		Returns(http.StatusOK, "OK", Result{}).
 		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
 		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
 		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).

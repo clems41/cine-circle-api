@@ -414,7 +414,7 @@ func TestWebService_SearchUsers(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
 
 	// Variables used for searching on username
-	commonUsernamePart := fake.UserName()[:3]
+	commonUsernamePart := (fake.UserName() + fake.UserName())[:3]
 	matchingUsername1 := fake.UserName() + commonUsernamePart + fake.UserName()
 	matchingUsername2 := commonUsernamePart + fake.UserName()
 	matchingUsername3 := fake.UserName() + commonUsernamePart
