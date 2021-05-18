@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/domain/userDom"
 	logger "cine-circle/pkg/logger"
 	"gorm.io/gorm"
@@ -18,7 +19,8 @@ type Repository interface {
 type Repositories struct {
 	List []Repository
 
-	User						*userDom.Repository
+	User   *userDom.Repository
+	Circle *circleDom.Repository
 }
 
 func (rs Repositories) Migrate() {
@@ -37,6 +39,8 @@ func NewAllRepositories(DB *gorm.DB) (r Repositories) {
 	r.User = userDom.NewRepository(DB)
 	r.List = append(r.List, r.User)
 
+	r.Circle = circleDom.NewRepository(DB)
+	r.List = append(r.List, r.Circle)
+
 	return
 }
-

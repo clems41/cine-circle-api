@@ -3,19 +3,19 @@ package circleDom
 import "cine-circle/internal/typedErrors"
 
 const (
-	errNameEmptyCode = "NAME_EMPTY"
+	errNameEmptyCode        = "NAME_EMPTY"
 	errDescriptionEmptyCode = "DESCRIPTION_EMPTY"
-	errUsersEmptyCode = "USERS_EMPTY"
 	errNoFieldsProvidedCode = "NO_FIELDS_PROVIDED"
-	errIdNullCode = "ID_NULL"
-	errNotAuthorizedCode = "USER_NOT_AUTHORIZED"
+	errIdNullCode           = "ID_NULL"
+	errNotAuthorizedCode    = "USER_NOT_AUTHORIZED"
+	errUserNotFoundCode     = "USER_NOT_FOUND"
 )
 
 var (
-	errNameEmpty = typedErrors.NewBadRequestWithCode(errNameEmptyCode)
+	errNameEmpty        = typedErrors.NewBadRequestWithCode(errNameEmptyCode)
 	errDescriptionEmpty = typedErrors.NewBadRequestWithCode(errDescriptionEmptyCode)
-	errUsersEmpty = typedErrors.NewBadRequestWithCode(errUsersEmptyCode)
 	errNoFieldsProvided = typedErrors.NewBadRequestWithCode(errNoFieldsProvidedCode)
-	errIdNull = typedErrors.NewBadRequestWithCode(errIdNullCode)
-	errNotAuthorized = typedErrors.NewAuthenticationErrorWithCode(errNotAuthorizedCode)
+	errIdNull           = typedErrors.NewBadRequestWithCode(errIdNullCode)
+	errNotAuthorized    = typedErrors.NewAuthenticationErrorWithCode(errNotAuthorizedCode)
+	errUserNotFound     = typedErrors.NewNotFoundWithCode(errUserNotFoundCode)
 )

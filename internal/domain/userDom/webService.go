@@ -158,7 +158,7 @@ func (ws handler) CreateUser(req *restful.Request, res *restful.Response) {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	res.WriteHeaderAndEntity(http.StatusOK, view)
+	res.WriteHeaderAndEntity(http.StatusCreated, view)
 }
 
 func (ws handler) Update(req *restful.Request, res *restful.Response) {

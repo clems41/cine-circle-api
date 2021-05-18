@@ -12,15 +12,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/emicklei/go-restful"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
-
-var DatabaseIndexName = 0
 
 type TestingHTTPServer struct {
 	container *restful.Container
@@ -40,8 +40,9 @@ func OpenDatabase(t *testing.T) (DB *gorm.DB, closeFunction func()) {
 		t.Fatalf(err.Error())
 	}
 
-	testingDatabaseName := fmt.Sprintf("%s%d", TestingDatabaseNamePrefix, DatabaseIndexName)
-	DatabaseIndexName++
+	uniqueID := uuid.New().String()
+	uniqueID = strings.ReplaceAll(uniqueID, "-", "_")
+	testingDatabaseName := fmt.Sprintf("%s%s", TestingDatabaseNamePrefix, uniqueID)
 
 	// Deleting testing database if already exists before creating new one from template
 	err = realDB.

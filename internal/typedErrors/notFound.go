@@ -9,3 +9,6 @@ var NotFoundError = NewCustomError("Request - Entity not found", http.StatusNotF
 func NewNotFoundErrorf(format string, args ...interface{}) error {
 	return Wrapf(NotFoundError, format, args...)
 }
+func NewNotFoundWithCode(code string) error {
+	return WrapCode(NotFoundError, code)
+}

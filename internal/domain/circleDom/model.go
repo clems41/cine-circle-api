@@ -1,24 +1,32 @@
 package circleDom
 
 type Creation struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	UsersID     []uint `json:"usersId"`
+	UserIDFromRequest uint   `json:"-"`
+	Name              string `json:"name"`
+	Description       string `json:"description"`
 }
 
 type Update struct {
-	CircleID    uint   `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	UsersID     []uint `json:"usersId"`
+	CircleID          uint   `json:"-"`
+	UserIDFromRequest uint   `json:"-"`
+	Name              string `json:"name"`
+	Description       string `json:"description"`
 }
 
-type Delete struct {
-	CircleID uint `json:"id"`
+type UpdateUser struct {
+	CircleID          uint
+	UserIDToUpdate    uint
+	UserIDFromRequest uint
+}
+
+type Deletion struct {
+	CircleID          uint `json:"-"`
+	UserIDFromRequest uint `json:"-"`
 }
 
 type Get struct {
-	CircleID uint `json:"id"`
+	CircleID          uint `json:"-"`
+	UserIDFromRequest uint `json:"-"`
 }
 
 type View struct {
@@ -41,9 +49,6 @@ func (c Creation) Valid() (err error) {
 	if c.Description == "" {
 		return errDescriptionEmpty
 	}
-	if len(c.UsersID) == 0 {
-		return errUsersEmpty
-	}
 	return
 }
 
@@ -51,13 +56,13 @@ func (u Update) Valid() (err error) {
 	if u.CircleID == 0 {
 		return errIdNull
 	}
-	if u.Name == "" || u.Description == "" || len(u.UsersID) == 0 {
+	if u.Name == "" || u.Description == "" {
 		return errNoFieldsProvided
 	}
 	return
 }
 
-func (d Delete) Valid() (err error) {
+func (d Deletion) Valid() (err error) {
 	if d.CircleID == 0 {
 		return errIdNull
 	}

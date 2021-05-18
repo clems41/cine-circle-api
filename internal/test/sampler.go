@@ -5,6 +5,7 @@ import (
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/utils"
 	"github.com/icrowley/fake"
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"strings"
 	"testing"
@@ -51,11 +52,9 @@ func (sampler *Sampler) GetUsersSample(numberOfUsers int) (users []repositoryMod
 func (sampler *Sampler) GetUserSampleWithSpecificPassword(password string) (user *repositoryModel.User) {
 
 	hashedPassword, err := utils.HashAndSaltPassword(password, constant.CostHashFunction)
+	require.NoError(sampler.t, err)
 
 	// Create new user
-	if err != nil {
-		sampler.t.Fatalf(err.Error())
-	}
 	username := strings.ToLower(fake.UserName())
 	user = &repositoryModel.User{
 		Username:       &username,
@@ -68,8 +67,26 @@ func (sampler *Sampler) GetUserSampleWithSpecificPassword(password string) (user
 	err = sampler.DB.
 		Create(user).
 		Error
-	if err != nil {
-		sampler.t.Fatalf(err.Error())
-	}
+	require.NoError(sampler.t, err)
 	return
+}
+
+func (sampler *Sampler) GetCircle() *repositoryModel.Circle{
+
+	circle := repositoryModel.Circle{
+		Name:        fake.Title(),
+		Description: fake.Sentences(),
+	}
+
+	nbUsers := FakeIntBetween(4, 12)
+	for i := 0; i < nbUsers; i++ {
+		circle.Users = append(circle.Users, *sampler.GetUserSample())
+	}
+
+	err := sampler.DB.
+		Create(&circle).
+		Error
+	require.NoError(sampler.t, err)
+
+	return &circle
 }

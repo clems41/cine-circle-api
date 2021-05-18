@@ -17,7 +17,7 @@ import (
 	"testing"
 )
 
-func TestWebService_CreateUser(t *testing.T) {
+func TestHandler_CreateUser(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -102,7 +102,7 @@ func TestWebService_CreateUser(t *testing.T) {
 
 	// Send request and check response code
 	resp = testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
 	var view View
 	testingHTTPServer.DecodeResponse(resp, &view)
 
@@ -127,7 +127,7 @@ func TestWebService_CreateUser(t *testing.T) {
 	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
 }
 
-func TestWebService_Update(t *testing.T) {
+func TestHandler_Update(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -227,7 +227,7 @@ func TestWebService_Update(t *testing.T) {
 	require.Equal(t, update.Email, user.Email)
 }
 
-func TestWebService_UpdatePassword(t *testing.T) {
+func TestHandler_UpdatePassword(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -314,7 +314,7 @@ func TestWebService_UpdatePassword(t *testing.T) {
 	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
 }
 
-func TestWebService_Delete(t *testing.T) {
+func TestHandler_Delete(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -358,7 +358,7 @@ func TestWebService_Delete(t *testing.T) {
 	require.True(t, gorm.ErrRecordNotFound == err)
 }
 
-func TestWebService_Get(t *testing.T) {
+func TestHandler_Get(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -403,7 +403,7 @@ func TestWebService_Get(t *testing.T) {
 	})
 }
 
-func TestWebService_SearchUsers(t *testing.T) {
+func TestHandler_SearchUsers(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -516,7 +516,7 @@ func TestWebService_SearchUsers(t *testing.T) {
 	require.Len(t, views, 3)
 }
 
-func TestWebService_GenerateToken(t *testing.T) {
+func TestHandler_GenerateToken(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -574,7 +574,7 @@ func TestWebService_GenerateToken(t *testing.T) {
 	require.NoError(t, err, "Token should be valid")
 }
 
-func TestWebService_GetOwnUserInfo(t *testing.T) {
+func TestHandler_GetOwnUserInfo(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -609,7 +609,7 @@ func TestWebService_GetOwnUserInfo(t *testing.T) {
 	})
 }
 
-func TestWebService_UsernameExists(t *testing.T) {
+func TestHandler_UsernameExists(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 

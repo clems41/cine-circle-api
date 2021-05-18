@@ -9,6 +9,7 @@ require (
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/emicklei/go-restful-openapi v1.4.1 // indirect
 	github.com/go-openapi/spec v0.20.3 // indirect
+	github.com/google/uuid v1.2.0 // indirect
 	github.com/icrowley/fake v0.0.0-20180203215853-4178557ae428 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
