@@ -51,12 +51,10 @@ func (svc *service) Create(creation Creation) (view View, err error) {
 }
 
 func (svc *service) Update(update Update) (view View, err error) {
-	// valid fields
 	err = update.Valid()
 	if err != nil {
 		return
 	}
-	// get user that sending request
 	userFromRequest, err := svc.r.GetUser(update.UserIDFromRequest)
 	if err != nil {
 		return

@@ -1,68 +1,53 @@
 package movieDom
 
-type movieHandler struct {
+import (
+	"cine-circle/internal/utils"
+	webServicePkg "cine-circle/internal/webService"
+	"github.com/emicklei/go-restful"
+	"net/http"
+)
+
+type handler struct {
 	service Service
 }
 
-func NewMovieHandler(svc Service) *movieHandler {
-	return &movieHandler{
+func NewHandler(svc Service) *handler {
+	return &handler{
 		service:    svc,
 	}
 }
 
-/*func (api movieHandler) WebService() *restful.WebService {
+func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsMovie := &restful.WebService{}
+	handlers = append(handlers, wsMovie)
+
 	wsMovie.Path("/v1/movies")
 
-	wsMovie.Route(wsMovie.GET("/").
-		Doc("Get movie or series by search").
-		Param(wsMovie.QueryParameter("title", "Get movie or series by title").DataType("string")).
-		Param(wsMovie.QueryParameter("type", "Type of media to search (movie, series, episode)").DataType("string")).
-		Writes(nil).
-		Returns(http.StatusOK, "OK", SearchResult{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
-		To(api.SearchMovie))
-
 	wsMovie.Route(wsMovie.GET("/{movieId}").
-		Doc("Get movie by ID").
-		Param(wsMovie.PathParameter("id", "Get movie by ID (based on IMDb ids)").DataType("string")).
+		Param(wsMovie.PathParameter("movieId", "ID of movie").DataType("int")).
+		Doc("Get movie").
 		Writes(nil).
-		Returns(http.StatusOK, "OK", Result{}).
-		Returns(400, "Bad request, fields not validated", typedErrors.CustomError{}).
-		Returns(401, "Unauthorized, user cannot access this route", typedErrors.CustomError{}).
-		Returns(422, "Not processable, impossible to serialize json",typedErrors.CustomError{}).
-		Filter(logRequest()).
-		Filter(authenticateUser()).
-		To(api.GetMovie))
+		Returns(http.StatusFound, "OK", View{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
+		To(api.Get))
 
-	return wsMovie
+	return
 }
 
-func (api movieHandler) SearchMovie(req *restful.Request, res *restful.Response) {
-	title := req.QueryParameter("title")
-	mediaType := req.QueryParameter("type")
-	search := Search{
-		Title:     title,
-		MediaType: mediaType,
-	}
-	result, err := api.service.SearchMovie(search)
+func (api handler) Get(req *restful.Request, res *restful.Response) {
+	movieID, err := utils.StrToID(req.PathParameter("movieId"))
 	if err != nil {
-		handleHTTPError(res, err)
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	res.WriteHeaderAndEntity(http.StatusOK, result)
-}
 
-func (api movieHandler) GetMovie(req *restful.Request, res *restful.Response) {
-	movieId := req.PathParameter("movieId")
-	movie, err := api.service.GetMovieByID(movieId)
+	view, err := api.service.Get(movieID)
 	if err != nil {
-		handleHTTPError(res, err)
+		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	res.WriteHeaderAndEntity(http.StatusOK, movie)
-}*/
+	res.WriteHeaderAndEntity(http.StatusFound, view)
+}

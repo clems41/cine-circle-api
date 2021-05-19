@@ -2,11 +2,12 @@ package movieDom
 
 import "cine-circle/internal/utils"
 
+// Used for Omdb
 const (
-	ExternalApiUrl = "http://www.omdbapi.com/"
+	OmdbApiUrl = "http://www.omdbapi.com/"
 
-	defaultAPIKey = "9d8fa748"
-	envAPIKey = "EXTERNAL_API_KEY"
+	defaultOmdbAPIKey = "9d8fa748"
+	envOmdbAPIKey = "EXTERNAL_API_KEY"
 
 	defaultPlotValue = "full" //(full or short)
 	envPlotValue = "EXTERNAL_PLOT_VALUE"
@@ -21,6 +22,25 @@ const (
 )
 
 var (
-	ExternalApiKey = utils.GetDefaultOrFromEnv(defaultAPIKey, envAPIKey)
+	ExternalOmdbApiKey = utils.GetDefaultOrFromEnv(defaultOmdbAPIKey, envOmdbAPIKey)
 	PlotValue = utils.GetDefaultOrFromEnv(defaultPlotValue, envPlotValue)
+)
+
+// Used for The Movie Database
+const (
+	MovieDBApiUrl = "https://api.themoviedb.org/3/"
+	MovieDBApiMovieUrl = "https://api.themoviedb.org/3/movie/"
+	MovieDBApiSearchUrl = "https://api.themoviedb.org/3/search/movie/"
+
+	defaultMovieDBApiToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0"
+	envMovieDBApiKey = "EXTERNAL_API_TOKEN"
+
+	releaseDateLayout = "2006-01-02"
+
+	languageQueryParameterKey = "language"
+	frenchValue = "fr-FR"
+)
+
+var (
+	ExternalMovieDBApiToken = utils.GetDefaultOrFromEnv(defaultMovieDBApiToken, envMovieDBApiKey)
 )
