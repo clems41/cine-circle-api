@@ -22,10 +22,10 @@ func NewHandler(svc Service) *handler {
 	}
 }
 
-func (ws handler) WebServices() (handlers []*restful.WebService) {
+func (ws handler) WebServices() (webServices []*restful.WebService) {
 	wsAuthentication := &restful.WebService{}
 	wsUser := &restful.WebService{}
-	handlers = append(handlers, wsAuthentication, wsUser)
+	webServices = append(webServices, wsAuthentication, wsUser)
 
 	// Route for signup or sign-in
 	wsAuthentication.Path("/v1")

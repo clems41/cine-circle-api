@@ -1,30 +1,25 @@
 package recommendationDom
 
-import (
-	"time"
-)
-
 type Creation struct {
-	MovieID   string `json:"movieId"`
-	UsersId   []uint `json:"usersId"`
-	CirclesId []uint `json:"circlesId"`
+	SenderID  uint   `json:"-"`
+	MovieID   uint   `json:"movieId"`
 	Comment   string `json:"comment"`
+	CircleIDs []uint `json:"circleIds"`
+	UserIDs   []uint `json:"userIds"`
 }
 
-type UserView struct {
-	UserID   uint   `json:"id"`
-	Username string `json:"username"`
-}
-
-type CircleView struct {
-	CircleID uint   `json:"id"`
-	Name     string `json:"name"'`
-}
-
-type Result struct {
-	AddedAt time.Time    `json:"addedAt"`
-	MovieID string       `json:"movieId"`
-	Users   []UserView   `json:"users"`
-	Circles []CircleView `json:"circles"`
-	Comment string       `json:"comment"`
+func (c Creation) Valid() error {
+	if c.SenderID == 0 {
+		return errSenderIDNull
+	}
+	if c.MovieID == 0 {
+		return errMovieIDNull
+	}
+	if c.Comment == "" {
+		return errCommentEmpty
+	}
+	if len(c.CircleIDs) == 0 && len(c.UserIDs) == 0 {
+		return errMissingRecipient
+	}
+	return nil
 }

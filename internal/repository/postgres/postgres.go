@@ -122,6 +122,7 @@ func OpenConnection(databaseName ...string) (db *gorm.DB, err error) {
 	if pgConfig.Debug {
 		db = db.Debug()
 	}
+	//db = db.Set("gorm:auto_preload", false)
 	return
 }
 

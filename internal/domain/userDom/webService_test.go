@@ -430,29 +430,34 @@ func TestHandler_SearchUsers(t *testing.T) {
 	fakeUsername2 := fake.UserName()
 	users := []repositoryModel.User{
 		{
-			Username:    &matchingUsername2,
-			DisplayName: matchingDisplayName3,
-			Email:       fake.EmailAddress(),
+			Username:       &matchingUsername2,
+			DisplayName:    matchingDisplayName3,
+			Email:          fake.EmailAddress(),
+			HashedPassword: test.FakePassword(),
 		},
 		{
-			Username:    &matchingUsername1,
-			DisplayName: fake.FullName(),
-			Email:       fake.EmailAddress(),
+			Username:       &matchingUsername1,
+			DisplayName:    fake.FullName(),
+			Email:          fake.EmailAddress(),
+			HashedPassword: test.FakePassword(),
 		},
 		{
-			Username:    &fakeUsername1,
-			DisplayName: matchingDisplayName1,
-			Email:       fake.EmailAddress(),
+			Username:       &fakeUsername1,
+			DisplayName:    matchingDisplayName1,
+			Email:          fake.EmailAddress(),
+			HashedPassword: test.FakePassword(),
 		},
 		{
-			Username:    &matchingUsername3,
-			DisplayName: matchingDisplayName2,
-			Email:       fake.EmailAddress(),
+			Username:       &matchingUsername3,
+			DisplayName:    matchingDisplayName2,
+			Email:          fake.EmailAddress(),
+			HashedPassword: test.FakePassword(),
 		},
 		{
-			Username:    &fakeUsername2,
-			DisplayName: fake.FullName(),
-			Email:       fake.EmailAddress(),
+			Username:       &fakeUsername2,
+			DisplayName:    fake.FullName(),
+			Email:          fake.EmailAddress(),
+			HashedPassword: test.FakePassword(),
 		},
 	}
 	// Save users into database
@@ -542,7 +547,6 @@ func TestHandler_GenerateToken(t *testing.T) {
 		*userSample.Username + constant.UsernamePasswordDelimiterForHeader + fakePassword))
 	correctUsernameWithCorrectPasswordEncoded := base64.StdEncoding.EncodeToString([]byte(
 		*userSample.Username + constant.UsernamePasswordDelimiterForHeader + password))
-
 
 	// Try to getting token with wrong username and wrong password
 	headerParameters := []test.KeyValue{

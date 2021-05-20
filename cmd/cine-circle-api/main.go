@@ -3,6 +3,7 @@ package main
 import (
 	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/domain/movieDom"
+	"cine-circle/internal/domain/recommendationDom"
 	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/repository"
 	"cine-circle/internal/repository/postgres"
@@ -95,6 +96,9 @@ func run(cmd *cobra.Command, args []string) {
 
 	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		movieDom.NewHandler(movieDom.NewService(movieDom.NewRepository(DB))))
+
+	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+		recommendationDom.NewHandler(recommendationDom.NewService(recommendationDom.NewRepository(DB))))
 
 
 	// Configure and run HTTP server

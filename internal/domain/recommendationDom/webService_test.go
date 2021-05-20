@@ -1,1 +1,218 @@
 package recommendationDom
+
+import (
+	"cine-circle/internal/repository/repositoryModel"
+	"cine-circle/internal/test"
+	"github.com/icrowley/fake"
+	"github.com/stretchr/testify/require"
+	"net/http"
+	"testing"
+)
+
+func TestHandler_Create(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, false)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Add existing users to database
+	userNotInCircle1 := sampler.GetUserSample()
+	userNotInCircle2 := sampler.GetUserSample()
+	userInCircle := sampler.GetUserSample()
+
+	// Creating circle with specific user
+	circle := sampler.GetCircle(*userInCircle)
+
+	movie := sampler.GetMovie()
+
+	// fields for recommendation
+	comment := fake.Sentences()
+	fakeMovieId := uint(99999)
+	fakeCircleId := uint(99999)
+	fakeUserId := uint(99999)
+
+	creation := Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   nil,
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Authenticate user for sending request (user not in circle), should fail and return 401
+	err := testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
+	require.NoError(t, err, "User should be authenticated")
+
+	// Send request and check response code with wrong user authenticated, should fail and return 401
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Authenticate user for sending request (user not in circle), should fail and return 401
+	err = testingHTTPServer.AuthenticateUserPermanently(userInCircle)
+	require.NoError(t, err, "User should be authenticated")
+
+	// Send request and check response with wrong movieId, should fail and return 404
+	creation = Creation{
+		MovieID:   fakeMovieId,
+		Comment:   comment,
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   []uint{userNotInCircle1.GetID()},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	// Send request and check response with empty comment, should fail and return 400
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   "",
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   []uint{userNotInCircle1.GetID()},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Send request and check response with empty recipient, should fail and return 400
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: nil,
+		UserIDs:   nil,
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Send request and check response with wrong userId, should fail and return 401 (like if users are not in same circle, event if user doesn't exists)
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: nil,
+		UserIDs:   []uint{fakeUserId},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Send request and check response with wrong circleId, should fail and return 401 (like if user is not in circle, even if circle doesn't exists)
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: []uint{fakeCircleId},
+		UserIDs:   nil,
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Send request and check response with user2 sending reco to user1 not in his contact list, should fail and return 401
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: nil,
+		UserIDs:   []uint{userNotInCircle1.GetID()},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Creating circle with both user, should now be OK
+	_ = sampler.GetCircle(*userNotInCircle1, *userNotInCircle2)
+
+	// Send request and check response with user2 sending reco to user1 now in his contact list, should work
+	err = testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
+	require.NoError(t, err, "User should be authenticated")
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: nil,
+		UserIDs:   []uint{userNotInCircle1.GetID()},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Send request and check response with user2 sending reco to other circle, should fail because user not in circle return 401
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   nil,
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Send request and check response with user2 sending reco to other circle, should work after adding him into circle
+	err = DB.
+		Exec("INSERT INTO circle_user (circle_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", circle.GetID(), userNotInCircle2.GetID()).
+		Error
+	require.NoError(t, err)
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   nil,
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Send request and check response with user2 sending reco to other circle and user1, should work
+	err = DB.
+		Exec("INSERT INTO circle_user (circle_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", circle.GetID(), userNotInCircle2.GetID()).
+		Error
+	require.NoError(t, err)
+	creation = Creation{
+		MovieID:   movie.GetID(),
+		Comment:   comment,
+		CircleIDs: []uint{circle.GetID()},
+		UserIDs:   []uint{userNotInCircle1.GetID()},
+	}
+	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
+	require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Check in DB if recommendations have been saved
+	var recommendations []repositoryModel.Recommendation
+	err = DB.
+		Preload("Users").
+		Preload("Movie").
+		Preload("Sender").
+		Preload("Circles").
+		Preload("Circles.Users").
+		Order("id").
+		Find(&recommendations, "movie_id = ? AND sender_id = ?", movie.GetID(), userNotInCircle2.GetID()).
+		Error
+	require.NoError(t, err)
+	require.Len(t, recommendations, 3, "should find 3 recommendations in DB")
+
+	// Update circle with new users before checking recommendation details
+	err = DB.Preload("Users").Take(&circle).Error
+	require.NoError(t, err)
+
+	for idx, reco := range recommendations {
+		// Check details about movie
+		require.True(t, reco.MovieID == reco.Movie.GetID())
+		require.Equal(t, reco.Movie.Title, movie.Title)
+
+		// Check details about sender
+		require.True(t, reco.SenderID == reco.Sender.GetID())
+		require.Equal(t, reco.Sender.Email, userNotInCircle2.Email)
+		require.Equal(t, reco.Sender.Username, userNotInCircle2.Username)
+		require.Equal(t, reco.Sender.DisplayName, userNotInCircle2.DisplayName)
+
+		// Check details about circles and users
+		switch idx {
+		case 0:
+			require.Len(t, reco.Users, 1)
+			require.Len(t, reco.Circles, 0)
+		case 1:
+			require.Len(t, reco.Users, 0)
+			require.Len(t, reco.Circles, 1)
+			require.Len(t, reco.Circles[0].Users, len(circle.Users))
+		case 2:
+			require.Len(t, reco.Users, 1)
+			require.Len(t, reco.Circles, 1)
+			require.Len(t, reco.Circles[0].Users, len(circle.Users))
+		}
+	}
+}

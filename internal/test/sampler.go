@@ -4,6 +4,7 @@ import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/utils"
+	"github.com/google/uuid"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -71,17 +72,21 @@ func (sampler *Sampler) GetUserSampleWithSpecificPassword(password string) (user
 	return
 }
 
-func (sampler *Sampler) GetCircle() *repositoryModel.Circle{
+func (sampler *Sampler) GetCircle(users ...repositoryModel.User) *repositoryModel.Circle{
 
 	circle := repositoryModel.Circle{
 		Name:        fake.Title(),
 		Description: fake.Sentences(),
 	}
 
+	// Adding users
 	nbUsers := FakeIntBetween(4, 12)
 	for i := 0; i < nbUsers; i++ {
 		circle.Users = append(circle.Users, *sampler.GetUserSample())
 	}
+
+	// Adding specific users
+	circle.Users = append(circle.Users, users...)
 
 	err := sampler.DB.
 		Create(&circle).
@@ -89,4 +94,26 @@ func (sampler *Sampler) GetCircle() *repositoryModel.Circle{
 	require.NoError(sampler.t, err)
 
 	return &circle
+}
+
+func (sampler *Sampler) GetMovie() *repositoryModel.Movie {
+	movie := repositoryModel.Movie{
+		Title:            fake.Title(),
+		ImdbId:           uuid.New().String(),
+		BackdropPath:     fake.Street(),
+		PosterPath:       fake.Street(),
+		Genres:           fake.GetLangs(),
+		OriginalLanguage: fake.Language(),
+		OriginalTitle:    fake.Title(),
+		Overview:         fake.Sentences(),
+		ReleaseDate:      FakeTime(),
+		Runtime:          FakeIntBetween(55, 236),
+	}
+
+	err := sampler.DB.
+		Create(&movie).
+		Error
+	require.NoError(sampler.t, err)
+
+	return &movie
 }

@@ -30,7 +30,6 @@ type stackTracer interface {
 
 // HandleHTTPError Write readable and formatted error in the restful.Response
 func HandleHTTPError(req *restful.Request, res *restful.Response, err error) {
-
 	// Instantiate the result object that will be displayed in HTTP response
 	jsonFormattedError := FormattedJsonError{
 		Kind:     "",
@@ -52,17 +51,16 @@ func HandleHTTPError(req *restful.Request, res *restful.Response, err error) {
 		jsonFormattedError.Metadata["Stack"] = string(buf[:stackLength])
 	}
 
-	// Manage DPC error typed
+	// Manage custom error typed
 
 	if e, ok := err.(typedErrors.TypedError); ok {
 
 		jsonFormattedError.Kind = e.Type()
 		jsonFormattedError.Code = e.BusinessCode()
 
-		err = res.WriteHeaderAndEntity(e.HttpStatus(), jsonFormattedError)
-		if err != nil {
-			logger.Sugar.Errorf("Cannot send response : %+v", err)
-		}
+		logger.Sugar.Errorf("%s - %s : error occurs (%d) : %+v", req.Request.Method, req.Request.URL.String(), e.HttpStatus(), err)
+
+		res.WriteHeaderAndEntity(e.HttpStatus(), jsonFormattedError)
 
 		return
 	}
@@ -73,24 +71,12 @@ func HandleHTTPError(req *restful.Request, res *restful.Response, err error) {
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 
-		logger.Sugar.Debugf("Entity not found in database: %+v", err)
-
-		jsonFormattedError.Kind = "Postgres"
-
-		err = res.WriteHeaderAndEntity(http.StatusNotFound, jsonFormattedError)
-		if err != nil {
-			logger.Sugar.Errorf("Cannot send response : %+v", err)
-		}
-
 		jsonFormattedError.Message = fmt.Sprintf("Entity not found in database: %+v", err)
 		jsonFormattedError.Kind = "Postgres"
 
-		logger.Sugar.Errorf(jsonFormattedError.Message)
+		logger.Sugar.Errorf("%s - %s : error occurs (%d) : %+v", req.Request.Method, req.Request.URL.String(), http.StatusNotFound, err)
 
-		err = res.WriteHeaderAndEntity(http.StatusNotFound, jsonFormattedError)
-		if err != nil {
-			logger.Sugar.Errorf("Cannot send response : %+v", err)
-		}
+		res.WriteHeaderAndEntity(http.StatusNotFound, jsonFormattedError)
 		return
 	}
 
@@ -99,10 +85,7 @@ func HandleHTTPError(req *restful.Request, res *restful.Response, err error) {
 	jsonFormattedError.Kind = "Internal server error"
 	jsonFormattedError.Message = fmt.Sprintf("Something went wrong : '%s'. Please report this error with the following stack to the IT crew", err.Error())
 
-	logger.Sugar.Errorf("%s - %s : error occurs : %+v", req.Request.Method, req.Request.URL.String(), err)
+	logger.Sugar.Errorf("%s - %s : error occurs (%d) : %+v", req.Request.Method, req.Request.URL.String(), http.StatusInternalServerError, err)
 
-	err = res.WriteHeaderAndEntity(http.StatusInternalServerError, jsonFormattedError)
-	if err != nil {
-		logger.Sugar.Errorf("Cannot send response : %+v", err)
-	}
+	res.WriteHeaderAndEntity(http.StatusInternalServerError, jsonFormattedError)
 }

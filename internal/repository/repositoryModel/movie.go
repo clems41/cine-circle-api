@@ -7,7 +7,7 @@ import (
 
 type Movie struct {
 	Metadata
-	Title            string
+	Title            string `gorm:"not null;default:null"`
 	ImdbId           string
 	BackdropPath     string
 	PosterPath       string

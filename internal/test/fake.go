@@ -8,6 +8,7 @@ import (
 )
 
 func FakeTime() time.Time {
+	rand.Seed(time.Now().UnixNano())
 	min := time.Date(1970, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	max := time.Date(2070, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	delta := max - min
@@ -22,6 +23,7 @@ func FakeTimePtr() *time.Time {
 }
 
 func FakeTimeBefore(max time.Time) time.Time {
+	rand.Seed(time.Now().UnixNano())
 	min := time.Date(1970, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	delta := max.Unix() - min
 
@@ -35,6 +37,7 @@ func FakeTimePtrBefore(max time.Time) *time.Time {
 }
 
 func FakeTimeAfter(min time.Time) time.Time {
+	rand.Seed(time.Now().UnixNano())
 	max := time.Date(2070, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	delta := max - min.Unix()
 
@@ -52,6 +55,7 @@ func FakeLocalPhone() string {
 }
 
 func FakeIntBetween(min, max int64) int {
+	rand.Seed(time.Now().UnixNano())
 	return int(rand.Int63n(max - min) + min)
 }
 

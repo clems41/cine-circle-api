@@ -17,9 +17,9 @@ func NewHandler(svc Service) *handler {
 	}
 }
 
-func (api handler) WebServices() (handlers []*restful.WebService) {
+func (api handler) WebServices() (webServices []*restful.WebService) {
 	wsMovie := &restful.WebService{}
-	handlers = append(handlers, wsMovie)
+	webServices = append(webServices, wsMovie)
 
 	wsMovie.Path("/v1/movies")
 

@@ -23,7 +23,7 @@ func TestHandler_Get(t *testing.T) {
 	// Add existing circle to database
 	userSample := sampler.GetUserSample()
 
-	// ID The Dark knight !!!
+	// ID of movie The Dark knight !!!
 	movieId := uint(155)
 
 	wrongBasePath := webServicePath + "/999999999"
