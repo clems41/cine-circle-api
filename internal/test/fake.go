@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/icrowley/fake"
 	"math/rand"
+	"reflect"
 	"time"
 )
 
@@ -59,6 +60,11 @@ func FakeIntBetween(min, max int64) int {
 	return int(rand.Int63n(max - min) + min)
 }
 
+func FakeRange(min, max int64) []int {
+	rangeValue := FakeIntBetween(min, max)
+	return make([]int, rangeValue)
+}
+
 func FakeBool() bool {
 	return rand.Int63n(1) == 1
 }
@@ -66,4 +72,13 @@ func FakeBool() bool {
 func FakePassword() string {
 	return fake.Password(PasswordMinCharacter, PasswordMaxCharacter, PasswordAllowUpper,
 		PasswordAllowNumber, PasswordAllowSpecial)
+}
+
+func RandomElement(slice interface{}) interface{} {
+	s := reflect.ValueOf(slice)
+	if s.Kind() != reflect.Slice {
+		return nil
+	}
+	idx := FakeIntBetween(0, int64(s.Len() - 1))
+	return s.Index(idx).Interface()
 }

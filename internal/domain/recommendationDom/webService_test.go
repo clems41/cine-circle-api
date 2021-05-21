@@ -13,16 +13,16 @@ func TestHandler_Create(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
-	sampler := test.NewSampler(t, DB, false)
+	sampler := test.NewSampler(t, DB, true)
 
 	webService := NewHandler(NewService(NewRepository(DB)))
 	webServicePath := webService.WebServices()[0].RootPath()
 	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
 
 	// Add existing users to database
-	userNotInCircle1 := sampler.GetUserSample()
-	userNotInCircle2 := sampler.GetUserSample()
-	userInCircle := sampler.GetUserSample()
+	userNotInCircle1 := sampler.GetUser()
+	userNotInCircle2 := sampler.GetUser()
+	userInCircle := sampler.GetUser()
 
 	// Creating circle with specific user
 	circle := sampler.GetCircle(*userInCircle)
@@ -215,4 +215,60 @@ func TestHandler_Create(t *testing.T) {
 			require.Len(t, reco.Circles[0].Users, len(circle.Users))
 		}
 	}
+}
+
+func TestHandler_List(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Create recommendations sent and received by user
+	userSample := sampler.GetUser()
+	sentRecommendations := sampler.GetRecommendationsSentByUser(userSample)
+	receivedRecommendations := sampler.GetRecommendationsReceivedByUser(userSample)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "field",
+			Value: fake.Word(),
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Authenticate user for sending request (user not in circle), should fail and return 401
+	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
+	require.NoError(t, err, "User should be authenticated")
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "field",
+			Value: "date",
+		},
+		{
+			Key:   "desc",
+			Value: "true",
+		},
+	}
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var view ViewList
+	testingHTTPServer.DecodeResponse(resp, &view)
+	require.Equal(t, len(receivedRecommendations) + len(sentRecommendations), view.NumberOfItems)
+
+	// TODO test more things
 }

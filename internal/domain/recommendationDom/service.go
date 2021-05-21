@@ -11,6 +11,7 @@ var _ Service = (*service)(nil)
 
 type Service interface {
 	Create(creation Creation) (err error)
+	List(filters Filters) (list ViewList, err error)
 }
 
 type service struct {
@@ -87,4 +88,74 @@ func (service *service) Create(creation Creation) (err error) {
 		Users:    users,
 	}
 	return service.r.Create(&recommendation)
+}
+
+func (service *service) List(filters Filters) (list ViewList, err error) {
+	err = filters.Valid()
+	if err != nil {
+		return
+	}
+
+	// Update filters with right fields
+	if filters.Field == "date" {
+		filters.Field = "created_at"
+	}
+
+	recommendations, total, err := service.r.List(filters)
+	if err != nil {
+		return
+	}
+	list.Page = filters.PaginationRequest.BuildResult(total)
+	for _, recommendation := range recommendations {
+		list.Recommendations = append(list.Recommendations, service.toView(recommendation, filters.UserID))
+	}
+	return
+}
+
+func (service *service) toView(recommendation repositoryModel.Recommendation, senderID uint) (view RecommendationView) {
+	view = RecommendationView{
+		ID:                 recommendation.GetID(),
+		Date:               recommendation.CreatedAt,
+		Sender:             UserView{
+			UserID:      recommendation.Sender.GetID(),
+			Username:    *recommendation.Sender.Username,
+			DisplayName: recommendation.Sender.DisplayName,
+		},
+		Movie:              MovieView{
+			ID:          recommendation.Movie.GetID(),
+			Title:       recommendation.Movie.Title,
+			PosterPath:  recommendation.Movie.PosterPath,
+			ReleaseDate: recommendation.Movie.ReleaseDate,
+		},
+		Comment:            recommendation.Comment,
+		Circles:            nil,
+		Users:              nil,
+	}
+	if senderID == recommendation.SenderID {
+		view.RecommendationType = recommendationSent
+	} else {
+		view.RecommendationType = recommendationReceived
+	}
+	for _, user := range recommendation.Users {
+		view.Users = append(view.Users, UserView{
+			UserID:      user.GetID(),
+			Username:    *user.Username,
+			DisplayName: user.DisplayName,
+		})
+	}
+	for _, circle := range recommendation.Circles {
+		circleView := CircleView{
+			CircleID:    circle.GetID(),
+			Name:        circle.Name,
+			Description: circle.Description,
+		}
+		for _, user := range circle.Users {
+			circleView.Users = append(circleView.Users, UserView{
+				UserID:      user.GetID(),
+				Username:    *user.Username,
+				DisplayName: user.DisplayName,
+			})
+		}
+	}
+	return
 }

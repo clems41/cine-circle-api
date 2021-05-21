@@ -138,7 +138,7 @@ func TestHandler_Update(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Routes use for this test
 	usersBasePath := userWebService.WebServices()[1].RootPath()
@@ -242,7 +242,7 @@ func TestHandler_UpdatePassword(t *testing.T) {
 	newPassword := test.FakePassword()
 
 	// Add existing user to database
-	userSample := sampler.GetUserSampleWithSpecificPassword(oldPassword)
+	userSample := sampler.GetUserWithSpecificPassword(oldPassword)
 
 	// Define testing base path
 	testingBasePath := webServicePath + "/password"
@@ -325,7 +325,7 @@ func TestHandler_Delete(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Check if user has been correctly created
 	var user repositoryModel.User
@@ -370,7 +370,7 @@ func TestHandler_Get(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Create different testing base path
 	wrongID := test.FakeIntBetween(9999, 99999999)
@@ -479,7 +479,7 @@ func TestHandler_SearchUsers(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 	err = testingHTTPServer.AuthenticateUserPermanently(userSample)
 	require.NoError(t, err, "User should be authenticated")
 
@@ -534,7 +534,7 @@ func TestHandler_GenerateToken(t *testing.T) {
 
 	// Create userSample used for getting token
 	password := test.FakePassword()
-	userSample := sampler.GetUserSampleWithSpecificPassword(password)
+	userSample := sampler.GetUserWithSpecificPassword(password)
 
 	// Create correct and wrong values for header
 	fakeUsername := strings.ToLower(fake.UserName())
@@ -595,7 +595,7 @@ func TestHandler_GetOwnUserInfo(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
 	require.NoError(t, err, "User should be authenticated")
 
@@ -624,7 +624,7 @@ func TestHandler_UsernameExists(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Define route test
 	fakeUsername := fake.UserName()

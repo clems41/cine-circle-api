@@ -14,6 +14,7 @@ type repository interface {
 	GetUserIDsFromCircle(circleID uint) (userIDs []uint, err error)
 	GetUserIDsCloseToUser(userID uint) (userIDs []uint, err error)
 	CheckIfMovieExists(movieID uint) (exists bool, err error)
+	List(filters Filters) (list []repositoryModel.Recommendation, total int64, err error)
 }
 
 type Repository struct {
@@ -147,4 +148,44 @@ func (r *Repository) CheckIfMovieExists(movieID uint) (exists bool, err error) {
 	}
 
 	return movie.ID == movieID, nil
+}
+
+func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendation, total int64, err error) {
+	query := r.DB.
+		Preload("Users").
+		Preload("Movie").
+		Preload("Sender").
+		Preload("Circles").
+		Preload("Circles.Users").
+		Order(filters.OrderSQL())
+
+	switch filters.RecommendationType {
+	case recommendationSent:
+		query = query.Where("sender_id = ?", filters.UserID)
+	case recommendationReceived:
+		// TODO
+		query = query.Where("id IN (select recommendation_id from recommendation_user where user_id = ?) or id in (select recommendation_id from recommendation_circle where circle_id in (select circle_id from circle_user where user_id = ?))", filters.UserID, filters.UserID)
+	case recommendationBoth:
+		// TODO
+		query = query.Where("sender_id = ? or id IN (select recommendation_id from recommendation_user where user_id = ?) or id in (select recommendation_id from recommendation_circle where circle_id in (select circle_id from circle_user where user_id = ?))", filters.UserID, filters.UserID, filters.UserID)
+	}
+	// Pagination
+
+	if filters.PageSize != 0 {
+		query = query.Limit(filters.PageSize)
+	}
+
+	query = query.Offset(filters.Offset())
+
+	err = query.
+		Find(&list).
+		Limit(-1).
+		Offset(-1).
+		Count(&total).
+		Error
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	return
 }

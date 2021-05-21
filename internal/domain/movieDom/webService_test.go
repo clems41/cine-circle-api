@@ -21,7 +21,7 @@ func TestHandler_Get(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
 
 	// Add existing circle to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// ID of movie The Dark knight !!!
 	movieId := uint(155)

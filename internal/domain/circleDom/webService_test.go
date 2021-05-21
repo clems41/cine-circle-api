@@ -21,7 +21,7 @@ func TestHandler_Create(t *testing.T) {
 	testingHTTPServer := test.NewTestingHTTPServer(t, circleWebService)
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// fields for circle
 	name := fake.Title()
@@ -103,7 +103,7 @@ func TestHandler_Update(t *testing.T) {
 	correctBasePath := webServicePath + "/" + circleSample.GetIDAsString()
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// fields for circle
 	name := fake.Title()
@@ -212,7 +212,7 @@ func TestHandler_Delete(t *testing.T) {
 	correctBasePath := webServicePath + "/" + circleSample.GetIDAsString()
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Send request and check response code without authentication, should fail
 	resp := testingHTTPServer.SendRequest(correctBasePath, http.MethodDelete)
@@ -265,7 +265,7 @@ func TestHandler_Get(t *testing.T) {
 	correctBasePath := webServicePath + "/" + circleSample.GetIDAsString()
 
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	// Send request and check response code without authentication, should fail
 	resp := testingHTTPServer.SendRequest(correctBasePath, http.MethodGet)
@@ -334,7 +334,7 @@ func TestHandler_AddUser(t *testing.T) {
 	// Add existing circle to database
 	circleSample := sampler.GetCircle()
 	// Add existing user to database
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	wrongBasePathWithWrongUserID := webServicePath + "/9999/" + userSample.GetIDAsString()
 	wrongBasePathWithWrongCircleID := webServicePath + "/" + circleSample.GetIDAsString() + "/9999"
@@ -424,7 +424,7 @@ func TestHandler_DeleteUser(t *testing.T) {
 	circleSample := sampler.GetCircle()
 	userFromCircleSampleToDelete := circleSample.Users[1]
 	userFromCircleSample := circleSample.Users[2]
-	userSample := sampler.GetUserSample()
+	userSample := sampler.GetUser()
 
 	wrongBasePathWithWrongUserID := webServicePath + "/9999/" + userFromCircleSampleToDelete.GetIDAsString()
 	wrongBasePathWithWrongCircleID := webServicePath + "/" + circleSample.GetIDAsString() + "/9999"

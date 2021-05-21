@@ -9,6 +9,9 @@ const (
 	errMissingRecipientCode = "MISSING_RECIPIENT"
 	errUserUnauthorizedCode = "USER_UNAUTHORIZED"
 	errMovieNotFoundCode    = "MOVIE_NOT_FOUND"
+
+	errRecommendationTypeIncorrectCode = "RECOMMENDATION_TYPE_INCORRECT"
+	errSortingFieldIncorrectCode       = "SORTING_FIELD_INCORRECT"
 )
 
 var (
@@ -18,4 +21,7 @@ var (
 	errMissingRecipient = typedErrors.NewBadRequestWithCode(errMissingRecipientCode)
 	errUserUnauthorized = typedErrors.NewAuthenticationErrorWithCode(errUserUnauthorizedCode)
 	errMovieNotFound    = typedErrors.NewNotFoundWithCode(errMovieNotFoundCode)
+
+	errRecommendationTypeIncorrect = typedErrors.NewBadRequestWithCode(errRecommendationTypeIncorrectCode)
+	errSortingFieldIncorrect       = typedErrors.NewBadRequestWithCode(errSortingFieldIncorrectCode)
 )
