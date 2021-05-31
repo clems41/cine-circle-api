@@ -8,10 +8,10 @@ import (
 )
 
 type Page struct {
-	NumberOfItems int `json:"number_of_items"`
-	NumberOfPages int `json:"number_of_pages"`
-	PageSize      int `json:"page_size"`
-	CurrentPage   int `json:"current_page"`
+	NumberOfItems int `json:"numberOfItems"`
+	NumberOfPages int `json:"numberOfPages"`
+	PageSize      int `json:"pageSize"`
+	CurrentPage   int `json:"currentPage"`
 }
 
 type SortingRequest struct {

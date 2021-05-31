@@ -93,6 +93,10 @@ func (api handler) List(req *restful.Request, res *restful.Response) {
 		return
 	}
 	filters.SortingRequest, err = utils.ExtractSortingRequest(req, "date", true)
+	if err != nil {
+		webServicePkg.HandleHTTPError(req, res, err)
+		return
+	}
 	filters.UserID = userFromRequest.ID
 	filters.RecommendationType = req.QueryParameter("recommendationType")
 

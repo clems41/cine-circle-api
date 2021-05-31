@@ -117,3 +117,63 @@ func TestHandler_Get(t *testing.T) {
 		require.Equal(t, movieGenre, view2.Genres[idx])
 	}
 }
+
+func TestHandler_Search(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, false)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Add existing circle to database
+	userSample := sampler.GetUser()
+
+	// Send request and check response code without authentication, should fail
+	resp := testingHTTPServer.SendRequest(webServicePath, http.MethodGet)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Authenticate user for sending request (bad user)
+	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
+	require.NoError(t, err, "User should be authenticated")
+
+	// Send request with missing query parameters, should return 400
+	resp = testingHTTPServer.SendRequest(webServicePath, http.MethodGet)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "query",
+			Value: "dark",
+		},
+	}
+
+	// Send request, should return 200
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var view SearchView
+	testingHTTPServer.DecodeResponse(resp, &view)
+	require.True(t, len(view.Results) > 0)
+	require.NotEqual(t, 0, view.NumberOfItems)
+	require.NotEqual(t, 0, view.PageSize)
+	require.NotEqual(t, 0, view.CurrentPage)
+	require.NotEqual(t, 0, view.NumberOfPages)
+
+	// Send request for page 4, should return 200
+	queryParameters = append(queryParameters, test.KeyValue{
+		Key:   "page",
+		Value: "4",
+	})
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	testingHTTPServer.DecodeResponse(resp, &view)
+	require.True(t, len(view.Results) > 0)
+	require.NotEqual(t, 0, view.NumberOfItems)
+	require.NotEqual(t, 0, view.PageSize)
+	require.Equal(t, 4, view.CurrentPage)
+	require.NotEqual(t, 0, view.NumberOfPages)
+}

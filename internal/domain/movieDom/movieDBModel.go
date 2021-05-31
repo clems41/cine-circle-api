@@ -53,11 +53,27 @@ type MovieDBSpokenLanguage struct {
 }
 
 type MovieDBVideos struct {
-	Id      int                    `json:"id"`
+	Id      int                   `json:"id"`
 	Results []MovieDBVideosResult `json:"results"`
 }
 
 type MovieDBVideosResult struct {
 	Key  string `json:"key"`
 	Name string `json:"name"`
+}
+
+type MovieDBSearch struct {
+	Page         int                   `json:"page"`
+	Results      []MovieDBSearchResult `json:"results"`
+	TotalPages   int                   `json:"total_pages"`
+	TotalResults int                   `json:"total_results"`
+}
+
+type MovieDBSearchResult struct {
+	ID           uint   `json:"id"`
+	MediaType    string `json:"media_type"`
+	Name         string `json:"name"`
+	OriginalName string `json:"original_name"`
+	Overview     string `json:"overview"`
+	PosterPath   string `json:"poster_path"`
 }

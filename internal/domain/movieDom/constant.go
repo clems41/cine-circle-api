@@ -32,8 +32,11 @@ const (
 
 	MovieDBApiUrl = "https://api.themoviedb.org/3"
 	MovieDBApiMovieUrl = MovieDBApiUrl + "/movie/" + MovieDBMovieID
-	MovieDBApiSearchUrl = MovieDBApiUrl + "/search/movie/"
+	MovieDBApiSeriesUrl = MovieDBApiUrl + "/tv/" + MovieDBMovieID
+	MovieDBApiSearchUrl = MovieDBApiUrl + "/search/multi/"
 	MovieDBApiVideoUrl = MovieDBApiMovieUrl+ "/videos"
+
+	MovieDBPageSizeSearch = 20
 
 
 	defaultMovieDBApiToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0"

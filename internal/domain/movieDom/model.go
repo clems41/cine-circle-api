@@ -1,6 +1,7 @@
 package movieDom
 
 import (
+	"cine-circle/internal/utils"
 	"time"
 )
 
@@ -22,4 +23,30 @@ type View struct {
 type QueryParameter struct {
 	Key   string
 	Value string
+}
+
+type SearchView struct {
+	utils.Page
+	Results []ItemView `json:"results"`
+}
+
+type ItemView struct {
+	ID           uint   `json:"id"`
+	MediaType    string `json:"mediaType"`
+	Name         string `json:"name"`
+	OriginalName string `json:"originalName"`
+	Overview     string `json:"overview"`
+	PosterPath   string `json:"posterPath"`
+}
+
+type Filters struct {
+	utils.PaginationRequest
+	Query string
+}
+
+func (filters Filters) Valid() error {
+	if filters.Query == "" {
+		return errEmptyQuery
+	}
+	return nil
 }

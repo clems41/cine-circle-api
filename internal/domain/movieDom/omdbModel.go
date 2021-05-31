@@ -1,18 +1,5 @@
 package movieDom
 
-type ResultShort struct {
-	ID     string `json:"id"`
-	Title  string `json:"title"`
-	Year   string `json:"year"`
-	Poster string `json:"poster"`
-	Type   string `json:"mediaType"`
-}
-
-type SearchResult struct {
-	Search       []ResultShort `json:"Search"`
-	TotalResults int           `json:"TotalResults"`
-}
-
 type OmdbRatingView struct {
 	Source string `json:"Source"`
 	Value  string `json:"Value"`
@@ -59,9 +46,4 @@ type OmdbSearchView struct {
 	Search       []OmdbShortView `json:"Search"`
 	TotalResults string          `json:"totalResults"`
 	Response     string          `json:"Response"`
-}
-
-type Search struct {
-	Title     string
-	MediaType string
 }

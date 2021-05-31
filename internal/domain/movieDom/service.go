@@ -18,7 +18,7 @@ var _ Service = (*service)(nil)
 
 type Service interface {
 	Get(movieId uint) (view View, err error)
-	//SearchMovie(search Search) (searchResult SearchResult, err error)
+	Search(filters Filters) (result SearchView, err error)
 }
 
 type service struct {
@@ -63,6 +63,36 @@ func (svc *service) Get(movieId uint) (view View, err error) {
 	return
 }
 
+// Search Find movie from query
+func (svc *service) Search(filters Filters) (result SearchView, err error) {
+	err = filters.Valid()
+	if err != nil {
+		return
+	}
+
+	search, err := svc.searchMovieFromExternal(filters)
+	if err != nil {
+		return
+	}
+	result.PageSize = MovieDBPageSizeSearch
+	result.CurrentPage = search.Page
+	result.NumberOfPages = search.TotalPages
+	result.NumberOfItems = search.TotalResults
+
+	for _, item := range search.Results {
+		result.Results = append(result.Results, ItemView{
+			ID:           item.ID,
+			MediaType:    item.MediaType,
+			Name:         item.Name,
+			OriginalName: item.OriginalName,
+			Overview:     item.Overview,
+			PosterPath:   item.PosterPath,
+		})
+	}
+
+	return
+}
+
 func (svc *service) addTrailer(view *View) (err error) {
 	// Getting movie trailer
 	url := strings.Replace(MovieDBApiVideoUrl, MovieDBMovieID, fmt.Sprintf("%d", view.ID), 1)
@@ -70,11 +100,15 @@ func (svc *service) addTrailer(view *View) (err error) {
 	if err != nil {
 		return
 	}
+
+	// Unmarshalling data
 	var videos MovieDBVideos
 	err = json.Unmarshal(resp, &videos)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// Adding trailer key into view
 	if len(videos.Results) > 0 {
 		view.Trailer = videos.Results[0].Key
 	}
@@ -207,51 +241,26 @@ func (svc *service) fromViewToRepo(view View) (movie repositoryModel.Movie) {
 }
 
 // searchMovieFromExternal search for movies or series from external API (OMDb in this case)
-/*func (svc *service) searchMovieFromExternal(search Search) (searchResult SearchResult, err error) {
-	// queryParam i means movieID, plot is use for specify version of plot to get (short or full) and type is used for searching among series or movies
-	params := []QueryParam{
+func (svc *service) searchMovieFromExternal(filters Filters) (movieDBResult MovieDBSearch, err error) {
+	url := MovieDBApiSearchUrl
+	params := []QueryParameter{
 		{
-			Key:   "s",
-			Value: search.Title,
+			Key:   "query",
+			Value: filters.Query,
 		},
 		{
-			Key:   "plot",
-			Value: PlotValue,
+			Key:   "page",
+			Value: fmt.Sprintf("%d", filters.Page),
 		},
 	}
-	if search.MediaType == MovieMedia || search.MediaType == SeriesMedia {
-		params = append(params, QueryParam{
-			Key:   "type",
-			Value: search.MediaType,
-		})
-	}
-
-	// Sending request to external API
-	resp, err := svc.sendRequestToExternal(params)
-
-	// Unmarshall response to get it as ExternalMovie
-	var externalSearch OmdbSearchView
-	err = json.Unmarshal(resp, &externalSearch)
+	resp, err := svc.sendRequestToExternal(url, http.MethodGet, params...)
 	if err != nil {
-		return searchResult, typedErrors.NewExternalReadBodyError(err)
+		return
 	}
 
-	// Check if Response from External API is correct
-	if externalSearch.Response == "False" {
-		return searchResult, typedErrors.ErrRepositoryResourceNotFound
+	err = json.Unmarshal(resp, &movieDBResult)
+	if err != nil {
+		return movieDBResult, errors.WithStack(err)
 	}
-
-	// Convert search result
-	for _, externalShortMovie := range externalSearch.Search {
-		resultShort := ResultShort{
-			ID:  	externalShortMovie.Imdbid,
-			Title:   externalShortMovie.Title,
-			Year:    externalShortMovie.Year,
-			Poster:  externalShortMovie.Poster,
-			Type:    externalShortMovie.Type,
-		}
-		searchResult.Search = append(searchResult.Search, resultShort)
-	}
-	searchResult.TotalResults, err = strconv.Atoi(externalSearch.TotalResults)
 	return
-}*/
+}
