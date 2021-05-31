@@ -34,8 +34,7 @@ func TestHandler_Get(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with bas id, should return 404
 	resp = testingHTTPServer.SendRequest(wrongBasePath, http.MethodGet)
@@ -66,7 +65,7 @@ func TestHandler_Get(t *testing.T) {
 
 	// Check if movie has been saved into DB
 	var movie repositoryModel.Movie
-	err = DB.
+	err := DB.
 		Take(&movie, "id = ?", movieId).
 		Error
 	require.NoError(t, err)
@@ -136,8 +135,7 @@ func TestHandler_Search(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with missing query parameters, should return 400
 	resp = testingHTTPServer.SendRequest(webServicePath, http.MethodGet)

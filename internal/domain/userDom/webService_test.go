@@ -159,8 +159,7 @@ func TestHandler_Update(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// test update with missing mandatory field : DisplayName and Email
 	update = Update{
@@ -220,7 +219,7 @@ func TestHandler_Update(t *testing.T) {
 
 	// Check that are not returned with View object
 	var user repositoryModel.User
-	err = DB.
+	err := DB.
 		Find(&user, "id = ?", view.UserID).
 		Error
 	require.NoError(t, err, "Should not return error but got %v", err)
@@ -257,8 +256,7 @@ func TestHandler_UpdatePassword(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// test updatePassword with missing mandatory field : OldPassword
 	updatePassword = UpdatePassword{
@@ -301,7 +299,7 @@ func TestHandler_UpdatePassword(t *testing.T) {
 
 	// check if password has been correctly salt and hash
 	var user repositoryModel.User
-	err = DB.
+	err := DB.
 		Select("hashed_password").
 		Find(&user, "id = ?", view.UserID).
 		Error
@@ -343,8 +341,7 @@ func TestHandler_Delete(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	err = testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code
 	resp = testingHTTPServer.SendRequest(webServicePath, http.MethodDelete)
@@ -382,8 +379,7 @@ func TestHandler_Get(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code
 	resp = testingHTTPServer.SendRequest(wrongTestingBasePath, http.MethodGet)
@@ -480,8 +476,7 @@ func TestHandler_SearchUsers(t *testing.T) {
 
 	// Authenticate user for sending request
 	userSample := sampler.GetUser()
-	err = testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code
 	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
@@ -596,8 +591,7 @@ func TestHandler_GetOwnUserInfo(t *testing.T) {
 
 	// Authenticate user for sending request
 	userSample := sampler.GetUser()
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code
 	resp = testingHTTPServer.SendRequest(testingBasePath, http.MethodGet)

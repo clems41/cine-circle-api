@@ -5,7 +5,6 @@ import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/postgres"
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/typedErrors"
 	"cine-circle/internal/utils"
 	"cine-circle/internal/webService"
 	"cine-circle/pkg/logger"
@@ -110,16 +109,16 @@ func NewTestingHTTPServer(t *testing.T, handlers ...webService.Handler) (server 
 	return
 }
 
-func (httpServer *TestingHTTPServer) AuthenticateUserPermanently(user *repositoryModel.User) (err error) {
+func (httpServer *TestingHTTPServer) AuthenticateUserPermanently(user *repositoryModel.User) {
 	if user == nil {
-		return typedErrors.NewAuthenticationErrorf("cannot authenticate user : user is nil")
+		httpServer.t.Fatalf("cannot authenticate user : user is nil")
 	}
 	if user.Username == nil {
-		return typedErrors.NewAuthenticationErrorf("cannot authenticate user : username is nil for user id %d", user.GetID())
+		httpServer.t.Fatalf("cannot authenticate user : username is nil for user id %d", user.GetID())
 	}
 	token, err := utils.GenerateTokenWithUsername(*user.Username)
 	if err != nil {
-		return
+		httpServer.t.Fatalf(err.Error())
 	}
 	httpServer.token = &token
 

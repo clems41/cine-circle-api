@@ -34,8 +34,7 @@ func TestHandler_Create(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with all missing fields, should fail and return 400
 	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
@@ -77,7 +76,7 @@ func TestHandler_Create(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", view.CircleID).
 		Error
@@ -119,16 +118,14 @@ func TestHandler_Update(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with user authenticated not in circle, should return 401
 	resp = testingHTTPServer.SendRequestWithBody(correctBasePath, http.MethodPut, update)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user in circle)
-	err = testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
 
 	// Send request with wrong path id, should fail and return 404
 	resp = testingHTTPServer.SendRequestWithBody(wrongBasePath, http.MethodPut, update)
@@ -187,7 +184,7 @@ func TestHandler_Update(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", view.CircleID).
 		Error
@@ -219,16 +216,14 @@ func TestHandler_Delete(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with user authenticated not in circle, should return 401
 	resp = testingHTTPServer.SendRequest(correctBasePath, http.MethodDelete)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user in circle)
-	err = testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
 
 	// Send request with wrong path id, should fail and return 404
 	resp = testingHTTPServer.SendRequest(wrongBasePath, http.MethodDelete)
@@ -240,7 +235,7 @@ func TestHandler_Delete(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", circleSample.GetID()).
 		Error
@@ -272,16 +267,14 @@ func TestHandler_Get(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with user authenticated not in circle, should return 401
 	resp = testingHTTPServer.SendRequest(correctBasePath, http.MethodGet)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user in circle)
-	err = testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
 
 	// Send request with wrong path id, should fail and return 404
 	resp = testingHTTPServer.SendRequest(wrongBasePath, http.MethodGet)
@@ -312,7 +305,7 @@ func TestHandler_Get(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", view.CircleID).
 		Error
@@ -346,16 +339,14 @@ func TestHandler_AddUser(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with user authenticated not in circle, should return 401
 	resp = testingHTTPServer.SendRequest(correctBasePath, http.MethodPut)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user in circle)
-	err = testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(&circleSample.Users[1])
 
 	// Send request with wrong path id, should fail and return 404
 	resp = testingHTTPServer.SendRequest(wrongBasePathWithWrongUserID, http.MethodPut)
@@ -401,7 +392,7 @@ func TestHandler_AddUser(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", view.CircleID).
 		Error
@@ -436,16 +427,14 @@ func TestHandler_DeleteUser(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (bad user)
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request with user authenticated not in circle, should return 401
 	resp = testingHTTPServer.SendRequest(correctBasePath, http.MethodDelete)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user in circle)
-	err = testingHTTPServer.AuthenticateUserPermanently(&userFromCircleSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(&userFromCircleSample)
 
 	// Send request with wrong path id, should fail and return 404
 	resp = testingHTTPServer.SendRequest(wrongBasePathWithWrongUserID, http.MethodDelete)
@@ -476,7 +465,7 @@ func TestHandler_DeleteUser(t *testing.T) {
 
 	// Check if all users has been correctly saved
 	var circle repositoryModel.Circle
-	err = DB.
+	err := DB.
 		Preload("Users").
 		Take(&circle, "id = ?", view.CircleID).
 		Error

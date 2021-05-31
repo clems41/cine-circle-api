@@ -47,16 +47,14 @@ func TestHandler_Create(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user not in circle), should fail and return 401
-	err := testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
 
 	// Send request and check response code with wrong user authenticated, should fail and return 401
 	resp = testingHTTPServer.SendRequestWithBody(webServicePath, http.MethodPost, creation)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user not in circle), should fail and return 401
-	err = testingHTTPServer.AuthenticateUserPermanently(userInCircle)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userInCircle)
 
 	// Send request and check response with wrong movieId, should fail and return 404
 	creation = Creation{
@@ -122,8 +120,7 @@ func TestHandler_Create(t *testing.T) {
 	_ = sampler.GetCircle(*userNotInCircle1, *userNotInCircle2)
 
 	// Send request and check response with user2 sending reco to user1 now in his contact list, should work
-	err = testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
 	creation = Creation{
 		MovieID:   movie.GetID(),
 		Comment:   comment,
@@ -144,7 +141,7 @@ func TestHandler_Create(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Send request and check response with user2 sending reco to other circle, should work after adding him into circle
-	err = DB.
+	err := DB.
 		Exec("INSERT INTO circle_user (circle_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", circle.GetID(), userNotInCircle2.GetID()).
 		Error
 	require.NoError(t, err)
@@ -244,8 +241,7 @@ func TestHandler_List(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Authenticate user for sending request (user not in circle), should fail and return 401
-	err := testingHTTPServer.AuthenticateUserPermanently(userSample)
-	require.NoError(t, err, "User should be authenticated")
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code with bad query params, should fail and return 400
 	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
