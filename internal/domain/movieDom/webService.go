@@ -26,7 +26,6 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 	wsMovie.Route(wsMovie.GET("/{movieId}").
 		Param(wsMovie.PathParameter("movieId", "ID of movie").DataType("int")).
 		Doc("Get movie").
-		Writes(nil).
 		Returns(http.StatusFound, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -36,9 +35,8 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 
 	wsMovie.Route(wsMovie.GET("/").
 		Param(wsMovie.QueryParameter("page", "num of page to get").DataType("int")).
-		Param(wsMovie.QueryParameter("query", "num of page to get").DataType("int")).
+		Param(wsMovie.QueryParameter("query", "query to search among tv shows and movies").DataType("int")).
 		Doc("Search movies").
-		Writes(nil).
 		Returns(http.StatusOK, "OK", SearchView{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Filter(webServicePkg.LogRequest()).

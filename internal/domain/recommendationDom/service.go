@@ -156,6 +156,7 @@ func (service *service) toView(recommendation repositoryModel.Recommendation, se
 				DisplayName: user.DisplayName,
 			})
 		}
+		view.Circles = append(view.Circles, circleView)
 	}
 	return
 }

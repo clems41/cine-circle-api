@@ -26,7 +26,7 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 
 	wsCircle.Route(wsCircle.POST("/").
 		Doc("Create new circle").
-		Writes(Creation{}).
+		Reads(Creation{}).
 		Returns(http.StatusCreated, "Created", View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -38,7 +38,7 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsCircle.Route(wsCircle.PUT("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Update existing circle").
-		Writes(Update{}).
+		Reads(Update{}).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -51,7 +51,6 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsCircle.Route(wsCircle.GET("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Get existing circle").
-		Writes(nil).
 		Returns(http.StatusFound, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -62,7 +61,6 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsCircle.Route(wsCircle.DELETE("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to delete").DataType("int")).
 		Doc("Delete existing circle").
-		Writes(nil).
 		Returns(http.StatusNoContent, "Deleted", nil).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -74,7 +72,6 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Param(wsCircle.PathParameter("userId", "userID to add at the circle").DataType("int")).
 		Doc("Add user to circle").
-		Writes(nil).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -86,7 +83,6 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Param(wsCircle.PathParameter("userId", "userID to delete from the circle").DataType("int")).
 		Doc("Delete user from circle").
-		Writes(nil).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).

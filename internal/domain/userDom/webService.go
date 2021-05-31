@@ -32,7 +32,7 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsAuthentication.Route(wsAuthentication.POST("/sign-up").
 		Doc("Create new user (signup)").
-		Writes(Creation{}).
+		Reads(Creation{}).
 		Returns(http.StatusCreated, "Created", View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
@@ -41,7 +41,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsAuthentication.Route(wsAuthentication.POST("/sign-in").
 		Doc("Generate token from username and password (basic authentication)").
-		Writes(nil).
 		Returns(http.StatusOK, "OK", "token").
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -53,7 +52,7 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsUser.Route(wsUser.PUT("/").
 		Doc("update actual user from token").
-		Writes(Update{}).
+		Reads(Update{}).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -64,7 +63,7 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsUser.Route(wsUser.PUT("/password").
 		Doc("update existing user's password").
-		Writes(UpdatePassword{}).
+		Reads(UpdatePassword{}).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -75,7 +74,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsUser.Route(wsUser.DELETE("/").
 		Doc("Delete existing user").
-		Writes(nil).
 		Returns(http.StatusNoContent, "Deleted", nil).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -85,7 +83,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsUser.Route(wsUser.GET("/{userId}").
 		Doc("Get existing user").
-		Writes(nil).
 		Returns(http.StatusFound, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -95,7 +92,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 
 	wsUser.Route(wsUser.GET("/me").
 		Doc("Get user info from token").
-		Writes(nil).
 		Returns(http.StatusOK, "OK", View{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -106,7 +102,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 	wsUser.Route(wsUser.GET("/{username}/exists").
 		Doc("Know if username is already taken").
 		Param(wsUser.PathParameter("username", "username of sought user").DataType("string")).
-		Writes(nil).
 		Returns(http.StatusFound, "OK", true).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
@@ -116,7 +111,6 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 	wsUser.Route(wsUser.GET("/").
 		Doc("Search for user(s)").
 		Param(wsUser.QueryParameter("search", "search user using keyword (will match username, email and displayName").DataType("string")).
-		Writes(nil).
 		Returns(http.StatusOK, "OK", []View{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -127,7 +121,7 @@ func (ws handler) WebServices() (webServices []*restful.WebService) {
 	/*	wsUser.Route(wsUser.GET("/{userId}/movies").
 		Doc("Get all movies that user had rated").
 		Param(wsUser.PathParameter("userId", "username of sought user").DataType("string")).
-		Writes(model.MovieSearch{}).
+		Reads(model.MovieSearch{}).
 		Returns(http.StatusOK, "OK", model.MovieSearch{}).
 		Returns(404, "User not found", typedErrors.ErrRepositoryResourceNotFound.CodeError()).
 		Filter(AuthenticateUser(true)).

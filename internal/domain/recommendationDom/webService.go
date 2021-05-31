@@ -26,7 +26,7 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 
 	wsReco.Route(wsReco.POST("/").
 		Doc("Send new recommendation").
-		Writes(Creation{}).
+		Reads(Creation{}).
 		Returns(http.StatusCreated, "Created", nil).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
@@ -41,7 +41,6 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsReco.QueryParameter("sort", "way of sorting elements (date:asc)").DataType("string").DefaultValue("date:desc")).
 		Param(wsReco.QueryParameter("recommendationType", "filter on type (received, sent or both)").DataType("string").DefaultValue("received")).
 		Doc("List, filter and sort recommendations").
-		Writes(nil).
 		Returns(http.StatusCreated, "Created", ViewList{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).

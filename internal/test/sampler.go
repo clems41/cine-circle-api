@@ -91,7 +91,7 @@ func (sampler *Sampler) GetUserWithSpecificPassword(password string) (user *repo
 	require.NoError(sampler.t, err)
 
 	// Create new user
-	username := strings.ToLower(fake.UserName())
+	username := strings.ToLower(fake.UserName() + fake.UserName())
 	user = &repositoryModel.User{
 		Username:       &username,
 		DisplayName:    fake.FullName(),
@@ -163,13 +163,13 @@ func (sampler *Sampler) GetRecommendationsSentByUser(sender *repositoryModel.Use
 		err := sampler.DB.Create(&recommendation).Error
 		require.NoError(sampler.t, err)
 		// Add users to sent recommendations
-		for range FakeRange(0, 3) {
+		for range FakeRange(1, 3) {
 			user := sampler.GetUser()
 			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), user.GetID()).Error
 			require.NoError(sampler.t, err)
 		}
 		// Add circles to sent recommendations
-		for range FakeRange(0, 1) {
+		for range FakeRange(1, 2) {
 			circle := sampler.GetCircle()
 			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
 			require.NoError(sampler.t, err)
@@ -211,13 +211,13 @@ func (sampler *Sampler) GetRecommendationsReceivedByUser(recipient *repositoryMo
 			require.NoError(sampler.t, err)
 		}
 		// Add users to sent recommendations
-		for range FakeRange(0, 3) {
+		for range FakeRange(1, 3) {
 			user := sampler.GetUser()
 			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), user.GetID()).Error
 			require.NoError(sampler.t, err)
 		}
 		// Add circles to sent recommendations
-		for range FakeRange(0, 1) {
+		for range FakeRange(1, 2) {
 			circle := sampler.GetCircle()
 			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
 			require.NoError(sampler.t, err)

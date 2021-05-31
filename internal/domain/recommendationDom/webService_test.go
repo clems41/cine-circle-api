@@ -240,7 +240,6 @@ func TestHandler_List(t *testing.T) {
 	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	// Authenticate user for sending request (user not in circle), should fail and return 401
 	testingHTTPServer.AuthenticateUserPermanently(userSample)
 
 	// Send request and check response code with bad query params, should fail and return 400
@@ -265,6 +264,218 @@ func TestHandler_List(t *testing.T) {
 	var view ViewList
 	testingHTTPServer.DecodeResponse(resp, &view)
 	require.Equal(t, len(receivedRecommendations) + len(sentRecommendations), view.NumberOfItems)
+	require.Equal(t, len(view.Recommendations), view.NumberOfItems)
+	require.Equal(t, view.CurrentPage, 1)
+	require.NotEqual(t, view.NumberOfPages, 0)
+	require.NotEqual(t, view.PageSize, 0)
 
-	// TODO test more things
+	for _, recommendation := range view.Recommendations {
+		require.NotEqual(t, 0, len(recommendation.Circles))
+		for _, circle := range recommendation.Circles {
+			require.NotEqual(t, 0, len(circle.Users))
+			require.NotEqual(t, 0, circle.CircleID)
+			require.NotEmpty(t, circle.Name)
+			require.NotEmpty(t, circle.Description)
+			for _, circleUser := range circle.Users {
+				require.NotEmpty(t, circleUser.Username)
+				require.NotEmpty(t, circleUser.DisplayName)
+				require.NotEqual(t, 0, circleUser.UserID)
+			}
+		}
+		require.NotEqual(t, 0, len(recommendation.Users))
+		for _, user := range recommendation.Users {
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+			require.NotEqual(t, 0, user.UserID)
+		}
+		require.NotEmpty(t, recommendation.Movie.Title)
+		require.NotEmpty(t, recommendation.Movie.PosterPath)
+		require.NotEqual(t, 0, recommendation.Movie.ID)
+		require.NotEmpty(t, recommendation.Date)
+		require.NotEmpty(t, recommendation.RecommendationType)
+		require.NotEmpty(t, recommendation.Comment)
+		require.NotEmpty(t, recommendation.Sender.Username)
+		require.NotEmpty(t, recommendation.Sender.DisplayName)
+		require.NotEqual(t, 0, recommendation.Sender.UserID)
+	}
+}
+
+func TestHandler_List_ReceivedRecommendation(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Create recommendations sent and received by user
+	userSample := sampler.GetUser()
+	sampler.GetRecommendationsSentByUser(userSample)
+	receivedRecommendations := sampler.GetRecommendationsReceivedByUser(userSample)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "field",
+			Value: fake.Word(),
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "field",
+			Value: "date",
+		},
+		{
+			Key:   "desc",
+			Value: "true",
+		},
+		{
+			Key:   "recommendationType",
+			Value: "received",
+		},
+	}
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var view ViewList
+	testingHTTPServer.DecodeResponse(resp, &view)
+	require.Equal(t, len(receivedRecommendations), view.NumberOfItems)
+	require.Equal(t, len(view.Recommendations), view.NumberOfItems)
+	require.Equal(t, view.CurrentPage, 1)
+	require.NotEqual(t, view.NumberOfPages, 0)
+	require.NotEqual(t, view.PageSize, 0)
+
+	for _, recommendation := range view.Recommendations {
+		require.NotEqual(t, 0, len(recommendation.Circles))
+		for _, circle := range recommendation.Circles {
+			require.NotEqual(t, 0, len(circle.Users))
+			require.NotEqual(t, 0, circle.CircleID)
+			require.NotEmpty(t, circle.Name)
+			require.NotEmpty(t, circle.Description)
+			for _, circleUser := range circle.Users {
+				require.NotEmpty(t, circleUser.Username)
+				require.NotEmpty(t, circleUser.DisplayName)
+				require.NotEqual(t, 0, circleUser.UserID)
+			}
+		}
+		require.NotEqual(t, 0, len(recommendation.Users))
+		for _, user := range recommendation.Users {
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+			require.NotEqual(t, 0, user.UserID)
+		}
+		require.NotEmpty(t, recommendation.Movie.Title)
+		require.NotEmpty(t, recommendation.Movie.PosterPath)
+		require.NotEqual(t, 0, recommendation.Movie.ID)
+		require.NotEmpty(t, recommendation.Date)
+		require.NotEmpty(t, recommendation.RecommendationType)
+		require.NotEmpty(t, recommendation.Comment)
+		require.NotEmpty(t, recommendation.Sender.Username)
+		require.NotEmpty(t, recommendation.Sender.DisplayName)
+		require.NotEqual(t, 0, recommendation.Sender.UserID)
+	}
+}
+
+func TestHandler_List_SentRecommendation(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Create recommendations sent and received by user
+	userSample := sampler.GetUser()
+	sentRecommendations := sampler.GetRecommendationsSentByUser(userSample)
+	sampler.GetRecommendationsReceivedByUser(userSample)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "field",
+			Value: fake.Word(),
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "field",
+			Value: "date",
+		},
+		{
+			Key:   "desc",
+			Value: "true",
+		},
+		{
+			Key:   "recommendationType",
+			Value: "sent",
+		},
+	}
+
+	// Send request and check response code with bad query params, should fail and return 400
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var view ViewList
+	testingHTTPServer.DecodeResponse(resp, &view)
+	require.Equal(t, len(sentRecommendations), view.NumberOfItems)
+	require.Equal(t, len(view.Recommendations), view.NumberOfItems)
+	require.Equal(t, view.CurrentPage, 1)
+	require.NotEqual(t, view.NumberOfPages, 0)
+	require.NotEqual(t, view.PageSize, 0)
+
+	for _, recommendation := range view.Recommendations {
+		require.NotEqual(t, 0, len(recommendation.Circles))
+		for _, circle := range recommendation.Circles {
+			require.NotEqual(t, 0, len(circle.Users))
+			require.NotEqual(t, 0, circle.CircleID)
+			require.NotEmpty(t, circle.Name)
+			require.NotEmpty(t, circle.Description)
+			for _, circleUser := range circle.Users {
+				require.NotEmpty(t, circleUser.Username)
+				require.NotEmpty(t, circleUser.DisplayName)
+				require.NotEqual(t, 0, circleUser.UserID)
+			}
+		}
+		require.NotEqual(t, 0, len(recommendation.Users))
+		for _, user := range recommendation.Users {
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+			require.NotEqual(t, 0, user.UserID)
+		}
+		require.NotEmpty(t, recommendation.Movie.Title)
+		require.NotEmpty(t, recommendation.Movie.PosterPath)
+		require.NotEqual(t, 0, recommendation.Movie.ID)
+		require.NotEmpty(t, recommendation.Date)
+		require.NotEmpty(t, recommendation.RecommendationType)
+		require.NotEmpty(t, recommendation.Comment)
+		require.NotEmpty(t, recommendation.Sender.Username)
+		require.NotEmpty(t, recommendation.Sender.DisplayName)
+		require.NotEqual(t, 0, recommendation.Sender.UserID)
+	}
 }

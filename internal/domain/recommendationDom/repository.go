@@ -163,10 +163,8 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 	case recommendationSent:
 		query = query.Where("sender_id = ?", filters.UserID)
 	case recommendationReceived:
-		// TODO
 		query = query.Where("id IN (select recommendation_id from recommendation_user where user_id = ?) or id in (select recommendation_id from recommendation_circle where circle_id in (select circle_id from circle_user where user_id = ?))", filters.UserID, filters.UserID)
 	case recommendationBoth:
-		// TODO
 		query = query.Where("sender_id = ? or id IN (select recommendation_id from recommendation_user where user_id = ?) or id in (select recommendation_id from recommendation_circle where circle_id in (select circle_id from circle_user where user_id = ?))", filters.UserID, filters.UserID, filters.UserID)
 	}
 	// Pagination

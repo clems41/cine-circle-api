@@ -104,7 +104,7 @@ func run(cmd *cobra.Command, args []string) {
 	// Configure and run HTTP server
 	config := restfulspec.Config{
 		WebServices: restful.DefaultContainer.RegisteredWebServices(),
-		APIPath:     "/webService/swagger.yaml",
+		APIPath:     "/swagger.json",
 	}
 	restful.DefaultContainer.Add(restfulspec.NewOpenAPIService(config))
 
