@@ -16,6 +16,7 @@ type View struct {
 	Overview         string    `json:"overview"`
 	ReleaseDate      time.Time `json:"releaseDate"`
 	Runtime          int       `json:"runtime"`
+	Trailer          string    `json:"trailer"`
 }
 
 type QueryParameter struct {

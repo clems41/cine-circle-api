@@ -51,3 +51,13 @@ type MovieDBSpokenLanguage struct {
 	Iso6391     string `json:"iso_639_1"`
 	Name        string `json:"name"`
 }
+
+type MovieDBVideos struct {
+	Id      int                    `json:"id"`
+	Results []MovieDBVideosResult `json:"results"`
+}
+
+type MovieDBVideosResult struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
+}

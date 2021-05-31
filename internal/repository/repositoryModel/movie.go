@@ -17,4 +17,5 @@ type Movie struct {
 	Overview         string
 	ReleaseDate      time.Time
 	Runtime          int
+	Trailer          string
 }

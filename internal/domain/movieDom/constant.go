@@ -28,9 +28,13 @@ var (
 
 // Used for The Movie Database
 const (
-	MovieDBApiUrl = "https://api.themoviedb.org/3/"
-	MovieDBApiMovieUrl = "https://api.themoviedb.org/3/movie/"
-	MovieDBApiSearchUrl = "https://api.themoviedb.org/3/search/movie/"
+	MovieDBMovieID = "{movieId}"
+
+	MovieDBApiUrl = "https://api.themoviedb.org/3"
+	MovieDBApiMovieUrl = MovieDBApiUrl + "/movie/" + MovieDBMovieID
+	MovieDBApiSearchUrl = MovieDBApiUrl + "/search/movie/"
+	MovieDBApiVideoUrl = MovieDBApiMovieUrl+ "/videos"
+
 
 	defaultMovieDBApiToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0"
 	envMovieDBApiKey = "EXTERNAL_API_TOKEN"

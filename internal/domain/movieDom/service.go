@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,7 @@ func (svc *service) Get(movieId uint) (view View, err error) {
 				return view, errMovieNotFound
 			}
 			view = svc.fromMovieDBToView(movieDBView)
+			svc.addTrailer(&view)
 			// Save movie into database for next request
 			movieToSave := svc.fromViewToRepo(view)
 			err = svc.r.Save(&movieToSave)
@@ -61,6 +63,24 @@ func (svc *service) Get(movieId uint) (view View, err error) {
 	return
 }
 
+func (svc *service) addTrailer(view *View) (err error) {
+	// Getting movie trailer
+	url := strings.Replace(MovieDBApiVideoUrl, MovieDBMovieID, fmt.Sprintf("%d", view.ID), 1)
+	resp, err := svc.sendRequestToExternal(url, http.MethodGet)
+	if err != nil {
+		return
+	}
+	var videos MovieDBVideos
+	err = json.Unmarshal(resp, &videos)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if len(videos.Results) > 0 {
+		view.Trailer = videos.Results[0].Key
+	}
+	return
+}
+
 // getMovieFromExternal get movie from external API (OMDb in this case)
 func (svc *service) getMovieFromMovieDB(movieId uint) (view MovieDBView, err error) {
 	params := []QueryParameter{
@@ -71,19 +91,23 @@ func (svc *service) getMovieFromMovieDB(movieId uint) (view MovieDBView, err err
 	}
 
 	// Send request to external API
-	url := MovieDBApiMovieUrl + fmt.Sprintf("%d", movieId)
-	resp, err := svc.sendRequestToExternal(url, http.MethodGet, params)
+	url := strings.Replace(MovieDBApiMovieUrl, MovieDBMovieID, fmt.Sprintf("%d", movieId), 1)
+	resp, err := svc.sendRequestToExternal(url, http.MethodGet, params...)
+	if err != nil {
+		return
+	}
 
 	// Unmarshall response to get it as ExternalMovie
 	err = json.Unmarshal(resp, &view)
 	if err != nil {
 		return view, errors.WithStack(err)
 	}
+
 	return
 }
 
 // sendRequestToExternal Send request to External API in order to get specific movie/serie or list of media depending on search
-func (svc *service) sendRequestToExternal(url, method string, queryParameters []QueryParameter) (response []byte, err error) {
+func (svc *service) sendRequestToExternal(url, method string, queryParameters ...QueryParameter) (response []byte, err error) {
 	// useful in debug mode to know how long it took for getting movie from external API
 	timeStart := time.Now()
 	// Prepare request to send with queryParams
@@ -99,7 +123,7 @@ func (svc *service) sendRequestToExternal(url, method string, queryParameters []
 	req.URL.RawQuery = q.Encode()
 
 	// Adding API token to the request (mandatory)
-	req.Header.Set(constant.TokenHeader, constant.TokenKind + constant.BearerTokenDelimiterForHeader + ExternalMovieDBApiToken)
+	req.Header.Set(constant.TokenHeader, constant.TokenKind+constant.BearerTokenDelimiterForHeader+ExternalMovieDBApiToken)
 
 	// Send request
 	res, err := client.Do(req)
@@ -159,6 +183,7 @@ func (svc *service) fromRepoToView(movie repositoryModel.Movie) (view View) {
 		Runtime:          movie.Runtime,
 		Genres:           movie.Genres,
 		ReleaseDate:      movie.ReleaseDate,
+		Trailer:          movie.Trailer,
 	}
 	return
 }
@@ -175,6 +200,7 @@ func (svc *service) fromViewToRepo(view View) (movie repositoryModel.Movie) {
 		Runtime:          view.Runtime,
 		Genres:           view.Genres,
 		ReleaseDate:      view.ReleaseDate,
+		Trailer:          view.Trailer,
 	}
 	movie.SetID(view.ID)
 	return

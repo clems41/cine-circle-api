@@ -61,6 +61,7 @@ func TestHandler_Get(t *testing.T) {
 		"Overview": test.NotEmptyField{},
 		"ReleaseDate": test.NotEmptyField{},
 		"Runtime": test.NotEmptyField{},
+		"Trailer": "kmJLuwP3MbY",
 	})
 
 	// Check if movie has been saved into DB
@@ -83,6 +84,7 @@ func TestHandler_Get(t *testing.T) {
 		"Overview": view.Overview,
 		"ReleaseDate": view.ReleaseDate,
 		"Runtime": view.Runtime,
+		"Trailer": view.Trailer,
 	})
 	require.Len(t, movie.Genres, len(view.Genres))
 	for idx, movieGenre := range movie.Genres {
@@ -97,20 +99,21 @@ func TestHandler_Get(t *testing.T) {
 	testingHTTPServer.DecodeResponse(resp, &view2)
 
 	ruler.CheckStruct(movie, map[string]interface{}{
-		"ID": view.ID,
-		"Title": view.Title,
-		"ImdbId": view.ImdbId,
-		"BackdropPath": view.BackdropPath,
-		"PosterPath": view.PosterPath,
+		"ID": view2.ID,
+		"Title": view2.Title,
+		"ImdbId": view2.ImdbId,
+		"BackdropPath": view2.BackdropPath,
+		"PosterPath": view2.PosterPath,
 		"Genres": test.NotEmptyField{},
-		"OriginalLanguage": view.OriginalLanguage,
-		"OriginalTitle": view.OriginalTitle,
-		"Overview": view.Overview,
-		"ReleaseDate": view.ReleaseDate,
-		"Runtime": view.Runtime,
+		"OriginalLanguage": view2.OriginalLanguage,
+		"OriginalTitle": view2.OriginalTitle,
+		"Overview": view2.Overview,
+		"ReleaseDate": view2.ReleaseDate,
+		"Runtime": view2.Runtime,
+		"Trailer": view2.Trailer,
 	})
-	require.Len(t, movie.Genres, len(view.Genres))
+	require.Len(t, movie.Genres, len(view2.Genres))
 	for idx, movieGenre := range movie.Genres {
-		require.Equal(t, movieGenre, view.Genres[idx])
+		require.Equal(t, movieGenre, view2.Genres[idx])
 	}
 }
