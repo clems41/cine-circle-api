@@ -169,7 +169,7 @@ func (ws handler) Update(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	user, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -193,7 +193,7 @@ func (ws handler) UpdatePassword(req *restful.Request, res *restful.Response) {
 		return
 	}
 
-	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	user, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -211,7 +211,7 @@ func (ws handler) UpdatePassword(req *restful.Request, res *restful.Response) {
 
 func (ws handler) Delete(req *restful.Request, res *restful.Response) {
 	var deletion Delete
-	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	user, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -244,7 +244,7 @@ func (ws handler) Get(req *restful.Request, res *restful.Response) {
 }
 
 func (ws handler) GetOwnUserInfo(req *restful.Request, res *restful.Response) {
-	user, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	user, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return

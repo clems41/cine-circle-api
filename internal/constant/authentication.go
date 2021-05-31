@@ -16,4 +16,6 @@ const (
 	UsernamePasswordDelimiterForHeader = ":"
 	BearerTokenDelimiterForHeader = " "
 	AuthenticationHeaderPrefixValue = "Basic "
+	UserClaims = "sub"
+	UserInfoRequestParameter = "UserInfo"
 )

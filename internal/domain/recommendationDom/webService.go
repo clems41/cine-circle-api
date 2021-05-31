@@ -61,7 +61,7 @@ func (api handler) Create(req *restful.Request, res *restful.Response) {
 	}
 
 	// Get user info from token
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -79,7 +79,7 @@ func (api handler) Create(req *restful.Request, res *restful.Response) {
 
 func (api handler) List(req *restful.Request, res *restful.Response) {
 	// Get user info from token
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return

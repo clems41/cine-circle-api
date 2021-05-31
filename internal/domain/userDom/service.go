@@ -197,7 +197,7 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 		return token, errBadLoginPassword
 	}
 
-	return utils.GenerateTokenWithUserID(user.GetID())
+	return utils.GenerateTokenWithUsername(*user.Username)
 }
 
 func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {

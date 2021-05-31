@@ -58,7 +58,7 @@ func HandleHTTPError(req *restful.Request, res *restful.Response, err error) {
 		jsonFormattedError.Kind = e.Type()
 		jsonFormattedError.Code = e.BusinessCode()
 
-		logger.Sugar.Errorf("%s - %s - return %d (%s) : error occurs : %+v", req.Request.Method, req.Request.URL.String(), e.HttpStatus(), e.BusinessCode(), err)
+		logger.Sugar.Errorf("\t%s - %s - return %d (%s) : error occurs : %+v", req.Request.Method, req.Request.URL.String(), e.HttpStatus(), e.BusinessCode(), err)
 
 		res.WriteHeaderAndEntity(e.HttpStatus(), jsonFormattedError)
 

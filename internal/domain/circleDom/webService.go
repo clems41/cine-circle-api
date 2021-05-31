@@ -106,7 +106,7 @@ func (api handler) Create(req *restful.Request, res *restful.Response) {
 	}
 
 	// Add automatically creator into circle
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -136,7 +136,7 @@ func (api handler) Update(req *restful.Request, res *restful.Response) {
 	}
 
 	// Check if user sending request is part of the circle
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -160,7 +160,7 @@ func (api handler) Delete(req *restful.Request, res *restful.Response) {
 	}
 
 	// Check if user sending request is part of the circle
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -186,7 +186,7 @@ func (api handler) Get(req *restful.Request, res *restful.Response) {
 	}
 
 	// Check if user sending request is part of the circle
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -215,7 +215,7 @@ func (api handler) AddUser(req *restful.Request, res *restful.Response) {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
@@ -244,7 +244,7 @@ func (api handler) DeleteUser(req *restful.Request, res *restful.Response) {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return
 	}
-	userFromRequest, err := webServicePkg.ActualUserHandler.WhoAmI(req)
+	userFromRequest, err := webServicePkg.WhoAmI(req)
 	if err != nil {
 		webServicePkg.HandleHTTPError(req, res, err)
 		return

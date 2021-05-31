@@ -117,7 +117,7 @@ func (httpServer *TestingHTTPServer) AuthenticateUserPermanently(user *repositor
 	if user.Username == nil {
 		return typedErrors.NewAuthenticationErrorf("cannot authenticate user : username is nil for user id %d", user.GetID())
 	}
-	token, err := utils.GenerateTokenWithUserID(user.GetID())
+	token, err := utils.GenerateTokenWithUsername(*user.Username)
 	if err != nil {
 		return
 	}

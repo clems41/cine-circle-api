@@ -10,7 +10,6 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"strconv"
 	"strings"
 )
 
@@ -32,27 +31,14 @@ type ActualUser struct {
 	Roles    []string
 }
 
-// WhoAmI : return username from token
-func (auh *actualUserHandler) WhoAmI(req *restful.Request) (user ActualUser, err error) {
-	// Get userID from token
-	token, err := GetTokenFromAuthenticationHeader(req)
-	if err != nil {
-		return
-	}
-	claims, err := CheckToken(token)
-	if err != nil {
-		return
-	}
-	subClaims := fmt.Sprintf("%v", claims["sub"])
-	userID, err := strconv.Atoi(subClaims)
-	if err != nil {
-		return user, typedErrors.NewAuthenticationErrorf("cannot find userID from token, got claims = %s", subClaims)
-	}
+// GetUserFromClaims : return username from token
+func (auh *actualUserHandler) GetUserFromClaims(claims jwt.MapClaims) (user ActualUser, err error) {
+	username := fmt.Sprintf("%v", claims[constant.UserClaims])
 
 	// Get user's info from DB based on userID (token)
 	var userFromDB repositoryModel.User
 	err = auh.DB.
-		Take(&userFromDB, "id = ?", userID).
+		Take(&userFromDB, "username = ?", username).
 		Error
 	if err != nil {
 		return user, errors.WithStack(err)

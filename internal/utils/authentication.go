@@ -23,12 +23,12 @@ func CompareHashAndPassword(hashedPassword, password string) (err error) {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func GenerateTokenWithUserID(userID uint) (string, error) {
+func GenerateTokenWithUsername(username string) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": constant.IssToken,
-		"sub": userID,
-		"aud": "any",
-		"exp": time.Now().Add(constant.ExpirationDuration).Unix(),
+		"iss":               constant.IssToken,
+		constant.UserClaims: username,
+		"aud":               "any",
+		"exp":               time.Now().Add(constant.ExpirationDuration).Unix(),
 	})
 
 	tokenKey := GetDefaultOrFromEnv(constant.SecretTokenDefault, constant.SecretTokenEnv)

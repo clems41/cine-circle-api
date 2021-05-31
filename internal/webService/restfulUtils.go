@@ -1,8 +1,11 @@
 package webService
 
 import (
+	"cine-circle/internal/constant"
 	"cine-circle/pkg/logger"
+	"encoding/json"
 	"github.com/emicklei/go-restful"
+	"github.com/pkg/errors"
 )
 
 type Handler interface {
@@ -20,4 +23,14 @@ func AddHandlersToRestfulContainer(container *restful.Container, handlers ...Han
 			}
 		}
 	}
+}
+
+// WhoAmI : get user info from request
+func WhoAmI(req *restful.Request) (user ActualUser, err error) {
+	userInfoStr := req.HeaderParameter(constant.UserInfoRequestParameter)
+	err = json.Unmarshal([]byte(userInfoStr), &user)
+	if err != nil {
+		return user, errors.WithStack(err)
+	}
+	return
 }
