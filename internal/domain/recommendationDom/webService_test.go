@@ -3,6 +3,7 @@ package recommendationDom
 import (
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/test"
+	"cine-circle/internal/utils"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -300,7 +301,7 @@ func TestHandler_List(t *testing.T) {
 	}
 }
 
-func TestHandler_List_ReceivedRecommendation(t *testing.T) {
+func TestHandler_List_ReceivedRecommendations(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -390,7 +391,7 @@ func TestHandler_List_ReceivedRecommendation(t *testing.T) {
 	}
 }
 
-func TestHandler_List_SentRecommendation(t *testing.T) {
+func TestHandler_List_SentRecommendations(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
 
@@ -471,6 +472,117 @@ func TestHandler_List_SentRecommendation(t *testing.T) {
 		require.NotEmpty(t, recommendation.Movie.Title)
 		require.NotEmpty(t, recommendation.Movie.PosterPath)
 		require.NotEqual(t, 0, recommendation.Movie.ID)
+		require.NotEmpty(t, recommendation.Date)
+		require.NotEmpty(t, recommendation.RecommendationType)
+		require.NotEmpty(t, recommendation.Comment)
+		require.NotEmpty(t, recommendation.Sender.Username)
+		require.NotEmpty(t, recommendation.Sender.DisplayName)
+		require.NotEqual(t, 0, recommendation.Sender.UserID)
+	}
+}
+
+func TestHandler_List_SpecificMovie(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Create user and add it to some circles
+	userSample := sampler.GetUser()
+	movie := sampler.GetMovie()
+	sampler.GetRecommendationsSentByUserForSpecificMovie(userSample, movie)
+	receivedRecommendations := sampler.GetRecommendationsReceivedByUserForSpecificMovie(userSample, movie)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code, should fail with wrong movie id
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+		{
+			Key:   "movieId",
+			Value: "99999",
+		},
+	}
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	// Send request and check response code, should work
+
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+		{
+			Key:   "movieId",
+			Value: utils.IDToStr(movie.GetID()),
+		},
+	}
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var list ViewList
+	testingHTTPServer.DecodeResponse(resp, &list)
+
+	require.Equal(t, len(receivedRecommendations), list.NumberOfItems)
+	require.NotEqual(t, 0, len(list.Recommendations))
+	require.Equal(t, 1, list.CurrentPage)
+	require.Equal(t, 7, list.PageSize)
+	require.NotEqual(t, 0, list.NumberOfPages)
+	require.True(t, len(list.Recommendations) <= 7)
+
+	for _, recommendation := range list.Recommendations {
+		require.NotEqual(t, 0, len(recommendation.Circles))
+		for _, circle := range recommendation.Circles {
+			require.NotEqual(t, 0, len(circle.Users))
+			require.NotEqual(t, 0, circle.CircleID)
+			require.NotEmpty(t, circle.Name)
+			require.NotEmpty(t, circle.Description)
+			for _, circleUser := range circle.Users {
+				require.NotEmpty(t, circleUser.Username)
+				require.NotEmpty(t, circleUser.DisplayName)
+				require.NotEqual(t, 0, circleUser.UserID)
+			}
+		}
+		require.NotEqual(t, 0, len(recommendation.Users))
+		for _, user := range recommendation.Users {
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+			require.NotEqual(t, 0, user.UserID)
+		}
+		require.Equal(t, movie.Title, recommendation.Movie.Title)
+		require.Equal(t, movie.PosterPath, recommendation.Movie.PosterPath)
+		require.Equal(t, movie.GetID(), recommendation.Movie.ID)
 		require.NotEmpty(t, recommendation.Date)
 		require.NotEmpty(t, recommendation.RecommendationType)
 		require.NotEmpty(t, recommendation.Comment)

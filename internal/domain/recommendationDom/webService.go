@@ -36,10 +36,11 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		To(api.Create))
 
 	wsReco.Route(wsReco.GET("/").
-		Param(wsReco.QueryParameter("page", "num of page to get").DataType("int")).
-		Param(wsReco.QueryParameter("pageSize", "number of element if one page").DataType("int")).
+		Param(wsReco.QueryParameter("page", "num of page to get").DataType("int").DefaultValue("1")).
+		Param(wsReco.QueryParameter("pageSize", "number of element if one page").DataType("int").DefaultValue("10")).
 		Param(wsReco.QueryParameter("sort", "way of sorting elements (date:asc)").DataType("string").DefaultValue("date:desc")).
 		Param(wsReco.QueryParameter("recommendationType", "filter on type (received, sent or both)").DataType("string").DefaultValue("received")).
+		Param(wsReco.QueryParameter("movieId", "get only recommendations for specific movie").DataType("int").DefaultValue("")).
 		Doc("List, filter and sort recommendations").
 		Returns(http.StatusOK, "Created", ViewList{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
@@ -109,6 +110,14 @@ func (api handler) List(req *restful.Request, res *restful.Response) {
 	}
 	filters.UserID = userFromRequest.ID
 	filters.RecommendationType = req.QueryParameter("recommendationType")
+	movieIdStr := req.QueryParameter("movieId")
+	if movieIdStr != "" {
+		filters.MovieID, err =  utils.StrToID(movieIdStr)
+		if err != nil {
+			webServicePkg.HandleHTTPError(req, res, err)
+			return
+		}
+	}
 
 	view, err := api.service.List(filters)
 	if err != nil {

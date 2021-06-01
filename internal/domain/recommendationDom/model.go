@@ -56,7 +56,7 @@ type UserList struct {
 
 type UsersFilters struct {
 	utils.PaginationRequest
-	UserID             uint   `json:"-"`
+	UserID uint `json:"-"`
 }
 
 type Filters struct {
@@ -64,6 +64,7 @@ type Filters struct {
 	utils.SortingRequest
 	RecommendationType string `json:"type"`
 	UserID             uint   `json:"-"`
+	MovieID            uint   `json:"-"`
 }
 
 func (c Creation) Valid() error {

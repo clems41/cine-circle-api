@@ -168,6 +168,19 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 	case recommendationBoth:
 		query = query.Where("sender_id = ? or id IN (select recommendation_id from recommendation_user where user_id = ?) or id in (select recommendation_id from recommendation_circle where circle_id in (select circle_id from circle_user where user_id = ?))", filters.UserID, filters.UserID, filters.UserID)
 	}
+
+	if filters.MovieID != 0 {
+		// Checj if movie exists
+		var movie repositoryModel.Movie
+		err = r.DB.
+			Take(&movie, "id = ?", filters.MovieID).
+			Error
+		if err != nil {
+			return nil, 0, errors.WithStack(err)
+		}
+		query = query.Where("movie_id = ?", filters.MovieID)
+	}
+
 	// Pagination
 
 	if filters.PageSize != 0 {
@@ -191,6 +204,7 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 
 func (r *Repository) ListUsers(usersFilters UsersFilters) (users []repositoryModel.User, total int64, err error) {
 	query := r.DB.
+		Order("username asc").
 		Select("username, id, display_name").
 		Where("id IN (SELECT user_id FROM circle_user WHERE circle_id IN (SELECT circle_id from circle_user WHERE user_id = ?)) AND id <> ?", usersFilters.UserID, usersFilters.UserID)
 

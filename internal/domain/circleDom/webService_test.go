@@ -522,12 +522,12 @@ func TestHandler_List(t *testing.T) {
 	require.True(t, len(list.Circles) <= 10)
 
 	for _, circle := range list.Circles {
-		require.NotEmpty(t, circle.CircleID)
+		require.NotEqual(t, 0, circle.CircleID)
 		require.NotEmpty(t, circle.Name)
 		require.NotEmpty(t, circle.Description)
 		require.NotEqual(t, 0, len(circle.Users))
 		for _, user := range circle.Users {
-			require.NotEmpty(t, user.UserID)
+			require.NotEqual(t, 0, user.UserID)
 			require.NotEmpty(t, user.Username)
 			require.NotEmpty(t, user.DisplayName)
 		}

@@ -189,10 +189,94 @@ func (sampler *Sampler) GetRecommendationsSentByUser(sender *repositoryModel.Use
 	return
 }
 
+func (sampler *Sampler) GetRecommendationsSentByUserForSpecificMovie(sender *repositoryModel.User, movie *repositoryModel.Movie) (list []repositoryModel.Recommendation) {
+	for range FakeRange(4, 12) {
+		movie := sampler.GetMovie()
+		recommendation := repositoryModel.Recommendation{
+			SenderID: sender.GetID(),
+			MovieID:  movie.GetID(),
+			Comment:  fake.Sentences(),
+		}
+		err := sampler.DB.Create(&recommendation).Error
+		require.NoError(sampler.t, err)
+		// Add users to sent recommendations
+		for range FakeRange(1, 3) {
+			user := sampler.GetUser()
+			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), user.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		// Add circles to sent recommendations
+		for range FakeRange(1, 2) {
+			circle := sampler.GetCircle()
+			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		err = sampler.DB.
+			Preload("Users").
+			Preload("Movie").
+			Preload("Sender").
+			Preload("Circles").
+			Preload("Circles.Users").
+			Order("id").
+			Take(&recommendation).
+			Error
+		require.NoError(sampler.t, err)
+		list = append(list, recommendation)
+	}
+	return
+}
+
 func (sampler *Sampler) GetRecommendationsReceivedByUser(recipient *repositoryModel.User) (list []repositoryModel.Recommendation) {
 	for range FakeRange(4, 12) {
 		sender := sampler.GetUser()
 		movie := sampler.GetMovie()
+		recommendation := repositoryModel.Recommendation{
+			SenderID: sender.GetID(),
+			MovieID:  movie.GetID(),
+			Comment:  fake.Sentences(),
+		}
+		err := sampler.DB.Create(&recommendation).Error
+		require.NoError(sampler.t, err)
+		// Create fake bool for choosing if user should be added into circles list or users list
+		recipientShouldBeAddedIntoCircle := FakeBool()
+		if !recipientShouldBeAddedIntoCircle {
+			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), recipient.GetID()).Error
+			require.NoError(sampler.t, err)
+		} else {
+			circle := sampler.GetCircle(*recipient)
+			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		// Add users to sent recommendations
+		for range FakeRange(1, 3) {
+			user := sampler.GetUser()
+			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), user.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		// Add circles to sent recommendations
+		for range FakeRange(1, 2) {
+			circle := sampler.GetCircle()
+			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		err = sampler.DB.
+			Preload("Users").
+			Preload("Movie").
+			Preload("Sender").
+			Preload("Circles").
+			Preload("Circles.Users").
+			Order("id").
+			Take(&recommendation).
+			Error
+		require.NoError(sampler.t, err)
+		list = append(list, recommendation)
+	}
+	return
+}
+
+func (sampler *Sampler) GetRecommendationsReceivedByUserForSpecificMovie(recipient *repositoryModel.User, movie *repositoryModel.Movie) (list []repositoryModel.Recommendation) {
+	for range FakeRange(4, 12) {
+		sender := sampler.GetUser()
 		recommendation := repositoryModel.Recommendation{
 			SenderID: sender.GetID(),
 			MovieID:  movie.GetID(),
