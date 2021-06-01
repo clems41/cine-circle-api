@@ -5,15 +5,16 @@ import (
 	"net/http"
 )
 
-type webService struct {
+type handler struct {
 }
 
-func NewWebService() *webService {
-	return &webService{}
+func NewHandler() *handler {
+	return &handler{}
 }
 
-func (api webService) Routes() *restful.WebService {
+func (api handler) WebServices() (handlers []*restful.WebService) {
 	wsRoot := &restful.WebService{}
+	handlers = append(handlers, wsRoot)
 
 	// HEALTH
 	wsRoot.Route(wsRoot.GET("/health/ok").
@@ -21,5 +22,5 @@ func (api webService) Routes() *restful.WebService {
 		To(func(req *restful.Request, res *restful.Response) {
 			res.WriteHeader(http.StatusOK)
 		}))
-	return wsRoot
+	return
 }

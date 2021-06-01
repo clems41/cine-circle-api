@@ -4,6 +4,7 @@ import (
 	"cine-circle/internal/domain/circleDom"
 	"cine-circle/internal/domain/movieDom"
 	"cine-circle/internal/domain/recommendationDom"
+	"cine-circle/internal/domain/rootDom"
 	"cine-circle/internal/domain/userDom"
 	"cine-circle/internal/repository"
 	"cine-circle/internal/repository/postgres"
@@ -88,6 +89,9 @@ func run(cmd *cobra.Command, args []string) {
 	webService.ActualUserHandler = webService.NewActualUserHandler(DB)
 
 	// Adding all new handlers here
+	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+		rootDom.NewHandler())
+
 	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		userDom.NewHandler(userDom.NewService(userDom.NewRepository(DB))))
 
