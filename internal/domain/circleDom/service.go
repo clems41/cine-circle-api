@@ -11,6 +11,7 @@ type Service interface {
 	Delete(deletion Deletion) (err error)
 	AddUser(updateUser UpdateUser) (view View, err error)
 	DeleteUser(updateUser UpdateUser) (view View, err error)
+	List(filters Filters) (list ListView, err error)
 }
 
 type service struct {
@@ -184,6 +185,18 @@ func (svc *service) DeleteUser(updateUser UpdateUser) (view View, err error) {
 		return
 	}
 	view = svc.toView(circle)
+	return
+}
+
+func (svc *service) List(filters Filters) (list ListView, err error) {
+	circles, total, err := svc.r.List(filters)
+	if err != nil {
+		return
+	}
+	list.Page = filters.BuildResult(total)
+	for _, circle := range circles {
+		list.Circles = append(list.Circles, svc.toView(circle))
+	}
 	return
 }
 

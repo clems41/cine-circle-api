@@ -17,6 +17,7 @@ type repository interface {
 	GetUser(userID uint) (user repositoryModel.User, err error)
 	AddUserToCircle(user repositoryModel.User, circle *repositoryModel.Circle) (err error)
 	DeleteUserFromCircle(userID uint, circle *repositoryModel.Circle) (err error)
+	List(filters Filters) (circles []repositoryModel.Circle, total int64, err error)
 }
 
 type Repository struct {
@@ -123,6 +124,29 @@ func (r *Repository) DeleteUserFromCircle(userID uint, circle *repositoryModel.C
 		})
 	if err != nil {
 		errors.WithStack(err)
+	}
+	return
+}
+
+func (r *Repository) List(filters Filters) (circles []repositoryModel.Circle, total int64, err error) {
+	query := r.DB.
+		Preload("Users").
+		Where("id IN (SELECT circle_id FROM circle_user WHERE user_id = ?)", filters.UserID)
+
+	if filters.PageSize != 0 {
+		query = query.Limit(filters.PageSize)
+	}
+
+	query = query.Offset(filters.Offset())
+
+	err = query.
+		Find(&circles).
+		Limit(-1).
+		Offset(-1).
+		Count(&total).
+		Error
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
 	}
 	return
 }

@@ -1,5 +1,7 @@
 package circleDom
 
+import "cine-circle/internal/utils"
+
 type Creation struct {
 	UserIDFromRequest uint   `json:"-"`
 	Name              string `json:"name"`
@@ -40,6 +42,16 @@ type UserView struct {
 	UserID      uint   `json:"id"`
 	Username    string `json:"username"`
 	DisplayName string `json:"displayName"`
+}
+
+type ListView struct {
+	utils.Page
+	Circles []View `json:"circles"`
+}
+
+type Filters struct {
+	utils.PaginationRequest
+	UserID uint `json:"-"`
 }
 
 func (c Creation) Valid() (err error) {

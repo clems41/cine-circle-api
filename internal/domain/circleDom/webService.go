@@ -35,6 +35,17 @@ func (api handler) WebServices() (handlers []*restful.WebService) {
 		Filter(webServicePkg.AuthenticateUser()).
 		To(api.Create))
 
+	wsCircle.Route(wsCircle.GET("/").
+		Doc("List circles that include actual user").
+		Param(wsCircle.QueryParameter("page", "num of page to get").DataType("int")).
+		Param(wsCircle.QueryParameter("pageSize", "number of element if one page").DataType("int")).
+		Returns(http.StatusOK, "Created", View{}).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
+		Filter(webServicePkg.LogRequest()).
+		Filter(webServicePkg.AuthenticateUser()).
+		To(api.List))
+
 	wsCircle.Route(wsCircle.PUT("/{circleId}").
 		Param(wsCircle.PathParameter("circleId", "ID of circle to update").DataType("int")).
 		Doc("Update existing circle").
@@ -256,4 +267,25 @@ func (api handler) DeleteUser(req *restful.Request, res *restful.Response) {
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, view)
+}
+
+func (api handler) List(req *restful.Request, res *restful.Response) {
+	userFromRequest, err := webServicePkg.WhoAmI(req)
+	if err != nil {
+		webServicePkg.HandleHTTPError(req, res, err)
+		return
+	}
+	var filters Filters
+	filters.PaginationRequest, err = utils.ExtractPaginationRequest(req)
+	if err != nil {
+		webServicePkg.HandleHTTPError(req, res, err)
+		return
+	}
+	filters.UserID = userFromRequest.ID
+	list, err := api.service.List(filters)
+	if err != nil {
+		webServicePkg.HandleHTTPError(req, res, err)
+		return
+	}
+	res.WriteHeaderAndEntity(http.StatusOK, list)
 }

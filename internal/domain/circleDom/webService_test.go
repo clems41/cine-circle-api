@@ -472,3 +472,64 @@ func TestHandler_DeleteUser(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, circle.Users, len(circleSample.Users)-1)
 }
+
+func TestHandler_List(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	circleWebService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := circleWebService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, circleWebService)
+
+	// Create circles with user in it
+	userSample := sampler.GetUser()
+	var circles []*repositoryModel.Circle
+	for range test.FakeRange(5, 15) {
+		circles = append(circles, sampler.GetCircle(*userSample))
+	}
+
+
+	// Send request and check response code without authentication, should fail
+	resp := testingHTTPServer.SendRequest(webServicePath, http.MethodGet)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Authenticate user for sending request (bad user)
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request with user authenticated, should work
+	queryParams := []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "10",
+		},
+	}
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParams)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	var list ListView
+	testingHTTPServer.DecodeResponse(resp, &list)
+
+	require.Equal(t, len(circles), list.NumberOfItems)
+	require.NotEqual(t, 0, len(list.Circles))
+	require.Equal(t, 1, list.CurrentPage)
+	require.Equal(t, 10, list.PageSize)
+	require.NotEqual(t, 0, list.NumberOfPages)
+	require.True(t, len(list.Circles) <= 10)
+
+	for _, circle := range list.Circles {
+		require.NotEmpty(t, circle.CircleID)
+		require.NotEmpty(t, circle.Name)
+		require.NotEmpty(t, circle.Description)
+		require.NotEqual(t, 0, len(circle.Users))
+		for _, user := range circle.Users {
+			require.NotEmpty(t, user.UserID)
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+		}
+	}
+}
