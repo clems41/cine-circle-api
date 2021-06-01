@@ -37,7 +37,7 @@ func (sampler *Sampler) populateDatabase() {
 
 	// populate database with some circles (between 1 and 5)
 	for range FakeRange(1, 5) {
-		// Add user into circle (1 chance over 2)
+		// 1 time over 2 : create circle with one existing user in it
 		if FakeBool() {
 			element := RandomElement(users)
 			user, ok := element.(repositoryModel.User)

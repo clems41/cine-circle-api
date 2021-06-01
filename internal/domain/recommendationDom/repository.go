@@ -15,6 +15,7 @@ type repository interface {
 	GetUserIDsCloseToUser(userID uint) (userIDs []uint, err error)
 	CheckIfMovieExists(movieID uint) (exists bool, err error)
 	List(filters Filters) (list []repositoryModel.Recommendation, total int64, err error)
+	ListUsers(usersFilters UsersFilters) (users []repositoryModel.User, total int64, err error)
 }
 
 type Repository struct {
@@ -177,6 +178,30 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 
 	err = query.
 		Find(&list).
+		Limit(-1).
+		Offset(-1).
+		Count(&total).
+		Error
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	return
+}
+
+func (r *Repository) ListUsers(usersFilters UsersFilters) (users []repositoryModel.User, total int64, err error) {
+	query := r.DB.
+		Select("username, id, display_name").
+		Where("id IN (SELECT user_id FROM circle_user WHERE circle_id IN (SELECT circle_id from circle_user WHERE user_id = ?)) AND id <> ?", usersFilters.UserID, usersFilters.UserID)
+
+	if usersFilters.PageSize != 0 {
+		query = query.Limit(usersFilters.PageSize)
+	}
+
+	query = query.Offset(usersFilters.Offset())
+
+	err = query.
+		Find(&users).
 		Limit(-1).
 		Offset(-1).
 		Count(&total).

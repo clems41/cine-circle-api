@@ -49,6 +49,16 @@ type ViewList struct {
 	Recommendations []RecommendationView `json:"recommendations"`
 }
 
+type UserList struct {
+	utils.Page
+	Users []UserView `json:"users"`
+}
+
+type UsersFilters struct {
+	utils.PaginationRequest
+	UserID             uint   `json:"-"`
+}
+
 type Filters struct {
 	utils.PaginationRequest
 	utils.SortingRequest

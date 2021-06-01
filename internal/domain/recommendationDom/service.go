@@ -12,6 +12,7 @@ var _ Service = (*service)(nil)
 type Service interface {
 	Create(creation Creation) (err error)
 	List(filters Filters) (list ViewList, err error)
+	ListUsers(usersFilters UsersFilters) (list UserList, err error)
 }
 
 type service struct {
@@ -108,6 +109,22 @@ func (service *service) List(filters Filters) (list ViewList, err error) {
 	list.Page = filters.PaginationRequest.BuildResult(total)
 	for _, recommendation := range recommendations {
 		list.Recommendations = append(list.Recommendations, service.toView(recommendation, filters.UserID))
+	}
+	return
+}
+
+func (service *service) ListUsers(usersFilters UsersFilters) (list UserList, err error) {
+	users, total, err := service.r.ListUsers(usersFilters)
+	if err != nil {
+		return
+	}
+	list.Page = usersFilters.PaginationRequest.BuildResult(total)
+	for _, user := range users {
+		list.Users = append(list.Users, UserView{
+			UserID:      user.GetID(),
+			Username:    *user.Username,
+			DisplayName: user.DisplayName,
+		})
 	}
 	return
 }

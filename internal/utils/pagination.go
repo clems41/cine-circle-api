@@ -86,13 +86,13 @@ func ExtractPaginationRequest(req *restful.Request) (request PaginationRequest, 
 
 		request.Page = 1
 	}
-	pageSize := req.QueryParameter("page_size")
+	pageSize := req.QueryParameter("pageSize")
 	if pageSize != "" {
 
 		request.PageSize, err = strconv.Atoi(pageSize)
 
 		if err != nil {
-			return request, typedErrors.NewBadRequestErrorf("'page_size' parameter is supposed to be an integer: %s", err.Error())
+			return request, typedErrors.NewBadRequestErrorf("'pageSize' parameter is supposed to be an integer: %s", err.Error())
 		}
 
 	} else {

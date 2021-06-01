@@ -263,7 +263,7 @@ func TestHandler_List(t *testing.T) {
 
 	var view ViewList
 	testingHTTPServer.DecodeResponse(resp, &view)
-	require.Equal(t, len(receivedRecommendations) + len(sentRecommendations), view.NumberOfItems)
+	require.Equal(t, len(receivedRecommendations)+len(sentRecommendations), view.NumberOfItems)
 	require.Equal(t, len(view.Recommendations), view.NumberOfItems)
 	require.Equal(t, view.CurrentPage, 1)
 	require.NotEqual(t, view.NumberOfPages, 0)
@@ -478,4 +478,114 @@ func TestHandler_List_SentRecommendation(t *testing.T) {
 		require.NotEmpty(t, recommendation.Sender.DisplayName)
 		require.NotEqual(t, 0, recommendation.Sender.UserID)
 	}
+}
+
+func TestHandler_ListUsers(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+	basePath := webServicePath + "/users"
+
+	// Create user and add it to some circles
+	userSample := sampler.GetUser()
+	var circles []*repositoryModel.Circle
+	for range test.FakeRange(2, 6) {
+		circles = append(circles, sampler.GetCircle(*userSample))
+	}
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "15",
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(basePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code, should work
+	resp = testingHTTPServer.SendRequestWithQueryParameters(basePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var list UserList
+	testingHTTPServer.DecodeResponse(resp, &list)
+	require.NotEqual(t, 0, len(list.Users))
+	require.Equal(t, list.CurrentPage, 1)
+	require.NotEqual(t, list.NumberOfPages, 0)
+	require.Equal(t, list.PageSize, 15)
+
+	// calculate number of user in all circles
+	var nbUsers int
+	for _, circle := range circles {
+		// we remove one to not count actual user
+		nbUsers += len(circle.Users) - 1
+	}
+	require.Equal(t, list.NumberOfItems, nbUsers)
+}
+
+func TestHandler_ListUsers_Page2(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+	basePath := webServicePath + "/users"
+
+	// Create user and add it to some circles
+	userSample := sampler.GetUser()
+	var circles []*repositoryModel.Circle
+	for range test.FakeRange(2, 6) {
+		circles = append(circles, sampler.GetCircle(*userSample))
+	}
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "2",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(basePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code, should work
+	resp = testingHTTPServer.SendRequestWithQueryParameters(basePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var list UserList
+	testingHTTPServer.DecodeResponse(resp, &list)
+	require.NotEqual(t, 0, len(list.Users))
+	require.Equal(t, list.CurrentPage, 2)
+	require.NotEqual(t, list.NumberOfPages, 0)
+	require.Equal(t, list.PageSize, 7)
+
+	// calculate number of user in all circles
+	var nbUsers int
+	for _, circle := range circles {
+		// we remove one to not count actual user
+		nbUsers += len(circle.Users) - 1
+	}
+	require.Equal(t, list.NumberOfItems, nbUsers)
 }
