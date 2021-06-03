@@ -487,7 +487,7 @@ func TestHandler_List(t *testing.T) {
 	userSample := sampler.GetUser()
 	var circles []*repositoryModel.Circle
 	for range test.FakeRange(5, 15) {
-		circles = append(circles, sampler.GetCircle(*userSample))
+		circles = append(circles, sampler.GetCircle(userSample))
 	}
 
 

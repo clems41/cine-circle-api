@@ -65,6 +65,7 @@ type Filters struct {
 	RecommendationType string `json:"type"`
 	UserID             uint   `json:"-"`
 	MovieID            uint   `json:"-"`
+	CircleID           uint   `json:"-"`
 }
 
 func (c Creation) Valid() error {

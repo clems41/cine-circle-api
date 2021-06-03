@@ -44,7 +44,7 @@ func (sampler *Sampler) populateDatabase() {
 			if !ok {
 				sampler.t.Fatalf("Element should be type User")
 			}
-			sampler.GetCircle(user)
+			sampler.GetCircle(&user)
 		} else {
 			sampler.GetCircle()
 		}
@@ -107,7 +107,7 @@ func (sampler *Sampler) GetUserWithSpecificPassword(password string) (user *repo
 	return
 }
 
-func (sampler *Sampler) GetCircle(users ...repositoryModel.User) *repositoryModel.Circle {
+func (sampler *Sampler) GetCircle(users ...*repositoryModel.User) *repositoryModel.Circle {
 
 	circle := repositoryModel.Circle{
 		Name:        fake.Title(),
@@ -120,7 +120,9 @@ func (sampler *Sampler) GetCircle(users ...repositoryModel.User) *repositoryMode
 	}
 
 	// Adding specific users
-	circle.Users = append(circle.Users, users...)
+	for _, user := range users {
+		circle.Users = append(circle.Users, *user)
+	}
 
 	err := sampler.DB.
 		Create(&circle).
@@ -243,7 +245,7 @@ func (sampler *Sampler) GetRecommendationsReceivedByUser(recipient *repositoryMo
 			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), recipient.GetID()).Error
 			require.NoError(sampler.t, err)
 		} else {
-			circle := sampler.GetCircle(*recipient)
+			circle := sampler.GetCircle(recipient)
 			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
 			require.NoError(sampler.t, err)
 		}
@@ -290,7 +292,7 @@ func (sampler *Sampler) GetRecommendationsReceivedByUserForSpecificMovie(recipie
 			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), recipient.GetID()).Error
 			require.NoError(sampler.t, err)
 		} else {
-			circle := sampler.GetCircle(*recipient)
+			circle := sampler.GetCircle(recipient)
 			err = sampler.DB.Exec("INSERT INTO recommendation_circle (recommendation_id,circle_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), circle.GetID()).Error
 			require.NoError(sampler.t, err)
 		}
@@ -316,6 +318,40 @@ func (sampler *Sampler) GetRecommendationsReceivedByUserForSpecificMovie(recipie
 			Take(&recommendation).
 			Error
 		require.NoError(sampler.t, err)
+		list = append(list, recommendation)
+	}
+	return
+}
+
+func (sampler *Sampler) GetRecommendationsForSpecificCircle(circle *repositoryModel.Circle) (list []repositoryModel.Recommendation) {
+	for range FakeRange(4, 12) {
+		movie := sampler.GetMovie()
+		sender := sampler.GetUser()
+		recommendation := repositoryModel.Recommendation{
+			SenderID: sender.GetID(),
+			MovieID:  movie.GetID(),
+			Comment:  fake.Sentences(),
+			Circles: []repositoryModel.Circle{*circle},
+		}
+		err := sampler.DB.Create(&recommendation).Error
+		require.NoError(sampler.t, err)
+		// Add users to sent recommendations
+		for range FakeRange(1, 3) {
+			user := sampler.GetUser()
+			err = sampler.DB.Exec("INSERT INTO recommendation_user (recommendation_id,user_id) VALUES (?,?) ON CONFLICT DO NOTHING", recommendation.GetID(), user.GetID()).Error
+			require.NoError(sampler.t, err)
+		}
+		err = sampler.DB.
+			Preload("Users").
+			Preload("Movie").
+			Preload("Sender").
+			Preload("Circles").
+			Preload("Circles.Users").
+			Order("id").
+			Take(&recommendation).
+			Error
+		require.NoError(sampler.t, err)
+		require.Len(sampler.t, recommendation.Circles, 1)
 		list = append(list, recommendation)
 	}
 	return

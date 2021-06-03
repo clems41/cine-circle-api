@@ -41,6 +41,7 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsReco.QueryParameter("sort", "way of sorting elements (date:asc)").DataType("string").DefaultValue("date:desc")).
 		Param(wsReco.QueryParameter("recommendationType", "filter on type (received, sent or both)").DataType("string").DefaultValue("received")).
 		Param(wsReco.QueryParameter("movieId", "get only recommendations for specific movie").DataType("int").DefaultValue("")).
+		Param(wsReco.QueryParameter("circleId", "get only recommendations for specific circle").DataType("int").DefaultValue("")).
 		Doc("List, filter and sort recommendations").
 		Returns(http.StatusOK, "Created", ViewList{}).
 		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
@@ -110,9 +111,19 @@ func (api handler) List(req *restful.Request, res *restful.Response) {
 	}
 	filters.UserID = userFromRequest.ID
 	filters.RecommendationType = req.QueryParameter("recommendationType")
+
 	movieIdStr := req.QueryParameter("movieId")
 	if movieIdStr != "" {
 		filters.MovieID, err =  utils.StrToID(movieIdStr)
+		if err != nil {
+			webServicePkg.HandleHTTPError(req, res, err)
+			return
+		}
+	}
+
+	circleIdStr := req.QueryParameter("circleId")
+	if circleIdStr != "" {
+		filters.CircleID, err =  utils.StrToID(circleIdStr)
 		if err != nil {
 			webServicePkg.HandleHTTPError(req, res, err)
 			return

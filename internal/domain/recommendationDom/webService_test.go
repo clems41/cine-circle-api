@@ -26,7 +26,7 @@ func TestHandler_Create(t *testing.T) {
 	userInCircle := sampler.GetUser()
 
 	// Creating circle with specific user
-	circle := sampler.GetCircle(*userInCircle)
+	circle := sampler.GetCircle(userInCircle)
 
 	movie := sampler.GetMovie()
 
@@ -118,7 +118,7 @@ func TestHandler_Create(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
 	// Creating circle with both user, should now be OK
-	_ = sampler.GetCircle(*userNotInCircle1, *userNotInCircle2)
+	_ = sampler.GetCircle(userNotInCircle1, userNotInCircle2)
 
 	// Send request and check response with user2 sending reco to user1 now in his contact list, should work
 	testingHTTPServer.AuthenticateUserPermanently(userNotInCircle2)
@@ -592,6 +592,114 @@ func TestHandler_List_SpecificMovie(t *testing.T) {
 	}
 }
 
+func TestHandler_List_SpecificCircle(t *testing.T) {
+	DB, clean := test.OpenDatabase(t)
+	defer clean()
+
+	sampler := test.NewSampler(t, DB, true)
+
+	webService := NewHandler(NewService(NewRepository(DB)))
+	webServicePath := webService.WebServices()[0].RootPath()
+	testingHTTPServer := test.NewTestingHTTPServer(t, webService)
+
+	// Create user and add it to some circles
+	userSample := sampler.GetUser()
+	circleSample := sampler.GetCircle(userSample)
+	recommendationsSample := sampler.GetRecommendationsForSpecificCircle(circleSample)
+
+	queryParameters := []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+	}
+
+	// Send request and check response code without authentication, should fail and return 401
+	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	testingHTTPServer.AuthenticateUserPermanently(userSample)
+
+	// Send request and check response code, should fail with wrong movie id
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+		{
+			Key:   "circleId",
+			Value: "99999",
+		},
+	}
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+	// Send request and check response code, should work
+
+	queryParameters = []test.KeyValue{
+		{
+			Key:   "page",
+			Value: "1",
+		},
+		{
+			Key:   "pageSize",
+			Value: "7",
+		},
+		{
+			Key:   "circleId",
+			Value: utils.IDToStr(circleSample.GetID()),
+		},
+	}
+	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var list ViewList
+	testingHTTPServer.DecodeResponse(resp, &list)
+
+	require.Equal(t, len(recommendationsSample), list.NumberOfItems)
+	require.NotEqual(t, 0, len(list.Recommendations))
+	require.Equal(t, 1, list.CurrentPage)
+	require.Equal(t, 7, list.PageSize)
+	require.NotEqual(t, 0, list.NumberOfPages)
+	require.True(t, len(list.Recommendations) <= 7)
+
+	for _, recommendation := range list.Recommendations {
+		require.Equal(t, 1, len(recommendation.Circles))
+		require.Equal(t, len(circleSample.Users), len(recommendation.Circles[0].Users))
+		require.Equal(t, circleSample.GetID(), recommendation.Circles[0].CircleID)
+		require.Equal(t, circleSample.Name, recommendation.Circles[0].Name)
+		require.Equal(t, circleSample.Description, recommendation.Circles[0].Description)
+		for _, circleUser := range recommendation.Circles[0].Users {
+			require.NotEmpty(t, circleUser.Username)
+			require.NotEmpty(t, circleUser.DisplayName)
+			require.NotEqual(t, 0, circleUser.UserID)
+		}
+		require.NotEqual(t, 0, len(recommendation.Users))
+		for _, user := range recommendation.Users {
+			require.NotEmpty(t, user.Username)
+			require.NotEmpty(t, user.DisplayName)
+			require.NotEqual(t, 0, user.UserID)
+		}
+		require.NotEmpty(t, recommendation.Movie.Title)
+		require.NotEmpty(t, recommendation.Movie.PosterPath)
+		require.NotEqual(t, 0, recommendation.Movie.ID)
+		require.NotEmpty(t, recommendation.Date)
+		require.NotEmpty(t, recommendation.RecommendationType)
+		require.NotEmpty(t, recommendation.Comment)
+		require.NotEmpty(t, recommendation.Sender.Username)
+		require.NotEmpty(t, recommendation.Sender.DisplayName)
+		require.NotEqual(t, 0, recommendation.Sender.UserID)
+	}
+}
+
 func TestHandler_ListUsers(t *testing.T) {
 	DB, clean := test.OpenDatabase(t)
 	defer clean()
@@ -607,7 +715,7 @@ func TestHandler_ListUsers(t *testing.T) {
 	userSample := sampler.GetUser()
 	var circles []*repositoryModel.Circle
 	for range test.FakeRange(2, 6) {
-		circles = append(circles, sampler.GetCircle(*userSample))
+		circles = append(circles, sampler.GetCircle(userSample))
 	}
 
 	queryParameters := []test.KeyValue{
@@ -662,7 +770,7 @@ func TestHandler_ListUsers_Page2(t *testing.T) {
 	userSample := sampler.GetUser()
 	var circles []*repositoryModel.Circle
 	for range test.FakeRange(2, 6) {
-		circles = append(circles, sampler.GetCircle(*userSample))
+		circles = append(circles, sampler.GetCircle(userSample))
 	}
 
 	queryParameters := []test.KeyValue{

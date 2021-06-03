@@ -170,7 +170,7 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 	}
 
 	if filters.MovieID != 0 {
-		// Checj if movie exists
+		// Check if movie exists
 		var movie repositoryModel.Movie
 		err = r.DB.
 			Take(&movie, "id = ?", filters.MovieID).
@@ -179,6 +179,18 @@ func (r *Repository) List(filters Filters) (list []repositoryModel.Recommendatio
 			return nil, 0, errors.WithStack(err)
 		}
 		query = query.Where("movie_id = ?", filters.MovieID)
+	}
+
+	if filters.CircleID != 0 {
+		// Check if circle exists
+		var circle repositoryModel.Circle
+		err = r.DB.
+			Take(&circle, "id = ?", filters.CircleID).
+			Error
+		if err != nil {
+			return nil, 0, errors.WithStack(err)
+		}
+		query = query.Where("id IN (SELECT recommendation_id FROM recommendation_circle WHERE circle_id = ?)", filters.CircleID)
 	}
 
 	// Pagination
