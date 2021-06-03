@@ -4,18 +4,20 @@ import (
 	"github.com/emicklei/go-restful"
 )
 
-type watchlistHandler struct {
+type handler struct {
 	service Service
 }
 
-func NewWatchlistHandler(svc Service) *watchlistHandler {
-	return &watchlistHandler{
-		service:    svc,
+func NewHandler(svc Service) *handler {
+	return &handler{
+		service: svc,
 	}
 }
 
-func (api watchlistHandler) WebService() *restful.WebService {
+func (api handler) WebServices() (webServices []*restful.WebService) {
 	wsWatchlist := &restful.WebService{}
+	webServices = append(webServices, wsWatchlist)
+
 	wsWatchlist.Path("/v1/watchlist")
 
 /*	wsWatchlist.Route(wsWatchlist.POST("/{movieId}").
@@ -51,5 +53,5 @@ func (api watchlistHandler) WebService() *restful.WebService {
 		Filter(authenticateUser(true)).
 		To(IsInWatchlist))*/
 
-	return wsWatchlist
+	return
 }

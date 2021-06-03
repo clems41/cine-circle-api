@@ -4,16 +4,18 @@ import (
 	"gorm.io/gorm"
 )
 
-var _ Repository = (*watchlistRepository)(nil)
+var _ repository = (*Repository)(nil)
 
-type watchlistRepository struct {
+type repository interface {
+}
+
+type Repository struct {
 	DB *gorm.DB
 }
 
-func NewWatchlistRepository(DB *gorm.DB) *watchlistRepository {
-	return &watchlistRepository{DB: DB}
+func NewRepository(DB *gorm.DB) *Repository {
+	return &Repository{DB: DB}
 }
 
-func (r watchlistRepository) Migrate() {
-
+func (r *Repository) Migrate() {
 }
