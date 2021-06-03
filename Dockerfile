@@ -8,6 +8,7 @@ ADD go.mod go.sum ./
 RUN go mod download
 
 ADD . ./
+
 RUN set -ex; \
     if grep -q '^package main *' *.go; then go install .; fi; \
     if [ -d cmd ]; then go install ./cmd/...; fi
