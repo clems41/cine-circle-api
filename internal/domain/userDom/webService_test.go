@@ -8,6 +8,7 @@ import (
 	"cine-circle/internal/webService"
 	"encoding/base64"
 	"github.com/icrowley/fake"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -352,7 +353,7 @@ func TestHandler_Delete(t *testing.T) {
 		Take(&user, "id = ?", userSample.GetID()).
 		Error
 	require.Error(t, err)
-	require.True(t, gorm.ErrRecordNotFound == err)
+	require.True(t, errors.Is(err, gorm.ErrRecordNotFound))
 }
 
 func TestHandler_Get(t *testing.T) {

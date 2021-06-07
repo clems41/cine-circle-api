@@ -364,3 +364,19 @@ func (sampler *Sampler) GetRecommendations() (list []repositoryModel.Recommendat
 	}
 	return
 }
+
+func (sampler *Sampler) GetWatchlist(user *repositoryModel.User) (watchlist []repositoryModel.Watchlist) {
+	for range FakeRange(5, 15) {
+		movieSample := sampler.GetMovie()
+		sample := repositoryModel.Watchlist{
+			UserID:   user.GetID(),
+			User:     user,
+			MovieID:  movieSample.GetID(),
+			Movie:    movieSample,
+		}
+		err := sampler.DB.Create(&sample).Error
+		require.NoError(sampler.t, err)
+		watchlist = append(watchlist, sample)
+	}
+	return
+}
