@@ -5,17 +5,18 @@ import (
 )
 
 const (
-	CostHashFunction = 8
-	ExpirationDuration = 1 * 24 * time.Hour
-	SecretTokenEnv = "SECRET_TOKEN"
-	SecretTokenDefault = "secret"
-	TokenKind = "Bearer"
-	TokenHeader = "Authorization"
-	IssToken = "huco-api"
-	AuthenticationHeaderName = "Authorization"
+	CostHashFunction                   = 8
+	ExpirationDuration                 = 1 * 24 * time.Hour
+	SecretTokenEnv                     = "SECRET_TOKEN"
+	SecretTokenDefault                 = "secret"
+	TokenKind                          = "Bearer"
+	TokenHeader                        = "Authorization"
+	IssToken                           = "huco-api"
+	AuthenticationHeaderName           = "Authorization"
 	UsernamePasswordDelimiterForHeader = ":"
-	BearerTokenDelimiterForHeader = " "
-	AuthenticationHeaderPrefixValue = "Basic "
-	UserClaims = "sub"
-	UserInfoRequestParameter = "UserInfo"
+	BearerTokenDelimiterForHeader      = " "
+	AuthenticationHeaderPrefixValue    = "Basic "
+	UserClaims                         = "sub"
+	UserInfoRequestParameter           = "UserInfo"
+	AuthorizationDelimiterForHeader    = " "
 )

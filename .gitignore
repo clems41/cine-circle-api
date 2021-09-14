@@ -1,15 +1,33 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+/assets
+/g.*
+.#*
+.*sw[po]
 
-# Test binary, built with `go test -c`
-*.test
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+.idea
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+!.idea
+.idea/cine-circle-api.iml
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+.idea/misc.xml
+
+.idea/modules.xml
+
+.idea/vcs.xml
+
+.idea/shelf
+
+docs
+.idea/dataSources.xml
+
+.idea/inspectionProfiles/Project_Default.xml
+
+# Files used by test script
+pre-coverage-report.html
+coverage-report.html
+main
+.idea/csv-plugin.xml
+
+# Files used by CI
+.kubeconfig

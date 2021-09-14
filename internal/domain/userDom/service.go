@@ -201,19 +201,21 @@ func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token 
 }
 
 func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {
-	result := strings.Split(header, constant.BearerTokenDelimiterForHeader)
-	if len(result) != 2 {
-		err = typedErrors.NewAuthenticationErrorf("Header format is not correct")
+	result := strings.Split(header, constant.AuthorizationDelimiterForHeader)
+	if len(result) != 2 { // Le header Authorization devrait être de la forme : Basic encoded64== (donc séparé par un espace)
+		err = typedErrors.NewAuthenticationErrorf("Header format is not correct for Authorization")
 		return
 	}
-	loginPasswordEncoded := result[1]
-	loginPasswordDecoded, err := base64.StdEncoding.DecodeString(loginPasswordEncoded)
+	nomUtilisateurMotDePasseEncode := result[1]
+	nomUtilisateurMotDePasseDecode, err := base64.StdEncoding.DecodeString(nomUtilisateurMotDePasseEncode)
 	if err != nil {
 		err = typedErrors.NewAuthenticationErrorf(err.Error())
 		return
 	}
-	pair := strings.Split(string(loginPasswordDecoded), constant.UsernamePasswordDelimiterForHeader)
-	if len(result) != 2 {
+	pair := strings.SplitN(string(nomUtilisateurMotDePasseDecode), constant.UsernamePasswordDelimiterForHeader, 2)
+	// pair devrait être composé de 2 parties : la première pour le nomUtilisateur et la deuxième pour le mdp (avec potentiellement des ':' dedans)
+	// le mot de passe peut contenir des ':', on split donc une seule fois le header afin de ne pas découper le mot de passe
+	if len(pair) != 2 {
 		err = typedErrors.NewAuthenticationErrorf("Encoded login:password is not correct")
 		return
 	}
