@@ -2,7 +2,7 @@ package utils
 
 import (
 	"cine-circle/internal/constant"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -27,7 +27,6 @@ func GenerateTokenWithUsername(username string) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss":               constant.IssToken,
 		constant.UserClaims: username,
-		"aud":               "any",
 		"exp":               time.Now().Add(constant.ExpirationDuration).Unix(),
 	})
 
