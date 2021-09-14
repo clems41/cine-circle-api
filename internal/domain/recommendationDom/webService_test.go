@@ -3,7 +3,7 @@ package recommendationDom
 import (
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/test"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/require"
 	"net/http"

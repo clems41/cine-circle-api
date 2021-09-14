@@ -1,6 +1,8 @@
 package movieDom
 
-import "cine-circle/internal/utils"
+import (
+	"cine-circle/pkg/utils"
+)
 
 // Used for Omdb
 const (

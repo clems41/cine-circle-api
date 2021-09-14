@@ -1,6 +1,8 @@
 package recommendationDom
 
-import "cine-circle/internal/typedErrors"
+import (
+	typedErrors2 "cine-circle/pkg/typedErrors"
+)
 
 const (
 	errSenderIDNullCode     = "SENDER_ID_NULL"
@@ -15,13 +17,13 @@ const (
 )
 
 var (
-	errSenderIDNull     = typedErrors.NewBadRequestWithCode(errSenderIDNullCode)
-	errMovieIDNull      = typedErrors.NewBadRequestWithCode(errMovieIDNullCode)
-	errCommentEmpty     = typedErrors.NewBadRequestWithCode(errCommentEmptyCode)
-	errMissingRecipient = typedErrors.NewBadRequestWithCode(errMissingRecipientCode)
-	errUserUnauthorized = typedErrors.NewAuthenticationErrorWithCode(errUserUnauthorizedCode)
-	errMovieNotFound    = typedErrors.NewNotFoundWithCode(errMovieNotFoundCode)
+	errSenderIDNull     = typedErrors2.NewBadRequestWithCode(errSenderIDNullCode)
+	errMovieIDNull      = typedErrors2.NewBadRequestWithCode(errMovieIDNullCode)
+	errCommentEmpty     = typedErrors2.NewBadRequestWithCode(errCommentEmptyCode)
+	errMissingRecipient = typedErrors2.NewBadRequestWithCode(errMissingRecipientCode)
+	errUserUnauthorized = typedErrors2.NewAuthenticationErrorWithCode(errUserUnauthorizedCode)
+	errMovieNotFound    = typedErrors2.NewNotFoundWithCode(errMovieNotFoundCode)
 
-	errRecommendationTypeIncorrect = typedErrors.NewBadRequestWithCode(errRecommendationTypeIncorrectCode)
-	errSortingFieldIncorrect       = typedErrors.NewBadRequestWithCode(errSortingFieldIncorrectCode)
+	errRecommendationTypeIncorrect = typedErrors2.NewBadRequestWithCode(errRecommendationTypeIncorrectCode)
+	errSortingFieldIncorrect       = typedErrors2.NewBadRequestWithCode(errSortingFieldIncorrectCode)
 )

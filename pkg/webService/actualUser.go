@@ -3,8 +3,8 @@ package webService
 import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/typedErrors"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/typedErrors"
+	"cine-circle/pkg/utils"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/emicklei/go-restful"

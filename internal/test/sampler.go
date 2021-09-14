@@ -3,7 +3,7 @@ package test
 import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/require"

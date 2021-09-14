@@ -1,7 +1,7 @@
 package recommendationDom
 
 import (
-	"cine-circle/internal/utils"
+	utils2 "cine-circle/pkg/utils"
 	"time"
 )
 
@@ -45,23 +45,23 @@ type RecommendationView struct {
 }
 
 type ViewList struct {
-	utils.Page
+	utils2.Page
 	Recommendations []RecommendationView `json:"recommendations"`
 }
 
 type UserList struct {
-	utils.Page
+	utils2.Page
 	Users []UserView `json:"users"`
 }
 
 type UsersFilters struct {
-	utils.PaginationRequest
+	utils2.PaginationRequest
 	UserID uint `json:"-"`
 }
 
 type Filters struct {
-	utils.PaginationRequest
-	utils.SortingRequest
+	utils2.PaginationRequest
+	utils2.SortingRequest
 	RecommendationType string `json:"type"`
 	UserID             uint   `json:"-"`
 	MovieID            uint   `json:"-"`
@@ -85,10 +85,10 @@ func (c Creation) Valid() error {
 }
 
 func (f Filters) Valid() error {
-	if !utils.SliceContainsStr(acceptedTypeOfRecommendation, f.RecommendationType) {
+	if !utils2.SliceContainsStr(acceptedTypeOfRecommendation, f.RecommendationType) {
 		return errRecommendationTypeIncorrect
 	}
-	if !utils.SliceContainsStr(acceptedFieldsForSorting, f.Field) {
+	if !utils2.SliceContainsStr(acceptedFieldsForSorting, f.Field) {
 		return errSortingFieldIncorrect
 	}
 	return nil

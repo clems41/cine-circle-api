@@ -1,6 +1,8 @@
 package circleDom
 
-import "cine-circle/internal/utils"
+import (
+	"cine-circle/pkg/utils"
+)
 
 type Creation struct {
 	UserIDFromRequest uint   `json:"-"`

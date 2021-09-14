@@ -4,8 +4,8 @@ import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/test"
-	"cine-circle/internal/utils"
-	"cine-circle/internal/webService"
+	utils2 "cine-circle/pkg/utils"
+	"cine-circle/pkg/webService"
 	"encoding/base64"
 	"github.com/icrowley/fake"
 	"github.com/pkg/errors"
@@ -124,7 +124,7 @@ func TestHandler_CreateUser(t *testing.T) {
 
 	// check if password has been correctly salt and hash
 	assert.NotEqual(t, creation.Password, user.HashedPassword, "password should be hashed")
-	err = utils.CompareHashAndPassword(user.HashedPassword, creation.Password)
+	err = utils2.CompareHashAndPassword(user.HashedPassword, creation.Password)
 	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
 }
 
@@ -307,9 +307,9 @@ func TestHandler_UpdatePassword(t *testing.T) {
 	require.NoError(t, err, "Should not return error but got %v", err)
 	assert.NotEqual(t, updatePassword.NewPassword, user.HashedPassword, "password should be hashed")
 	assert.NotEqual(t, updatePassword.OldPassword, user.HashedPassword, "password should be hashed")
-	err = utils.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
+	err = utils2.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
 	require.Error(t, err, "passwords should not be the same (oldPassword)")
-	err = utils.CompareHashAndPassword(user.HashedPassword, updatePassword.NewPassword)
+	err = utils2.CompareHashAndPassword(user.HashedPassword, updatePassword.NewPassword)
 	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
 }
 
@@ -372,7 +372,7 @@ func TestHandler_Get(t *testing.T) {
 
 	// Create different testing base path
 	wrongID := test.FakeIntBetween(9999, 99999999)
-	testingBasePath := webServicePath + "/" + utils.IDToStr(userSample.GetID())
+	testingBasePath := webServicePath + "/" + utils2.IDToStr(userSample.GetID())
 	wrongTestingBasePath := webServicePath + "/" + strconv.Itoa(wrongID)
 
 	// Send request and check response code without authentication, should fail

@@ -1,6 +1,8 @@
 package circleDom
 
-import "cine-circle/internal/typedErrors"
+import (
+	typedErrors2 "cine-circle/pkg/typedErrors"
+)
 
 const (
 	errNameEmptyCode        = "NAME_EMPTY"
@@ -12,10 +14,10 @@ const (
 )
 
 var (
-	errNameEmpty        = typedErrors.NewBadRequestWithCode(errNameEmptyCode)
-	errDescriptionEmpty = typedErrors.NewBadRequestWithCode(errDescriptionEmptyCode)
-	errNoFieldsProvided = typedErrors.NewBadRequestWithCode(errNoFieldsProvidedCode)
-	errIdNull           = typedErrors.NewBadRequestWithCode(errIdNullCode)
-	errNotAuthorized    = typedErrors.NewAuthenticationErrorWithCode(errNotAuthorizedCode)
-	errUserNotFound     = typedErrors.NewNotFoundWithCode(errUserNotFoundCode)
+	errNameEmpty        = typedErrors2.NewBadRequestWithCode(errNameEmptyCode)
+	errDescriptionEmpty = typedErrors2.NewBadRequestWithCode(errDescriptionEmptyCode)
+	errNoFieldsProvided = typedErrors2.NewBadRequestWithCode(errNoFieldsProvidedCode)
+	errIdNull           = typedErrors2.NewBadRequestWithCode(errIdNullCode)
+	errNotAuthorized    = typedErrors2.NewAuthenticationErrorWithCode(errNotAuthorizedCode)
+	errUserNotFound     = typedErrors2.NewNotFoundWithCode(errUserNotFoundCode)
 )

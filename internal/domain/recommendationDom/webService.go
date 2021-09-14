@@ -1,9 +1,9 @@
 package recommendationDom
 
 import (
-	"cine-circle/internal/typedErrors"
-	"cine-circle/internal/utils"
-	webServicePkg "cine-circle/internal/webService"
+	"cine-circle/pkg/typedErrors"
+	utils2 "cine-circle/pkg/utils"
+	"cine-circle/pkg/webService"
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
@@ -28,11 +28,11 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Doc("Send new recommendation").
 		Reads(Creation{}).
 		Returns(http.StatusCreated, "Created", nil).
-		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
-		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
-		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webServicePkg.FormattedJsonError{}).
-		Filter(webServicePkg.LogRequest()).
-		Filter(webServicePkg.AuthenticateUser()).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webService.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webService.FormattedJsonError{}).
+		Returns(http.StatusUnprocessableEntity, "Not processable, impossible to serialize json", webService.FormattedJsonError{}).
+		Filter(webService.LogRequest()).
+		Filter(webService.AuthenticateUser()).
 		To(api.Create))
 
 	wsReco.Route(wsReco.GET("/").
@@ -44,10 +44,10 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsReco.QueryParameter("circleId", "get only recommendations for specific circle").DataType("int").DefaultValue("")).
 		Doc("List, filter and sort recommendations").
 		Returns(http.StatusOK, "Created", ViewList{}).
-		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
-		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
-		Filter(webServicePkg.LogRequest()).
-		Filter(webServicePkg.AuthenticateUser()).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webService.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webService.FormattedJsonError{}).
+		Filter(webService.LogRequest()).
+		Filter(webService.AuthenticateUser()).
 		To(api.List))
 
 	wsReco.Route(wsReco.GET("/users/").
@@ -55,10 +55,10 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsReco.QueryParameter("pageSize", "number of element if one page").DataType("int")).
 		Doc("List all users that can received recommendation from user").
 		Returns(http.StatusOK, "Created", ViewList{}).
-		Returns(http.StatusBadRequest, "Bad request, fields not validated", webServicePkg.FormattedJsonError{}).
-		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
-		Filter(webServicePkg.LogRequest()).
-		Filter(webServicePkg.AuthenticateUser()).
+		Returns(http.StatusBadRequest, "Bad request, fields not validated", webService.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webService.FormattedJsonError{}).
+		Filter(webService.LogRequest()).
+		Filter(webService.AuthenticateUser()).
 		To(api.ListUsers))
 
 	return
@@ -68,21 +68,21 @@ func (api handler) Create(req *restful.Request, res *restful.Response) {
 	var creation Creation
 	err := req.ReadEntity(&creation)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, typedErrors.NewUnprocessableEntityErrorf(err.Error()))
+		webService.HandleHTTPError(req, res, typedErrors.NewUnprocessableEntityErrorf(err.Error()))
 		return
 	}
 
 	// Get user info from token
-	userFromRequest, err := webServicePkg.WhoAmI(req)
+	userFromRequest, err := webService.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 	creation.SenderID = userFromRequest.ID
 
 	err = api.service.Create(creation)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
@@ -91,22 +91,22 @@ func (api handler) Create(req *restful.Request, res *restful.Response) {
 
 func (api handler) List(req *restful.Request, res *restful.Response) {
 	// Get user info from token
-	userFromRequest, err := webServicePkg.WhoAmI(req)
+	userFromRequest, err := webService.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
 	// get query parameters for filtering search
 	var filters Filters
-	filters.PaginationRequest, err = utils.ExtractPaginationRequest(req)
+	filters.PaginationRequest, err = utils2.ExtractPaginationRequest(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
-	filters.SortingRequest, err = utils.ExtractSortingRequest(req, "date", true)
+	filters.SortingRequest, err = utils2.ExtractSortingRequest(req, "date", true)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 	filters.UserID = userFromRequest.ID
@@ -114,25 +114,25 @@ func (api handler) List(req *restful.Request, res *restful.Response) {
 
 	movieIdStr := req.QueryParameter("movieId")
 	if movieIdStr != "" {
-		filters.MovieID, err =  utils.StrToID(movieIdStr)
+		filters.MovieID, err =  utils2.StrToID(movieIdStr)
 		if err != nil {
-			webServicePkg.HandleHTTPError(req, res, err)
+			webService.HandleHTTPError(req, res, err)
 			return
 		}
 	}
 
 	circleIdStr := req.QueryParameter("circleId")
 	if circleIdStr != "" {
-		filters.CircleID, err =  utils.StrToID(circleIdStr)
+		filters.CircleID, err =  utils2.StrToID(circleIdStr)
 		if err != nil {
-			webServicePkg.HandleHTTPError(req, res, err)
+			webService.HandleHTTPError(req, res, err)
 			return
 		}
 	}
 
 	view, err := api.service.List(filters)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
@@ -141,23 +141,23 @@ func (api handler) List(req *restful.Request, res *restful.Response) {
 
 func (api handler) ListUsers(req *restful.Request, res *restful.Response) {
 	// Get user info from token
-	userFromRequest, err := webServicePkg.WhoAmI(req)
+	userFromRequest, err := webService.WhoAmI(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
 	var usersFilters UsersFilters
-	usersFilters.PaginationRequest, err = utils.ExtractPaginationRequest(req)
+	usersFilters.PaginationRequest, err = utils2.ExtractPaginationRequest(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 	usersFilters.UserID = userFromRequest.ID
 
 	list, err := api.service.ListUsers(usersFilters)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 

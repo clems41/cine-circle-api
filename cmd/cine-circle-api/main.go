@@ -10,8 +10,8 @@ import (
 	"cine-circle/internal/domain/watchlistDom"
 	"cine-circle/internal/repository"
 	"cine-circle/internal/repository/postgres"
-	"cine-circle/internal/webService"
 	"cine-circle/pkg/logger"
+	webService2 "cine-circle/pkg/webService"
 	"context"
 	"flag"
 	"github.com/emicklei/go-restful"
@@ -88,28 +88,28 @@ func run(cmd *cobra.Command, args []string) {
 	restful.DefaultContainer.EnableContentEncoding(true)
 
 	// Define common handler used for getting actual user from token
-	webService.ActualUserHandler = webService.NewActualUserHandler(DB)
+	webService2.ActualUserHandler = webService2.NewActualUserHandler(DB)
 
 	// Adding all new handlers here
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		rootDom.NewHandler())
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		userDom.NewHandler(userDom.NewService(userDom.NewRepository(DB))))
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		circleDom.NewHandler(circleDom.NewService(circleDom.NewRepository(DB))))
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		movieDom.NewHandler(movieDom.NewService(movieDom.NewRepository(DB))))
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		recommendationDom.NewHandler(recommendationDom.NewService(recommendationDom.NewRepository(DB))))
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		watchlistDom.NewHandler(watchlistDom.NewService(watchlistDom.NewRepository(DB))))
 
-	webService.AddHandlersToRestfulContainer(restful.DefaultContainer,
+	webService2.AddHandlersToRestfulContainer(restful.DefaultContainer,
 		libraryDom.NewHandler(libraryDom.NewService(libraryDom.NewRepository(DB))))
 
 

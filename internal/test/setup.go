@@ -5,9 +5,9 @@ import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/postgres"
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/utils"
-	"cine-circle/internal/webService"
 	"cine-circle/pkg/logger"
+	"cine-circle/pkg/utils"
+	webService2 "cine-circle/pkg/webService"
 	"encoding/json"
 	"fmt"
 	"github.com/emicklei/go-restful"
@@ -87,12 +87,12 @@ func OpenDatabase(t *testing.T) (DB *gorm.DB, closeFunction func()) {
 		}
 	}
 
-	webService.ActualUserHandler = webService.NewActualUserHandler(testingDB)
+	webService2.ActualUserHandler = webService2.NewActualUserHandler(testingDB)
 
 	return testingDB, closeFunction
 }
 
-func NewTestingHTTPServer(t *testing.T, handlers ...webService.Handler) (server *TestingHTTPServer) {
+func NewTestingHTTPServer(t *testing.T, handlers ...webService2.Handler) (server *TestingHTTPServer) {
 	logger.InitLogger()
 	restful.DefaultRequestContentType(restful.MIME_JSON)
 	restful.DefaultResponseContentType(restful.MIME_JSON)

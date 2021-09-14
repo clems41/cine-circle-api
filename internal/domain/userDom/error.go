@@ -1,6 +1,8 @@
 package userDom
 
-import "cine-circle/internal/typedErrors"
+import (
+	typedErrors2 "cine-circle/pkg/typedErrors"
+)
 
 const (
 	errValidPasswordCode    = "PASSWORD_EMPTY"
@@ -16,14 +18,14 @@ const (
 )
 
 var (
-	errValidPassword    = typedErrors.NewBadRequestWithCode(errValidPasswordCode)
-	errValidEmail       = typedErrors.NewBadRequestWithCode(errValidEmailCode)
-	errValidUsername    = typedErrors.NewBadRequestWithCode(errValidUsernameCode)
-	errValidDisplayName = typedErrors.NewBadRequestWithCode(errValidDisplayNameCode)
-	errValidID          = typedErrors.NewBadRequestWithCode(errValidIDCode)
-	errValidOldPassword = typedErrors.NewBadRequestWithCode(errValidOldPasswordCode)
-	errValidNewPassword = typedErrors.NewBadRequestWithCode(errValidNewPasswordCode)
-	errValidGet         = typedErrors.NewBadRequestWithCode(errValidGetCode)
-	errValidKeyword     = typedErrors.NewBadRequestWithCode(errValidKeywordCode)
-	errBadLoginPassword = typedErrors.NewAuthenticationErrorf(errBadLoginPasswordCode)
+	errValidPassword    = typedErrors2.NewBadRequestWithCode(errValidPasswordCode)
+	errValidEmail       = typedErrors2.NewBadRequestWithCode(errValidEmailCode)
+	errValidUsername    = typedErrors2.NewBadRequestWithCode(errValidUsernameCode)
+	errValidDisplayName = typedErrors2.NewBadRequestWithCode(errValidDisplayNameCode)
+	errValidID          = typedErrors2.NewBadRequestWithCode(errValidIDCode)
+	errValidOldPassword = typedErrors2.NewBadRequestWithCode(errValidOldPasswordCode)
+	errValidNewPassword = typedErrors2.NewBadRequestWithCode(errValidNewPasswordCode)
+	errValidGet         = typedErrors2.NewBadRequestWithCode(errValidGetCode)
+	errValidKeyword     = typedErrors2.NewBadRequestWithCode(errValidKeywordCode)
+	errBadLoginPassword = typedErrors2.NewAuthenticationErrorf(errBadLoginPasswordCode)
 )

@@ -3,7 +3,7 @@ package watchlistDom
 import (
 	"cine-circle/internal/repository/repositoryModel"
 	"cine-circle/internal/test"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"

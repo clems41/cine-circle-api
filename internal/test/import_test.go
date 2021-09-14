@@ -1,7 +1,7 @@
 package test
 
 import (
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"strings"

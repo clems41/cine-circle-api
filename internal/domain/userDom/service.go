@@ -3,8 +3,8 @@ package userDom
 import (
 	"cine-circle/internal/constant"
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/typedErrors"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/typedErrors"
+	"cine-circle/pkg/utils"
 	"encoding/base64"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"

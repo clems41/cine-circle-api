@@ -1,8 +1,8 @@
 package webService
 
 import (
-	"cine-circle/internal/typedErrors"
 	"cine-circle/pkg/logger"
+	"cine-circle/pkg/typedErrors"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"

@@ -1,6 +1,8 @@
 package watchlistDom
 
-import "cine-circle/internal/typedErrors"
+import (
+	"cine-circle/pkg/typedErrors"
+)
 
 const (
 	errMovieNotFoundCode    = "MOVIE_NOT_FOUND"

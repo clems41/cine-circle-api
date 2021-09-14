@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"cine-circle/internal/utils"
 	logger "cine-circle/pkg/logger"
+	"cine-circle/pkg/utils"
 	"fmt"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"

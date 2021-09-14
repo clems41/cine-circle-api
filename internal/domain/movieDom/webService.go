@@ -1,8 +1,8 @@
 package movieDom
 
 import (
-	"cine-circle/internal/utils"
-	webServicePkg "cine-circle/internal/webService"
+	utils2 "cine-circle/pkg/utils"
+	"cine-circle/pkg/webService"
 	"github.com/emicklei/go-restful"
 	"net/http"
 )
@@ -27,10 +27,10 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsMovie.PathParameter("movieId", "ID of movie").DataType("int")).
 		Doc("Get movie").
 		Returns(http.StatusFound, "OK", View{}).
-		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
-		Returns(http.StatusNotFound, "Not found, impossible to find resource", webServicePkg.FormattedJsonError{}).
-		Filter(webServicePkg.LogRequest()).
-		Filter(webServicePkg.AuthenticateUser()).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webService.FormattedJsonError{}).
+		Returns(http.StatusNotFound, "Not found, impossible to find resource", webService.FormattedJsonError{}).
+		Filter(webService.LogRequest()).
+		Filter(webService.AuthenticateUser()).
 		To(api.Get))
 
 	wsMovie.Route(wsMovie.GET("/").
@@ -38,24 +38,24 @@ func (api handler) WebServices() (webServices []*restful.WebService) {
 		Param(wsMovie.QueryParameter("query", "query to search among tv shows and movies").DataType("string")).
 		Doc("Search movies").
 		Returns(http.StatusOK, "OK", SearchView{}).
-		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webServicePkg.FormattedJsonError{}).
-		Filter(webServicePkg.LogRequest()).
-		Filter(webServicePkg.AuthenticateUser()).
+		Returns(http.StatusUnauthorized, "Unauthorized, user cannot access this route", webService.FormattedJsonError{}).
+		Filter(webService.LogRequest()).
+		Filter(webService.AuthenticateUser()).
 		To(api.Search))
 
 	return
 }
 
 func (api handler) Get(req *restful.Request, res *restful.Response) {
-	movieID, err := utils.StrToID(req.PathParameter("movieId"))
+	movieID, err := utils2.StrToID(req.PathParameter("movieId"))
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
 	view, err := api.service.Get(movieID)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusFound, view)
@@ -64,9 +64,9 @@ func (api handler) Get(req *restful.Request, res *restful.Response) {
 func (api handler) Search(req *restful.Request, res *restful.Response) {
 	var filters Filters
 	var err error
-	filters.PaginationRequest, err = utils.ExtractPaginationRequest(req)
+	filters.PaginationRequest, err = utils2.ExtractPaginationRequest(req)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (api handler) Search(req *restful.Request, res *restful.Response) {
 
 	result, err := api.service.Search(filters)
 	if err != nil {
-		webServicePkg.HandleHTTPError(req, res, err)
+		webService.HandleHTTPError(req, res, err)
 		return
 	}
 	res.WriteHeaderAndEntity(http.StatusOK, result)

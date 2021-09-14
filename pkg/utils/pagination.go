@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"cine-circle/internal/typedErrors"
+	"cine-circle/pkg/typedErrors"
 	"github.com/emicklei/go-restful"
 	"math"
 	"strconv"

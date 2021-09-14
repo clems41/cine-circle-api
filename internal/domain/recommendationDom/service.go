@@ -2,7 +2,7 @@ package recommendationDom
 
 import (
 	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )

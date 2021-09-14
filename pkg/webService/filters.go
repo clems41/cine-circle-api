@@ -2,8 +2,8 @@ package webService
 
 import (
 	"cine-circle/internal/constant"
-	"cine-circle/internal/utils"
 	"cine-circle/pkg/logger"
+	"cine-circle/pkg/utils"
 	"encoding/json"
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"

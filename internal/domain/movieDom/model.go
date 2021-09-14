@@ -1,7 +1,7 @@
 package movieDom
 
 import (
-	"cine-circle/internal/utils"
+	"cine-circle/pkg/utils"
 	"time"
 )
 

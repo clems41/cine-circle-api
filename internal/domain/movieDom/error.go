@@ -1,6 +1,8 @@
 package movieDom
 
-import "cine-circle/internal/typedErrors"
+import (
+	typedErrors2 "cine-circle/pkg/typedErrors"
+)
 
 const (
 	errMovieNotFoundCode = "MOVIE_NOT_FOUND"
@@ -8,6 +10,6 @@ const (
 )
 
 var (
-	errMovieNotFound = typedErrors.NewNotFoundWithCode(errMovieNotFoundCode)
-	errEmptyQuery = typedErrors.NewBadRequestWithCode(errEmptyQueryCode)
+	errMovieNotFound = typedErrors2.NewNotFoundWithCode(errMovieNotFoundCode)
+	errEmptyQuery = typedErrors2.NewBadRequestWithCode(errEmptyQueryCode)
 )
