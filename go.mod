@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/corpix/uarand v0.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-openapi v1.4.1
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
