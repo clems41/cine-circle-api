@@ -2,7 +2,7 @@
 **(!) WARNING :** you need postgres database for running this API
 
 ## PostgresSQL
-This project is using PostgresSQL Database.  
+This project is using PostgresSQL Database.   
 For getting one on your machine, you can use docker.  
 **(!) (Don't forget to replace value in `<>`)**
 ```bash
