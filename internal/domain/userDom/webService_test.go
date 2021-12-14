@@ -1,641 +1,656 @@
 package userDom
 
 import (
-	"cine-circle/internal/constant"
-	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/internal/test"
-	utils2 "cine-circle/pkg/utils"
-	"cine-circle/pkg/webService"
+	"cine-circle-api/internal/repository/instance/userRepository"
+	"cine-circle-api/internal/repository/model"
+	"cine-circle-api/internal/test/mocks/mailServiceMock"
+	"cine-circle-api/internal/test/setupTestCase"
+	"cine-circle-api/internal/test/testSampler"
+	"cine-circle-api/pkg/httpServer"
+	"cine-circle-api/pkg/httpServer/authentication"
+	"cine-circle-api/pkg/httpServer/httpServerMock"
+	"cine-circle-api/pkg/logger"
+	"cine-circle-api/pkg/utils/securityUtils"
+	"cine-circle-api/pkg/utils/testUtils/fakeData"
+	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"encoding/base64"
 	"github.com/icrowley/fake"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
-func TestHandler_CreateUser(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
+/* Sign In */
 
-	ruler := test.NewRuler(t)
+func TestHandler_SignIn(t *testing.T) {
+	testPath := basePath + signInPath
+	_, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
+	defer tearDown()
 
-	userHandler := NewHandler(NewService(NewRepository(DB)))
-	testingHTTPServer := test.NewTestingHTTPServer(t, userHandler)
+	// Create testing data
+	password := fakeData.Password()
+	user := sampler.GetUserWithPassword(password)
+	wrongUsername := strings.ToLower(fakeData.UniqueUsername())
+	wrongEmail := fakeData.UniqueEmail()
+	wrongPassword := fakeData.Password()
 
-	// Routes use for this test
-	signUpBasePath := userHandler.WebServices()[0].RootPath() + "/sign-up"
+	// Try without authorization header --> NOK 400
+	resp := httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, nil)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	// Fields for creation
-	username := fake.UserName()
-	displayName := fake.FullName()
-	password := test.FakePassword()
-	email := fake.EmailAddress()
+	// Try with wrong login (username) et wrong password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(wrongUsername, wrongPassword))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	// test creation with missing mandatory field : Username
-	creation := Creation{
-		Username: "",
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       email,
+	// Try with wrong login (email) et wrong password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(wrongEmail, wrongPassword))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with wrong login (username) et correct password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(wrongUsername, password))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with wrong login (email) et correct password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(wrongEmail, password))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct login (username) et wrong password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(user.Username, wrongPassword))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct login (email) et wrong password --> NOK 401
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(user.Email, wrongPassword))
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct login (username) et correct password --> OK 200
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(user.Username, password))
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Try with correct login (email) et correct password --> OK 200
+	resp = httpMock.SendRequestWithHeaderParameters(testPath, http.MethodPost, basicAuthHeader(user.Email, password))
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check view fields
+	var view SignInView
+	httpMock.DecodeResponse(resp, &view)
+	ruler.CheckStruct(view, map[string]interface{}{
+		"CommonView": map[string]interface{}{
+			"Id":             user.ID,
+			"FirstName":      user.FirstName,
+			"LastName":       user.LastName,
+			"Email":          user.Email,
+			"Username":       user.Username,
+			"EmailConfirmed": user.EmailConfirmed,
 		},
-		Password: password,
+		"Token": map[string]interface{}{
+			"TokenString":    testRuler.NotEmptyField{},
+			"ExpirationDate": testRuler.NotEmptyField{},
+		},
+	})
+
+	// Check that expirationDate is not in the past and not more than 3 days
+	require.True(t, view.Token.ExpirationDate.After(time.Now()) && view.Token.ExpirationDate.Before(time.Now().AddDate(0, 0, 3)),
+		"%s should be not in the past, meaning before %s, but also before 3 days from now %s",
+		view.Token.ExpirationDate.String(), time.Now().String(), time.Now().AddDate(0, 0, 3).String())
+
+	// Check that token claims contains userInfo (id)
+	var userInfo authentication.UserInfo
+	claims, err := httpServer.ValidateToken(view.Token.TokenString)
+	require.NoError(t, err)
+	err = httpServer.GetUserInfoFromTokenClaims(claims, &userInfo)
+	require.NoError(t, err)
+	require.Equal(t, user.ID, userInfo.Id)
+}
+
+/* Sign Up */
+
+func TestHandler_SignUp(t *testing.T) {
+	testPath := basePath + signUpPath
+	db, httpMock, _, ruler, tearDown := setupTestcase(t, false)
+	defer tearDown()
+
+	// Create testing data
+	correctForm := SignUpForm{
+		CommonForm: CommonForm{
+			FirstName: fake.FirstName(),
+			LastName:  fake.LastName(),
+			Email:     fakeData.UniqueEmail(),
+			Username:  strings.ToLower(fakeData.UniqueUsername()),
+		},
+		Password: fakeData.Password(),
 	}
-	// Send request and check response code
-	resp := testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
+
+	// Try with missing firstname --> NOK 400
+	wrongForm := correctForm
+	wrongForm.FirstName = ""
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// test creation with missing mandatory field : DisplayName
-	creation = Creation{
-		Username: username,
-		CommonFields: CommonFields{
-			DisplayName: "",
-			Email:       email,
-		},
-		Password: password,
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
+	// Try with missing lastname --> NOK 400
+	wrongForm = correctForm
+	wrongForm.LastName = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// test creation with missing mandatory field : Password
-	creation = Creation{
-		Username: username,
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       email,
-		},
-		Password: "",
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
+	// Try with missing email --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Email = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// test creation with missing mandatory field : Email
-	creation = Creation{
-		Username: username,
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       "",
-		},
-		Password: password,
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
+	// Try with missing password --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Password = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// test creation with all correct fields
-	creation = Creation{
-		Username: username,
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       email,
-		},
-		Password: password,
-	}
+	// Try with missing username --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Username = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(signUpBasePath, http.MethodPost, creation)
+	// Try with invalid password (too short 6 < 8) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Password = fakeData.Password()[:6]
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid email (not email type) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Email = fake.Country()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid firstname (not only alpha) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.FirstName = "toto*tata"
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid lastname (not only alpha) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.LastName = "toto*tata"
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid username (not only lowercase) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.FirstName = strings.ToLower(strings.ToLower(fakeData.UniqueUsername()))
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with correct form --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, correctForm)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
-	var view View
-	testingHTTPServer.DecodeResponse(resp, &view)
 
-	// Check struct returned
+	// Check view fields
+	var view SignUpView
+	httpMock.DecodeResponse(resp, &view)
 	ruler.CheckStruct(view, map[string]interface{}{
-		"UserID":      test.NotEmptyField{},
-		"DisplayName": creation.DisplayName,
-		"Username":    strings.ToLower(creation.Username),
+		"CommonView": map[string]interface{}{
+			"Id":             testRuler.NotEmptyField{},
+			"FirstName":      correctForm.FirstName,
+			"LastName":       correctForm.LastName,
+			"Email":          correctForm.Email,
+			"Username":       correctForm.Username,
+			"EmailConfirmed": false,
+		},
 	})
 
-	// Check that are not returned with View object
-	var user repositoryModel.User
-	err := DB.
-		Find(&user, "id = ?", view.UserID).
-		Error
-	require.NoError(t, err, "Should not return error but got %v", err)
-	require.Equal(t, creation.Email, user.Email)
-
-	// check if password has been correctly salt and hash
-	assert.NotEqual(t, creation.Password, user.HashedPassword, "password should be hashed")
-	err = utils2.CompareHashAndPassword(user.HashedPassword, creation.Password)
-	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
-}
-
-func TestHandler_Update(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
-
-	ruler := test.NewRuler(t)
-	sampler := test.NewSampler(t, DB, false)
-
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-
-	// Add existing user to database
-	userSample := sampler.GetUser()
-
-	// Routes use for this test
-	usersBasePath := userWebService.WebServices()[1].RootPath()
-
-	// New fields to update user with
-	displayName := fake.FullName()
-	email := fake.EmailAddress()
-
-	// test update without authentication
-	update := Update{
-		CommonFields: CommonFields{
-			DisplayName: "",
-			Email:       "",
-		},
-	}
-	// Send request and check response code without authentication, should fail
-	resp := testingHTTPServer.SendRequestWithBody(usersBasePath, http.MethodPut, update)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Authenticate user for sending request
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
-
-	// test update with missing mandatory field : DisplayName and Email
-	update = Update{
-		CommonFields: CommonFields{
-			DisplayName: "",
-			Email:       "",
-		},
-	}
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(usersBasePath, http.MethodPut, update)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-	// test update with only email
-	update = Update{
-		CommonFields: CommonFields{
-			DisplayName: "",
-			Email:       email,
-		},
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(usersBasePath, http.MethodPut, update)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-	// test update with only displayName
-	update = Update{
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       "",
-		},
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(usersBasePath, http.MethodPut, update)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-	// test update with all fields
-	update = Update{
-		CommonFields: CommonFields{
-			DisplayName: displayName,
-			Email:       email,
-		},
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(usersBasePath, http.MethodPut, update)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var view View
-	testingHTTPServer.DecodeResponse(resp, &view)
-
-	// Check struct returned
-	ruler.CheckStruct(view, map[string]interface{}{
-		"UserID":      test.NotEmptyField{},
-		"DisplayName": update.DisplayName,
-		"Username":    strings.ToLower(*userSample.Username),
-	})
-
-	// Check that are not returned with View object
-	var user repositoryModel.User
-	err := DB.
-		Find(&user, "id = ?", view.UserID).
-		Error
-	require.NoError(t, err, "Should not return error but got %v", err)
-	require.Equal(t, update.Email, user.Email)
-}
-
-func TestHandler_UpdatePassword(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
-
-	sampler := test.NewSampler(t, DB, false)
-
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-
-	// New fields to update user with
-	oldPassword := test.FakePassword()
-	newPassword := test.FakePassword()
-
-	// Add existing user to database
-	userSample := sampler.GetUserWithSpecificPassword(oldPassword)
-
-	// Define testing base path
-	testingBasePath := webServicePath + "/password"
-
-	// test updatePassword without authentication
-	updatePassword := UpdatePassword{
-		OldPassword: oldPassword,
-		NewPassword: newPassword,
-	}
-	// Send request and check response code without authentication, should fail
-	resp := testingHTTPServer.SendRequestWithBody(testingBasePath, http.MethodPut, updatePassword)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Authenticate user for sending request
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
-
-	// test updatePassword with missing mandatory field : OldPassword
-	updatePassword = UpdatePassword{
-		OldPassword: "",
-		NewPassword: newPassword,
-	}
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(testingBasePath, http.MethodPut, updatePassword)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-	// test updatePassword with wrong mandatory field : OldPassword
-	updatePassword = UpdatePassword{
-		OldPassword: "wrongPassword",
-		NewPassword: newPassword,
-	}
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(testingBasePath, http.MethodPut, updatePassword)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// test updatePassword with missing mandatory field : NewPassword
-	updatePassword = UpdatePassword{
-		OldPassword: oldPassword,
-		NewPassword: "",
-	}
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(testingBasePath, http.MethodPut, updatePassword)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-
-	// test updatePassword with all correct fields
-	updatePassword = UpdatePassword{
-		OldPassword: oldPassword,
-		NewPassword: newPassword,
-	}
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithBody(testingBasePath, http.MethodPut, updatePassword)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var view View
-	testingHTTPServer.DecodeResponse(resp, &view)
-
-	// check if password has been correctly salt and hash
-	var user repositoryModel.User
-	err := DB.
-		Select("hashed_password").
-		Find(&user, "id = ?", view.UserID).
-		Error
-	require.NoError(t, err, "Should not return error but got %v", err)
-	assert.NotEqual(t, updatePassword.NewPassword, user.HashedPassword, "password should be hashed")
-	assert.NotEqual(t, updatePassword.OldPassword, user.HashedPassword, "password should be hashed")
-	err = utils2.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
-	require.Error(t, err, "passwords should not be the same (oldPassword)")
-	err = utils2.CompareHashAndPassword(user.HashedPassword, updatePassword.NewPassword)
-	require.NoError(t, err, "passwords should be the same (using hash comparison) but got %v", err)
-}
-
-func TestHandler_Delete(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
-
-	sampler := test.NewSampler(t, DB, false)
-
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-
-	// Add existing user to database
-	userSample := sampler.GetUser()
-
-	// Check if user has been correctly created
-	var user repositoryModel.User
-	err := DB.
-		Take(&user, "id = ?", userSample.GetID()).
+	// Check that user has been successfully stored into database
+	var user model.User
+	err := db.
+		Take(&user, view.Id).
 		Error
 	require.NoError(t, err)
-	require.Equal(t, *userSample.Username, *user.Username)
-	require.Equal(t, userSample.Email, user.Email)
-	require.Equal(t, userSample.HashedPassword, user.HashedPassword)
-	require.Equal(t, userSample.DisplayName, user.DisplayName)
+	require.Equal(t, view.Id, user.ID)
+	require.Equal(t, view.Username, user.Username)
+	require.Equal(t, view.LastName, user.LastName)
+	require.Equal(t, view.FirstName, user.FirstName)
+	require.Equal(t, view.Email, user.Email)
 
-	// Send request and check response code without authentication, should fail
-	resp := testingHTTPServer.SendRequest(webServicePath, http.MethodDelete)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Authenticate user for sending request
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequest(webServicePath, http.MethodDelete)
-	require.Equal(t, http.StatusNoContent, resp.StatusCode)
-
-	// Check if user has been correctly deleted
-	err = DB.
-		Take(&user, "id = ?", userSample.GetID()).
-		Error
-	require.Error(t, err)
-	require.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+	// Check that password has been successfully hashed
+	require.NoError(t, securityUtils.CompareHashAndPassword(user.HashedPassword, correctForm.Password))
 }
 
-func TestHandler_Get(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
+/* Send confirmation email */
 
-	ruler := test.NewRuler(t)
-	sampler := test.NewSampler(t, DB, false)
+func TestHandler_SendConfirmationEmail(t *testing.T) {
+	testPath := basePath + sendConfirmationEmailPath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
 
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
+	// Create testing data
+	user := sampler.GetUser()
 
-	// Add existing user to database
-	userSample := sampler.GetUser()
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequest(testPath, http.MethodGet)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
 
-	// Create different testing base path
-	wrongID := test.FakeIntBetween(9999, 99999999)
-	testingBasePath := webServicePath + "/" + utils2.IDToStr(userSample.GetID())
-	wrongTestingBasePath := webServicePath + "/" + strconv.Itoa(wrongID)
+	// Try with user authenticated --> OK 200
+	httpMock.AuthenticateUserPermanently(user)
+	resp = httpMock.SendRequest(testPath, http.MethodGet)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Send request and check response code without authentication, should fail
-	resp := testingHTTPServer.SendRequest(wrongTestingBasePath, http.MethodGet)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Authenticate user for sending request
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequest(wrongTestingBasePath, http.MethodGet)
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequest(testingBasePath, http.MethodGet)
-	require.Equal(t, http.StatusFound, resp.StatusCode)
-	var view View
-	testingHTTPServer.DecodeResponse(resp, &view)
-
-	// Check struct returned
-	ruler.CheckStruct(view, map[string]interface{}{
-		"UserID":      userSample.GetID(),
-		"DisplayName": userSample.DisplayName,
-		"Username":    *userSample.Username,
-	})
+	// Check that emailToken has been created in database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.NotEmpty(t, user.EmailToken, "EmailToken should not be empty because confirmation email has been sent")
 }
 
-func TestHandler_SearchUsers(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
+/* Confirm email */
 
-	sampler := test.NewSampler(t, DB, false)
+func TestHandler_ConfirmEmail(t *testing.T) {
+	testPath := basePath + confirmEmailPath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
 
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-
-	// Variables used for searching on username
-	commonUsernamePart := (fake.UserName() + fake.UserName())[:3]
-	matchingUsername1 := fake.UserName() + commonUsernamePart + fake.UserName()
-	matchingUsername2 := commonUsernamePart + fake.UserName()
-	matchingUsername3 := fake.UserName() + commonUsernamePart
-
-	// Variables used for searching on displayName
-	commonDisplayNamePart := fake.FullName()[3:9]
-	matchingDisplayName1 := fake.FullName() + commonDisplayNamePart + fake.FullName()
-	matchingDisplayName2 := commonDisplayNamePart + fake.FullName()
-	matchingDisplayName3 := fake.FullName() + commonDisplayNamePart
-
-	// Create some users using matching and not matching fields
-	fakeUsername1 := fake.UserName()
-	fakeUsername2 := fake.UserName()
-	users := []repositoryModel.User{
-		{
-			Username:       &matchingUsername2,
-			DisplayName:    matchingDisplayName3,
-			Email:          fake.EmailAddress(),
-			HashedPassword: test.FakePassword(),
-		},
-		{
-			Username:       &matchingUsername1,
-			DisplayName:    fake.FullName(),
-			Email:          fake.EmailAddress(),
-			HashedPassword: test.FakePassword(),
-		},
-		{
-			Username:       &fakeUsername1,
-			DisplayName:    matchingDisplayName1,
-			Email:          fake.EmailAddress(),
-			HashedPassword: test.FakePassword(),
-		},
-		{
-			Username:       &matchingUsername3,
-			DisplayName:    matchingDisplayName2,
-			Email:          fake.EmailAddress(),
-			HashedPassword: test.FakePassword(),
-		},
-		{
-			Username:       &fakeUsername2,
-			DisplayName:    fake.FullName(),
-			Email:          fake.EmailAddress(),
-			HashedPassword: test.FakePassword(),
-		},
-	}
-	// Save users into database
-	err := DB.
-		Create(&users).
-		Error
-	if err != nil {
-		t.Fatalf(err.Error())
+	// Create testing data
+	user := sampler.GetUserWithEmailToken()
+	correctForm := ConfirmEmailForm{
+		EmailToken: user.EmailToken,
 	}
 
-	// Send request and check response code, should fail because user is not authenticate
-	queryParameters := []test.KeyValue{
-		{
-			Key:   "search",
-			Value: "a",
-		},
-	}
-	resp := testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodPost, correctForm)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+	// Try with wrong emailToken --> NOK 401
+	httpMock.AuthenticateUserPermanently(user)
+	wrongForm := correctForm
+	wrongForm.EmailToken = fake.Country()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	// Authenticate user for sending request
-	userSample := sampler.GetUser()
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
+	// Try with correct emailToken --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, correctForm)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	// Check that email has been confirmed in database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.True(t, user.EmailConfirmed, "Email should be confirmed")
+}
+
+/* Send reset password email */
+
+func TestHandler_SendResetPasswordEmail(t *testing.T) {
+	testPath := basePath + sendResetPasswordEmailPath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
+
+	// Create testing data
+	user := sampler.GetUser()
+	wrongLogin := fakeData.UniqueEmail()
+
+	// Try with non-existing login --> NOK 401
+	resp := httpMock.SendRequest(testPath+"/"+wrongLogin, http.MethodGet)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct login (username) --> OK 200
+	resp = httpMock.SendRequest(testPath+"/"+user.Username, http.MethodGet)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Try with correct login (email) --> OK 200
+	resp = httpMock.SendRequest(testPath+"/"+user.Email, http.MethodGet)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check that passwordToken has been created in database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.NotEmpty(t, user.PasswordToken, "PasswordToken should not be empty because reset password email has been sent")
+}
+
+/* Reset password */
+
+func TestHandler_ResetPassword(t *testing.T) {
+	testPath := basePath + resetPasswordPath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
+
+	// Create testing data
+	user := sampler.GetUserWithPasswordToken()
+	wrongPasswordToken := fake.Country()
+	newPassword := fakeData.Password()
+	correctFormUsername := ResetPasswordForm{
+		PasswordToken: user.PasswordToken,
+		Login:         user.Username,
+		NewPassword:   newPassword,
+	}
+	correctFormEmail := ResetPasswordForm{
+		PasswordToken: user.PasswordToken,
+		Login:         user.Email,
+		NewPassword:   newPassword,
+	}
+
+	// Try with wrong passwordToken and wrong login (username) --> NOK 401
+	wrongForm := correctFormUsername
+	wrongForm.PasswordToken = wrongPasswordToken
+	wrongForm.Login = strings.ToLower(fakeData.UniqueUsername())
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with wrong passwordToken and wrong login (email) --> NOK 401
+	wrongForm = correctFormEmail
+	wrongForm.PasswordToken = wrongPasswordToken
+	wrongForm.Login = fakeData.UniqueEmail()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with wrong passwordToken and correct login (username) --> NOK 401
+	wrongForm = correctFormUsername
+	wrongForm.PasswordToken = wrongPasswordToken
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with wrong passwordToken and correct login (email) --> NOK 401
+	wrongForm = correctFormEmail
+	wrongForm.PasswordToken = wrongPasswordToken
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct passwordToken and wrong login (username) --> NOK 401
+	wrongForm = correctFormUsername
+	wrongForm.Login = strings.ToLower(fakeData.UniqueUsername())
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct passwordToken and wrong login (email) --> NOK 401
+	wrongForm = correctFormEmail
+	wrongForm.Login = fakeData.UniqueEmail()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct passwordToken and correct login but newPassword too short (6 < 8) --> NOK 400
+	wrongForm = correctFormEmail
+	wrongForm.PasswordToken = fakeData.Password()[:6]
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct passwordToken and correct login (username) --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, correctFormUsername)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check that password has been updated in database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.NoError(t, securityUtils.CompareHashAndPassword(user.HashedPassword, correctFormEmail.NewPassword),
+		"Hashed password %s should match with new password %s", user.HashedPassword, correctFormEmail.NewPassword)
+
+	// PasswordToken has been removed, so we need to add new one to check with email as login
+	user = sampler.GetUserWithPasswordToken()
+	correctFormEmail.NewPassword = fakeData.Password()
+	correctFormEmail.Login = user.Email
+	correctFormEmail.PasswordToken = user.PasswordToken
+
+	// Try with correct passwordToken and correct login (email) --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, correctFormEmail)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check that password has been updated in database
+	err = db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.NoError(t, securityUtils.CompareHashAndPassword(user.HashedPassword, correctFormEmail.NewPassword),
+		"Hashed password %s should match with new password %s", user.HashedPassword, correctFormEmail.NewPassword)
+}
+
+/* Update password */
+
+func TestHandler_UpdatePassword(t *testing.T) {
+	testPath := basePath + updatePasswordPath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
+
+	// Create testing data
+	oldPassword := fakeData.Password()
+	newPassword := fakeData.Password()
+	user := sampler.GetUserWithPassword(oldPassword)
+	correctForm := UpdatePasswordForm{
+		OldPassword: oldPassword,
+		NewPassword: newPassword,
+	}
+
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodPut, correctForm)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+	// Try with missing oldPassword --> NOK 400
+	httpMock.AuthenticateUserPermanently(user)
+	wrongForm := correctForm
+	wrongForm.OldPassword = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Check with keyword matching nothing : should return not error and length of 0
-	queryParameters[0].Value = fake.UserName()
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var views []View
-	testingHTTPServer.DecodeResponse(resp, &views)
-	require.Len(t, views, 0)
+	// Try with missing newPassword --> NOK 400
+	wrongForm = correctForm
+	wrongForm.NewPassword = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Check that search on email is not working : should return not error and length of 0
-	queryParameters[0].Value = users[2].Email
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	testingHTTPServer.DecodeResponse(resp, &views)
-	require.Len(t, views, 0)
+	// Try with wrong newPassword (too short 6 < 8) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.NewPassword = newPassword[:6]
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Check with keyword matching username : should return not error and length of 3
-	queryParameters[0].Value = commonUsernamePart
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	testingHTTPServer.DecodeResponse(resp, &views)
-	require.Len(t, views, 3)
+	// Try with wrong oldPassword --> NOK 401
+	wrongForm = correctForm
+	wrongForm.OldPassword = fakeData.Password()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-	// Check with keyword matching displayName : should return not error and length of 3
-	queryParameters[0].Value = commonDisplayNamePart
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequestWithQueryParameters(webServicePath, http.MethodGet, queryParameters)
+	// Try with correct form --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, correctForm)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	testingHTTPServer.DecodeResponse(resp, &views)
-	require.Len(t, views, 3)
+
+	// Check that password has been successfully updated into database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.NoError(t, securityUtils.CompareHashAndPassword(user.HashedPassword, correctForm.NewPassword),
+		"Hashed password %s should match with new password %s", user.HashedPassword, correctForm.NewPassword)
 }
 
-func TestHandler_GenerateToken(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
+/* Get own info */
 
-	sampler := test.NewSampler(t, DB, false)
+func TestHandler_GetOwnInfo(t *testing.T) {
+	testPath := basePath + ownInfoPath
+	_, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
+	defer tearDown()
 
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[0].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-	testingBasePath := webServicePath + "/sign-in"
+	// Create testing data
+	user := sampler.GetUser()
 
-	// Create userSample used for getting token
-	password := test.FakePassword()
-	userSample := sampler.GetUserWithSpecificPassword(password)
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequest(testPath, http.MethodGet)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
 
-	// Create correct and wrong values for header
-	fakeUsername := strings.ToLower(fake.UserName())
-	fakePassword := test.FakePassword()
-	fakeUsernameWithCorrectPasswordEncoded := base64.StdEncoding.EncodeToString([]byte(
-		fakeUsername + constant.UsernamePasswordDelimiterForHeader + password))
-	fakeUsernameWithFakePasswordEncoded := base64.StdEncoding.EncodeToString([]byte(
-		fakeUsername + constant.UsernamePasswordDelimiterForHeader + fakePassword))
-	correctUsernameWithFakePasswordEncoded := base64.StdEncoding.EncodeToString([]byte(
-		*userSample.Username + constant.UsernamePasswordDelimiterForHeader + fakePassword))
-	correctUsernameWithCorrectPasswordEncoded := base64.StdEncoding.EncodeToString([]byte(
-		*userSample.Username + constant.UsernamePasswordDelimiterForHeader + password))
-
-	// Try to getting token with wrong username and wrong password
-	headerParameters := []test.KeyValue{
-		{
-			Key:   constant.AuthenticationHeaderName,
-			Value: constant.AuthenticationHeaderPrefixValue + fakeUsernameWithFakePasswordEncoded,
-		},
-	}
-	resp := testingHTTPServer.SendRequestWithHeaders(testingBasePath, http.MethodPost, headerParameters)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Try to getting token with wrong username and correct password
-	headerParameters[0].Value = constant.AuthenticationHeaderPrefixValue + fakeUsernameWithCorrectPasswordEncoded
-	resp = testingHTTPServer.SendRequestWithHeaders(testingBasePath, http.MethodPost, headerParameters)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Try to getting token with correct username and wrong password
-	headerParameters[0].Value = constant.AuthenticationHeaderPrefixValue + correctUsernameWithFakePasswordEncoded
-	resp = testingHTTPServer.SendRequestWithHeaders(testingBasePath, http.MethodPost, headerParameters)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Try to getting token with correct username and correct password
-	headerParameters[0].Value = constant.AuthenticationHeaderPrefixValue + correctUsernameWithCorrectPasswordEncoded
-	resp = testingHTTPServer.SendRequestWithHeaders(testingBasePath, http.MethodPost, headerParameters)
+	// Try with authenticated user --> OK 200
+	httpMock.AuthenticateUserPermanently(user)
+	resp = httpMock.SendRequest(testPath, http.MethodGet)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var token string
-	testingHTTPServer.DecodeResponse(resp, &token)
-	_, err := webService.CheckToken(token)
-	require.NoError(t, err, "Token should be valid")
-}
 
-func TestHandler_GetOwnUserInfo(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
-
-	sampler := test.NewSampler(t, DB, false)
-	ruler := test.NewRuler(t)
-
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
-	testingBasePath := webServicePath + "/me"
-
-	// Send request and check response code, should fail because user is not authenticate
-	resp := testingHTTPServer.SendRequest(testingBasePath, http.MethodGet)
-	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-
-	// Authenticate user for sending request
-	userSample := sampler.GetUser()
-	testingHTTPServer.AuthenticateUserPermanently(userSample)
-
-	// Send request and check response code
-	resp = testingHTTPServer.SendRequest(testingBasePath, http.MethodGet)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	var view ViewMe
-	testingHTTPServer.DecodeResponse(resp, &view)
-	// Check struct returned
+	// Check view fields
+	var view GetOwnInfoView
+	httpMock.DecodeResponse(resp, &view)
 	ruler.CheckStruct(view, map[string]interface{}{
-		"UserID":      userSample.GetID(),
-		"DisplayName": userSample.DisplayName,
-		"Username":    *userSample.Username,
-		"Email":       userSample.Email,
+		"CommonView": map[string]interface{}{
+			"Id":             user.ID,
+			"FirstName":      user.FirstName,
+			"LastName":       user.LastName,
+			"Email":          user.Email,
+			"Username":       user.Username,
+			"EmailConfirmed": user.EmailConfirmed,
+		},
 	})
 }
 
-func TestHandler_UsernameExists(t *testing.T) {
-	DB, clean := test.OpenDatabase(t)
-	defer clean()
+/* Update */
 
-	sampler := test.NewSampler(t, DB, false)
+func TestHandler_Update(t *testing.T) {
+	testPath := basePath
+	db, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
+	defer tearDown()
 
-	userWebService := NewHandler(NewService(NewRepository(DB)))
-	webServicePath := userWebService.WebServices()[1].RootPath()
-	testingHTTPServer := test.NewTestingHTTPServer(t, userWebService)
+	// Create testing data
+	user := sampler.GetUser()
+	correctForm := UpdateForm{
+		CommonForm: CommonForm{
+			FirstName: fake.FirstName(),
+			LastName:  fake.LastName(),
+			Email:     fakeData.UniqueEmail(),
+			Username:  strings.ToLower(fakeData.UniqueUsername()),
+		},
+	}
 
-	// Add existing user to database
-	userSample := sampler.GetUser()
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodPut, correctForm)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
 
-	// Define route test
-	fakeUsername := fake.UserName()
-	wrongExistsBasePath := webServicePath + "/" + fakeUsername + "/exists"
-	existsBasePath := webServicePath + "/" + *userSample.Username + "/exists"
+	// Try with missing firstname --> NOK 400
+	httpMock.AuthenticateUserPermanently(user)
+	wrongForm := correctForm
+	wrongForm.FirstName = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Send request and check response code for wrong username
-	resp := testingHTTPServer.SendRequest(wrongExistsBasePath, http.MethodGet)
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	var exists bool
-	testingHTTPServer.DecodeResponse(resp, &exists)
-	require.False(t, exists, "This username should not exists")
+	// Try with missing lastname --> NOK 400
+	wrongForm = correctForm
+	wrongForm.LastName = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-	// Send request and check response code for correct username
-	resp = testingHTTPServer.SendRequest(existsBasePath, http.MethodGet)
-	require.Equal(t, http.StatusFound, resp.StatusCode)
-	testingHTTPServer.DecodeResponse(resp, &exists)
-	require.True(t, exists, "This username should exists")
+	// Try with missing email --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Email = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with missing username --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Username = ""
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid email (not email type) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Email = fake.Country()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid firstname (not only alpha) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.FirstName = fakeData.UniqueEmail()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid lastname (not only alpha) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.LastName = fakeData.UniqueEmail()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with invalid username (not only lowercase) --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Username = strings.ToUpper(strings.ToLower(fakeData.UniqueUsername()))
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with correct form --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPut, correctForm)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check view fields
+	var view UpdateView
+	httpMock.DecodeResponse(resp, &view)
+	ruler.CheckStruct(view, map[string]interface{}{
+		"CommonView": map[string]interface{}{
+			"Id":             user.ID,
+			"FirstName":      correctForm.FirstName,
+			"LastName":       correctForm.LastName,
+			"Email":          correctForm.Email,
+			"Username":       correctForm.Username,
+			"EmailConfirmed": user.EmailConfirmed,
+		},
+	})
+
+	// Check that user info have been successfully updated in database
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.NoError(t, err)
+	require.Equal(t, correctForm.FirstName, user.FirstName)
+	require.Equal(t, correctForm.LastName, user.LastName)
+	require.Equal(t, correctForm.Email, user.Email)
+	require.Equal(t, correctForm.Username, user.Username)
+}
+
+/* Delete */
+
+func TestHandler_Delete(t *testing.T) {
+	testPath := basePath
+	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
+
+	// Create testing data
+	password := fakeData.Password()
+	user := sampler.GetUserWithPassword(password)
+	correctForm := DeleteForm{
+		Password: password,
+	}
+
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequestWithBody(testPath, http.MethodDelete, correctForm)
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+	// Try with wrong password --> NOK 401
+	httpMock.AuthenticateUserPermanently(user)
+	wrongForm := correctForm
+	wrongForm.Password = fakeData.Password()
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodDelete, wrongForm)
+	require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	// Try with correct password --> OK 200
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodDelete, correctForm)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check that user has been deleted
+	err := db.
+		Take(&user, user.ID).
+		Error
+	require.Error(t, err)
+}
+
+// setupTestcase will instantiate project and return all objects that can be needed for testing
+func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *httpServerMock.Server, sampler *testSampler.Sampler, ruler *testRuler.Ruler, tearDown func()) {
+	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
+	repo := userRepository.New(db)
+	mailMock := mailServiceMock.New()
+	svc := NewService(repo, mailMock)
+	ws := NewHandler(svc)
+	httpMock = httpServerMock.New(t, logger.Logger(), ws)
+	sampler = testSampler.New(t, db, populateDatabase)
+	ruler = testRuler.New(t)
+	return
+}
+
+// basicAuth return Authorization header with Basic Authentication header (ex: Basic bG9naW46cGFzc3dvcmQK)
+func basicAuthHeader(username, password string) map[string]string {
+	auth := username + ":" + password
+	return map[string]string{"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))}
 }

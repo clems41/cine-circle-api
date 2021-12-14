@@ -8,7 +8,7 @@
 .idea
 
 !.idea
-.idea/cine-circle-api.iml
+.idea/dpc.iml
 
 .idea/misc.xml
 
@@ -23,11 +23,14 @@ docs
 
 .idea/inspectionProfiles/Project_Default.xml
 
-# Files used by test script
-pre-coverage-report.html
-coverage-report.html
-main
 .idea/csv-plugin.xml
 
-# Files used by CI
-.kubeconfig
+# Files used by test script
+main
+
+# Files used for getting coverage report
+pre-coverage-report.html
+coverage-report.html
+
+# Generated file using Jasper example
+test.pdf

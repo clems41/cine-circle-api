@@ -1,248 +1,342 @@
 package userDom
 
 import (
-	"cine-circle/internal/constant"
-	"cine-circle/internal/repository/repositoryModel"
-	"cine-circle/pkg/typedErrors"
-	"cine-circle/pkg/utils"
-	"encoding/base64"
+	"cine-circle-api/internal/repository/model"
+	"cine-circle-api/internal/service/mailService"
+	"cine-circle-api/pkg/httpServer"
+	"cine-circle-api/pkg/httpServer/authentication"
+	"cine-circle-api/pkg/utils/securityUtils"
+	"fmt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 	"strings"
 )
 
 var _ Service = (*service)(nil)
 
 type Service interface {
-	Create(creation Creation) (view View, err error)
-	Update(update  Update) (view View, err error)
-	UpdatePassword(updatePassword UpdatePassword) (view View, err error)
-	Delete(delete Delete) (err error)
-	Get(get Get) (view View, err error)
-	GetOwnInfo(userID uint) (view ViewMe, err error)
-	Search(filters Filters) (views []View, err error)
-	GenerateTokenFromAuthenticationHeader(header string) (token string, err error)
-	getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error)
+	SignIn(form SignInForm) (view SignInView, err error)
+	SignUp(form SignUpForm) (view SignUpView, err error)
+	SendEmailConfirmation(form SendEmailConfirmationForm) (err error)
+	ConfirmEmail(form ConfirmEmailForm) (err error)
+	SendResetPasswordEmail(form SendResetPasswordEmailForm) (err error)
+	ResetPassword(form ResetPasswordForm) (err error)
+	GetOwnInfo(form GetOwnInfoForm) (view GetOwnInfoView, err error)
+	Update(form UpdateForm) (view UpdateView, err error)
+	UpdatePassword(form UpdatePasswordForm) (err error)
+	Delete(form DeleteForm) (err error)
+}
+
+type repository interface {
+	GetUserFromLogin(login string) (user model.User, ok bool, err error)
+	GetUser(userId uint) (user model.User, ok bool, err error)
+	Create(user *model.User) (err error)
+	Save(user *model.User) (err error)
+	Delete(userId uint) (ok bool, err error)
+}
+
+type serviceMail interface {
+	Send(form mailService.SendEmailForm) (err error)
 }
 
 type service struct {
-	r repository
+	repository  repository
+	serviceMail serviceMail
 }
 
-func NewService(r repository) Service {
+func NewService(repository repository, serviceMail serviceMail) *service {
 	return &service{
-		r: r,
+		repository:  repository,
+		serviceMail: serviceMail,
 	}
 }
 
-func (svc *service) Create(creation Creation) (view View, err error) {
-	// Validate fields
-	err = creation.Valid()
+/* Login */
+
+func (svc *service) SignIn(form SignInForm) (view SignInView, err error) {
+	// Check if user exists
+	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
 	if err != nil {
 		return
 	}
-	// Hash and salt password
-	hashedPassword, err := utils.HashAndSaltPassword(creation.Password, constant.CostHashFunction)
+	if !ok {
+		return view, errBadCredentials
+	}
+
+	// Check if password is correct
+	err = securityUtils.CompareHashAndPassword(user.HashedPassword, form.Password)
+	if err != nil {
+		return view, errBadCredentials
+	}
+
+	// Generate token and view
+	userInfo := authentication.UserInfo{
+		Id: user.ID,
+	}
+	token, err := httpServer.GenerateTokenWithUserInfo(userInfo)
 	if err != nil {
 		return
 	}
-	// Save hashed and salt password as user's password
-	creation.Password = hashedPassword
-
-	username := strings.ToLower(creation.Username)
-
-	user := repositoryModel.User{
-		Username:       &username,
-		DisplayName:    creation.DisplayName,
-		Email:          creation.Email,
-		HashedPassword: creation.Password,
+	view.CommonView = svc.fromModelToView(user)
+	view.Token = Token{
+		ExpirationDate: token.ExpirationDate,
+		TokenString:    token.TokenString,
 	}
-
-	err = svc.r.Create(&user)
-	if err != nil {
-		return
-	}
-
-	view = svc.toView(user)
 	return
 }
 
-func (svc *service) Update(update Update) (view View, err error) {
-	// Validate fields
-	err = update.Valid()
+func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
+	hashedPassword, err := securityUtils.HashAndSaltPassword(form.Password)
+	if err != nil {
+		return view, errors.WithStack(err)
+	}
+	user := model.User{
+		Username:       form.Username,
+		HashedPassword: hashedPassword,
+		LastName:       form.LastName,
+		FirstName:      form.FirstName,
+		Email:          form.Email,
+		EmailConfirmed: false,
+	}
+	err = svc.repository.Create(&user)
 	if err != nil {
 		return
 	}
-
-	// Get old user from DB
-	user, err := svc.r.Get(Get{UserID: update.UserID})
-	if err != nil {
-		return
-	}
-
-	// Update specific fields
-	user.DisplayName = update.DisplayName
-	user.Email = update.Email
-
-	// Save new user info
-	err = svc.r.Save(&user)
-	if err != nil {
-		return
-	}
-
-	view = svc.toView(user)
+	view.CommonView = svc.fromModelToView(user)
 	return
 }
 
-func (svc *service) UpdatePassword(updatePassword UpdatePassword) (view View, err error) {
-	// Validate fields
-	err = updatePassword.Valid()
+func (svc *service) SendEmailConfirmation(form SendEmailConfirmationForm) (err error) {
+	// Get user info
+	user, ok, err := svc.repository.GetUser(form.UserId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return errUserUnauthorized
+	}
+
+	// Generate token
+	token := fmt.Sprintf("%d", uuid.New().ID())
+
+	// Generate and send email
+	emailBody := strings.Replace(sendConfirmationEmailBody, sendConfirmationEmailFirstNameJoker, user.FirstName, 1)
+	emailBody = strings.Replace(emailBody, sendConfirmationEmailTokenJoker, token, 1)
+	emailForm := mailService.SendEmailForm{
+		To:      []string{user.Email},
+		Subject: sendConfirmationEmailSubject,
+		Message: emailBody,
+		Tags:    sendConfirmationEmailTags,
+		Html:    false,
+	}
+	err = svc.serviceMail.Send(emailForm)
 	if err != nil {
 		return
 	}
 
-	// Get old user from DB
-	user, err := svc.r.Get(Get{UserID: updatePassword.UserID})
+	// Save token into database
+	user.EmailToken = token
+	err = svc.repository.Save(&user)
 	if err != nil {
 		return
 	}
 
-	err = utils.CompareHashAndPassword(user.HashedPassword, updatePassword.OldPassword)
+	return
+}
+
+func (svc *service) ConfirmEmail(form ConfirmEmailForm) (err error) {
+	// Get user info
+	user, ok, err := svc.repository.GetUser(form.UserId)
 	if err != nil {
-		return view, errBadLoginPassword
+		return
+	}
+	if !ok {
+		return errUserUnauthorized
 	}
 
-	newHashedPassword, err := utils.HashAndSaltPassword(updatePassword.NewPassword, constant.CostHashFunction)
-	if err != nil {
-		return view, err
+	// Check if token is correct
+	if user.EmailToken != form.EmailToken {
+		return errUserUnauthorized
 	}
-	// Save new user info
+
+	// Remove token in database and mark email as confirmed
+	user.EmailToken = ""
+	user.EmailConfirmed = true
+	err = svc.repository.Save(&user)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (svc *service) SendResetPasswordEmail(form SendResetPasswordEmailForm) (err error) {
+	// Get user info
+	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return errUserUnauthorized
+	}
+
+	// Generate token
+	token := fmt.Sprintf("%d", uuid.New().ID())
+
+	// Generate and send email
+	emailBody := strings.Replace(sendResetPasswordEmailBody, sendResetPasswordEmailFirstNameJoker, user.FirstName, 1)
+	emailBody = strings.Replace(emailBody, sendResetPasswordTokenJoker, token, 1)
+	emailForm := mailService.SendEmailForm{
+		To:      []string{user.Email},
+		Subject: sendResetPasswordEmailSubject,
+		Message: emailBody,
+		Tags:    sendResetPasswordEmailTags,
+		Html:    false,
+	}
+	err = svc.serviceMail.Send(emailForm)
+	if err != nil {
+		return
+	}
+
+	// Save token into database
+	user.PasswordToken = token
+	err = svc.repository.Save(&user)
+	if err != nil {
+		return
+	}
+	return
+}
+
+func (svc *service) ResetPassword(form ResetPasswordForm) (err error) { // Get user info
+	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return errUserUnauthorized
+	}
+
+	// Check if token is correct
+	if user.PasswordToken != form.PasswordToken {
+		return errUserUnauthorized
+	}
+
+	// Remove token in database and update password with new one
+	newHashedPassword, err := securityUtils.HashAndSaltPassword(form.NewPassword)
+	if err != nil {
+		return
+	}
+	user.PasswordToken = ""
 	user.HashedPassword = newHashedPassword
-	err = svc.r.Save(&user)
+	err = svc.repository.Save(&user)
 	if err != nil {
 		return
-	}
-
-	view = svc.toView(user)
-	return
-}
-
-func (svc *service) Delete(delete Delete) (err error) {
-	// Validate fields
-	err = delete.Valid()
-	if err != nil {
-		return
-	}
-
-	return svc.r.Delete(delete.UserID)
-}
-
-func (svc *service) Get(get Get) (view View, err error) {
-	// Validate fields
-	err = get.Valid()
-	if err != nil {
-		return
-	}
-	user, err := svc.r.Get(get)
-	if err != nil {
-		return
-	}
-
-	view = svc.toView(user)
-	return
-}
-
-func (svc *service) GetOwnInfo(userID uint) (view ViewMe, err error) {
-	user, err := svc.r.Get(Get{UserID: userID})
-	if err != nil {
-		return
-	}
-
-	view = svc.toViewMe(user)
-	return
-}
-
-func (svc *service) Search(filters Filters) (views []View, err error) {
-	err = filters.Valid()
-	if err != nil {
-		return
-	}
-	users, err := svc.r.Search(filters)
-	if err != nil {
-		return
-	}
-
-	for _, user := range users {
-		views = append(views, svc.toView(user))
 	}
 	return
 }
 
-func (svc *service) GenerateTokenFromAuthenticationHeader(header string) (token string, err error) {
-	username, password, err := svc.getUsernameAndPasswordFromAuthenticationHeader(header)
+func (svc *service) GetOwnInfo(form GetOwnInfoForm) (view GetOwnInfoView, err error) {
+	user, ok, err := svc.repository.GetUser(form.UserId)
 	if err != nil {
 		return
 	}
-
-	user, err := svc.r.Get(Get{Username: username})
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return token, errBadLoginPassword
-		}
-		return
+	if !ok {
+		return view, errUserUnauthorized
 	}
-
-	err = utils.CompareHashAndPassword(user.HashedPassword, password)
-	if err != nil {
-		return token, errBadLoginPassword
-	}
-
-	return utils.GenerateTokenWithUsername(*user.Username)
-}
-
-func (svc *service) getUsernameAndPasswordFromAuthenticationHeader(header string) (username string, password string, err error) {
-	result := strings.Split(header, constant.AuthorizationDelimiterForHeader)
-	if len(result) != 2 { // Le header Authorization devrait être de la forme : Basic encoded64== (donc séparé par un espace)
-		err = typedErrors.NewAuthenticationErrorf("Header format is not correct for Authorization")
-		return
-	}
-	nomUtilisateurMotDePasseEncode := result[1]
-	nomUtilisateurMotDePasseDecode, err := base64.StdEncoding.DecodeString(nomUtilisateurMotDePasseEncode)
-	if err != nil {
-		err = typedErrors.NewAuthenticationErrorf(err.Error())
-		return
-	}
-	pair := strings.SplitN(string(nomUtilisateurMotDePasseDecode), constant.UsernamePasswordDelimiterForHeader, 2)
-	// pair devrait être composé de 2 parties : la première pour le nomUtilisateur et la deuxième pour le mdp (avec potentiellement des ':' dedans)
-	// le mot de passe peut contenir des ':', on split donc une seule fois le header afin de ne pas découper le mot de passe
-	if len(pair) != 2 {
-		err = typedErrors.NewAuthenticationErrorf("Encoded login:password is not correct")
-		return
-	}
-	username = pair[0]
-	password = pair[1]
+	view.CommonView = svc.fromModelToView(user)
 	return
 }
 
-func (svc *service) toView(user repositoryModel.User) (view View) {
-	view = View {
-		UserID:      user.GetID(),
-		DisplayName: user.DisplayName,
+func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
+	user, ok, err := svc.repository.GetUser(form.UserId)
+	if err != nil {
+		return
 	}
-	if user.Username != nil {
-		view.Username = *user.Username
+	if !ok {
+		return view, errUserUnauthorized
+	}
+	user.Username = form.Username
+	user.LastName = form.LastName
+	user.FirstName = form.FirstName
+	user.Email = form.Email
+	err = svc.repository.Save(&user)
+	if err != nil {
+		return
+	}
+	view.CommonView = svc.fromModelToView(user)
+	return
+}
+
+func (svc *service) UpdatePassword(form UpdatePasswordForm) (err error) {
+	// Check if old password is correct
+	user, ok, err := svc.repository.GetUser(form.UserId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return errUserUnauthorized
+	}
+	err = securityUtils.CompareHashAndPassword(user.HashedPassword, form.OldPassword)
+	if err != nil {
+		return errUserUnauthorized
+	}
+
+	// Update new one
+	newHashedPassword, err := securityUtils.HashAndSaltPassword(form.NewPassword)
+	if err != nil {
+		return
+	}
+	user.HashedPassword = newHashedPassword
+	err = svc.repository.Save(&user)
+	if err != nil {
+		return
 	}
 	return
 }
 
-func (svc *service) toViewMe(user repositoryModel.User) (view ViewMe) {
-	view = ViewMe {
-		UserID:      user.GetID(),
-		DisplayName: user.DisplayName,
+func (svc *service) Delete(form DeleteForm) (err error) {
+	// Check if password is correct
+	user, ok, err := svc.repository.GetUser(form.UserId)
+	if err != nil {
+		return
 	}
-	if user.Username != nil {
-		view.Username = *user.Username
+	if !ok {
+		return errUserUnauthorized
 	}
-	view.Email = user.Email
+	err = securityUtils.CompareHashAndPassword(user.HashedPassword, form.Password)
+	if err != nil {
+		return errUserUnauthorized
+	}
+
+	ok, err = svc.repository.Delete(form.UserId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return errUserCannotBeDeleted
+	}
+	return
+}
+
+/* Private methods below */
+
+func (svc *service) fromModelToView(user model.User) (view CommonView) {
+	view = CommonView{
+		Id:             user.ID,
+		FirstName:      user.FirstName,
+		LastName:       user.LastName,
+		Email:          user.Email,
+		Username:       user.Username,
+		EmailConfirmed: user.EmailConfirmed,
+	}
+	return
+}
+
+func (svc *service) fromFormToModel(form CommonForm) (user model.User) {
+	user = model.User{
+		Username:  form.Username,
+		LastName:  form.LastName,
+		FirstName: form.FirstName,
+		Email:     form.Email,
+	}
 	return
 }

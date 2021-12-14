@@ -1,111 +1,110 @@
 package userDom
 
-type CommonFields struct {
-	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+import (
+	"time"
+)
+
+/* Common */
+
+type CommonForm struct {
+	FirstName string `json:"firstName" validate:"required,alpha"`             // Obligatoire et doit contenir uniquement des lettres
+	LastName  string `json:"lastName" validate:"required,alpha"`              // Obligatoire et doit contenir uniquement des lettres
+	Email     string `json:"email" validate:"required,email"`                 // Obligatoire et doit être sous la forme d'un email
+	Username  string `json:"username" validate:"required,alphanum,lowercase"` // Obligatoire et doit contenir uniquement des lettres en minuscule et des chiffres
 }
 
-type Creation struct {
-	CommonFields
-	Username string `json:"username"`
+type CommonView struct {
+	Id             uint   `json:"id"`
+	FirstName      string `json:"firstName"`
+	LastName       string `json:"lastName"`
+	Email          string `json:"email"`
+	Username       string `json:"username"`
+	EmailConfirmed bool   `json:"emailConfirmed"`
+}
+
+/* SignIn */
+
+type SignInForm struct {
+	Password string `json:"-"` // récupéré depuis le header Authorization (Basic authentication)
+	Login    string `json:"-"` // récupéré depuis le header Authorization (Basic authentication)
+}
+
+type Token struct {
+	ExpirationDate time.Time `json:"expirationDate"`
+	TokenString    string    `json:"tokenString"`
+}
+
+type SignInView struct {
+	CommonView
+	Token Token `json:"token"`
+}
+
+/* SignUp */
+
+type SignUpForm struct {
+	CommonForm
+	Password string `json:"password" validate:"required,min=8"` // Obligatoire et doit contenir au moins 8 caractères
+}
+
+type SignUpView struct {
+	CommonView
+}
+
+/* Send email confirmation */
+
+type SendEmailConfirmationForm struct {
+	UserId uint `json:"-"` // Champ récupéré depuis le token
+}
+
+type ConfirmEmailForm struct {
+	UserId     uint   `json:"-"` // Champ récupéré depuis le token
+	EmailToken string `json:"emailToken"`
+}
+
+/* Reset password */
+
+type SendResetPasswordEmailForm struct {
+	Login string `json:"-"` // Champ récupéré depuis le path parameter de la route
+}
+
+type ResetPasswordForm struct {
+	PasswordToken string `json:"passwordToken" validate:"required"`
+	Login         string `json:"login" validate:"required"`
+	NewPassword   string `json:"newPassword" validate:"required,min=8"`
+}
+
+/* Update password */
+
+type UpdatePasswordForm struct {
+	UserId      uint   `json:"-"` // Champ récupéré depuis le path parameter de la route
+	OldPassword string `json:"oldPassword" validate:"required"`
+	NewPassword string `json:"newPassword" validate:"required,min=8"`
+}
+
+/* Update info */
+
+type UpdateForm struct {
+	UserId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	CommonForm
+}
+
+type UpdateView struct {
+	CommonView
+}
+
+/* Get own info */
+
+type GetOwnInfoForm struct {
+	UserId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+}
+
+type GetOwnInfoView struct {
+	CommonView
+}
+
+/* Delete */
+
+type DeleteForm struct {
+	UserId   uint   `json:"-"` // Champ récupéré depuis le path parameter de la route
 	Password string `json:"password"`
-}
-
-type Update struct {
-	UserID uint `json:"-"`
-	CommonFields
-}
-
-type Get struct {
-	UserID   uint   `json:"-"`
-	Username string `json:"-"`
-	Email    string `json:"-"`
-}
-
-type UpdatePassword struct {
-	UserID      uint   `json:"-"`
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
-}
-
-type Delete struct {
-	UserID uint `json:"-"`
-}
-
-type View struct {
-	UserID      uint   `json:"id"`
-	Username    string `json:"username"`
-	DisplayName string `json:"displayName"`
-}
-
-type ViewMe struct {
-	UserID      uint   `json:"id"`
-	Username    string `json:"username"`
-	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
-}
-
-type Filters struct {
-	Keyword string
-}
-
-func (c CommonFields) Valid() (err error) {
-	if c.Email == "" {
-		return errValidEmail
-	}
-	if c.DisplayName == "" {
-		return errValidDisplayName
-	}
-	return nil
-}
-
-func (c Creation) Valid() (err error) {
-	if c.Password == "" {
-		return errValidPassword
-	}
-	if c.Username == "" {
-		return errValidUsername
-	}
-	return c.CommonFields.Valid()
-}
-
-func (u Update) Valid() (err error) {
-	if u.UserID == 0 {
-		return errValidID
-	}
-	return u.CommonFields.Valid()
-}
-
-func (d Delete) Valid() (err error) {
-	if d.UserID == 0 {
-		err = errValidID
-	}
-	return
-}
-
-func (g Get) Valid() (err error) {
-	if g.UserID == 0 && g.Username == "" && g.Email == "" {
-		err = errValidGet
-	}
-	return
-}
-
-func (f Filters) Valid() (err error) {
-	if len(f.Keyword) < 3 {
-		err = errValidKeyword
-	}
-	return
-}
-
-func (up UpdatePassword) Valid() (err error) {
-	if up.UserID == 0 {
-		err = errValidID
-	}
-	if up.OldPassword == "" {
-		err = errValidOldPassword
-	}
-	if up.NewPassword == "" {
-		err = errValidNewPassword
-	}
-	return
 }
