@@ -3,7 +3,7 @@ package userDom
 import (
 	"cine-circle-api/internal/repository/instance/userRepository"
 	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/test/mocks/mailServiceMock"
+	"cine-circle-api/internal/service/mailService/mailServiceMock"
 	"cine-circle-api/internal/test/setupTestCase"
 	"cine-circle-api/internal/test/testSampler"
 	"cine-circle-api/pkg/httpServer"
@@ -641,7 +641,7 @@ func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *
 	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
 	repo := userRepository.New(db)
 	mailMock := mailServiceMock.New()
-	svc := NewService(repo, mailMock)
+	svc := NewService(mailMock, repo)
 	ws := NewHandler(svc)
 	httpMock = httpServerMock.New(t, logger.Logger(), ws)
 	sampler = testSampler.New(t, db, populateDatabase)

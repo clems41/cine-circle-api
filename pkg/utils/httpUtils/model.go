@@ -1,6 +1,9 @@
 package httpUtils
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/emicklei/go-restful"
+)
 
 type Request struct {
 	Url               string
@@ -11,12 +14,30 @@ type Request struct {
 	Body              interface{}
 }
 
-type PathParameter string
-
-func (path PathParameter) Joker() string {
-	return fmt.Sprintf("{%s}", path)
+type Parameter struct {
+	Name         string
+	Description  string
+	DefaultValue interface{}
+	DataType     string
+	Required     bool
 }
 
-func (path PathParameter) String() string {
-	return string(path)
+func (path Parameter) PathParameter() *restful.Parameter {
+	return restful.
+		PathParameter(path.Name, path.Description).
+		DataType(path.DataType).
+		Required(path.Required).
+		DefaultValue(fmt.Sprintf("%v", path.DefaultValue))
+}
+
+func (path Parameter) QueryParameter() *restful.Parameter {
+	return restful.
+		QueryParameter(path.Name, path.Description).
+		DataType(path.DataType).
+		Required(path.Required).
+		DefaultValue(fmt.Sprintf("%v", path.DefaultValue))
+}
+
+func (path Parameter) Joker() string {
+	return fmt.Sprintf("{%s}", path.Name)
 }

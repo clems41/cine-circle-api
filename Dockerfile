@@ -2,9 +2,6 @@ FROM golang:1.16.9-alpine as build-env
 RUN apk add --no-cache ca-certificates git
 RUN apk --no-cache add tzdata
 
-ARG GOPROXY=https://nexus.dev.isi.nc/repository/go-proxy-group/
-ARG GONOSUMDB=*isi.nc/*
-
 # Install depedencies if needed (swag, easytags, etc...)
 # RUN go get -u -v github.com/swaggo/swag/cmd/swag
 # RUN go get -u -v github.com/betacraft/easytags

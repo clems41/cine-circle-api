@@ -13,12 +13,14 @@ const (
 // Define here all tags that can be used with swagger
 const (
 	UserTag  = "users"
+	MediaTag = "medias"
 	OtherTag = "other"
 )
 
 var (
 	tags = map[swagger.TagName]swagger.TagDescription{
 		UserTag:  "Managing own user info",
+		MediaTag: "Search among medias (movie and tv shows)",
 		OtherTag: "Anything else",
 	}
 )

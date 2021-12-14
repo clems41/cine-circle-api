@@ -1,8 +1,5 @@
 package searchUtils
 
-// FieldsToColumnConversionMap is used to convert all fields known by request sender (FRONT for example) into column name known by database.
-type FieldsToColumnConversionMap map[string]string
-
 type Page struct {
 	NumberOfItems int `json:"numberOfItems"`
 	NumberOfPages int `json:"numberOfPages"`

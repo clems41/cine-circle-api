@@ -38,6 +38,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Writes(SignInView{}).
 		Returns(http.StatusOK, "Token généré", SignInView{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		To(hd.SignIn))
 
 	wsUser.Route(wsUser.POST(signUpPath).
@@ -56,6 +57,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Email envoyé", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.SendConfirmationEmail))
 
@@ -64,16 +66,17 @@ func (hd *handler) WebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Email confirmé", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.ConfirmEmail))
 
-	wsUser.Route(wsUser.GET(sendResetPasswordEmailPath+"/"+loginPathParameter.Joker()).
-		Param(wsUser.PathParameter(loginPathParameter.String(), "Login (nom user ou email) de l'user qui souhaite réinitialiser son mot de passe").
-			DataType("string").Required(true)).
+	wsUser.Route(wsUser.GET(sendResetPasswordEmailPath+"/"+loginParameter.Joker()).
+		Param(loginParameter.PathParameter()).
 		Doc("Envoie d'un email pour réinitialiser le mot de passe de l'user").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Email envoyé", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		To(hd.SendResetPasswordEmail))
 
 	wsUser.Route(wsUser.POST(resetPasswordPath).
@@ -81,6 +84,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Mot de passe réinitialisé", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		To(hd.ResetPassword))
 
 	wsUser.Route(wsUser.PUT(updatePasswordPath).
@@ -91,6 +95,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "Mot de passe l'user authentifié mis à jour", nil).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, webserviceConst.UnprocessableEntityMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.UpdatePassword))
@@ -104,6 +109,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "Informations mises à jour", nil).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, webserviceConst.UnprocessableEntityMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Update))
@@ -116,6 +122,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "Compte supprimé", nil).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, webserviceConst.UnprocessableEntityMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Delete))
@@ -125,6 +132,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Informations récupérées", GetOwnInfoView{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()). // Tous les users ont accès à cette route, pas besoin de préciser de rôle autorisé
 		To(hd.GetOwnInfo))
 
@@ -204,7 +212,7 @@ func (hd *handler) ConfirmEmail(req *restful.Request, res *restful.Response) {
 }
 
 func (hd *handler) SendResetPasswordEmail(req *restful.Request, res *restful.Response) {
-	login := req.PathParameter(loginPathParameter.String())
+	login := req.PathParameter(loginParameter.Name)
 	form := SendResetPasswordEmailForm{Login: login}
 	err := hd.service.SendResetPasswordEmail(form)
 	if err != nil {

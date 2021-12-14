@@ -13,7 +13,6 @@ type User struct {
 	LastName       string `gorm:"check:last_name <> ''"`            // Doit être non vide, car nécessaire pour identifier les utilisateurs
 	FirstName      string `gorm:"check:first_name <> ''"`           // Doit être non vide, car nécessaire pour identifier les utilisateurs
 	Email          string `gorm:"uniqueIndex;check:email <> ''"`    // Doit être unique et non nul, car utilisé pour l'authentification
-	Role           string // Exemple de contrainte : `gorm:"check:role in ('admin', 'lecteur')"` // Doit être égal à un rôle existant : admin ou lecteur
 	Active         bool
 	EmailToken     string // Utilisé pour valider l'email
 	PasswordToken  string // Utilisé pour réinitialiser le mot de passe (mot de passe oublié)

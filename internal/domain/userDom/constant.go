@@ -1,5 +1,35 @@
 package userDom
 
+import "cine-circle-api/pkg/utils/httpUtils"
+
+/* Http parameters */
+
+var (
+	loginParameter = httpUtils.Parameter{
+		Name:         "login",
+		Description:  "Login (username or email) to use to reset password",
+		DefaultValue: nil,
+		DataType:     "string",
+		Required:     true,
+	}
+)
+
+/* Routes */
+
+const (
+	basePath = "/v1/users"
+
+	signInPath                 = "/sign-in"
+	signUpPath                 = "/sign-up"
+	sendConfirmationEmailPath  = "/send-confirmation-email"
+	confirmEmailPath           = "/confirm-email"
+	sendResetPasswordEmailPath = "/send-reset-password-email"
+	resetPasswordPath          = "/reset-password"
+
+	ownInfoPath        = "/me"
+	updatePasswordPath = "/password"
+)
+
 /* Send confirmation email */
 
 const (

@@ -6,14 +6,14 @@ import (
 	"gorm.io/gorm"
 )
 
-type Exemple struct {
+type Media struct {
 	gormUtils.Metadata
-	// TODO add your custom fields here and their rules (cf. user model example with gorm constraints)
+	Title string `gorm:"uniqueIndex;check:title <> ''"`
 }
 
-func MigrateExemple(DB *gorm.DB) (err error) {
+func MigrateMedia(DB *gorm.DB) (err error) {
 	err = DB.
-		AutoMigrate(&Exemple{})
+		AutoMigrate(&Media{})
 	if err != nil {
 		return errors.WithStack(err)
 	}

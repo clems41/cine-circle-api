@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="API" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="cine-circle-api" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="APPLICATION_NAME" value="cine-circle-api" />
+    </envs>
+    <kind value="PACKAGE" />
+    <package value="cine-circle-api/cmd/cine-circle-api" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/cine-circle-api/main.go" />
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Migration manager" run_configuration_type="GoApplicationRunConfiguration" />
+    </method>
+  </configuration>
+</component>

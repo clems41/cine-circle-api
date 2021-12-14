@@ -9,7 +9,7 @@
     <filePath value="$PROJECT_DIR$" />
     <framework value="gotest" />
     <method v="2">
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Build and Run TestTemplate" run_configuration_type="GoApplicationRunConfiguration" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="TestTemplate" run_configuration_type="GoApplicationRunConfiguration" />
     </method>
   </configuration>
 </component>

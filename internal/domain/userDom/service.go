@@ -35,16 +35,12 @@ type repository interface {
 	Delete(userId uint) (ok bool, err error)
 }
 
-type serviceMail interface {
-	Send(form mailService.SendEmailForm) (err error)
-}
-
 type service struct {
 	repository  repository
-	serviceMail serviceMail
+	serviceMail mailService.Service
 }
 
-func NewService(repository repository, serviceMail serviceMail) *service {
+func NewService(serviceMail mailService.Service, repository repository) *service {
 	return &service{
 		repository:  repository,
 		serviceMail: serviceMail,

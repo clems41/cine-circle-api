@@ -24,7 +24,7 @@ func Migrate(tx *gorm.DB) (err error) {
 // Please add here your new migration method.
 func list() (migrationList []MigrationFunction) {
 	migrationList = append(migrationList, model.MigrateUser)
-	migrationList = append(migrationList, model.MigrateExemple)
+	migrationList = append(migrationList, model.MigrateMedia)
 	// TODO add your new repository migration method here
 	return
 }

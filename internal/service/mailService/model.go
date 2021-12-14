@@ -1,6 +1,7 @@
 package mailService
 
 type SendEmailForm struct {
+	From        string       `json:"from"`
 	To          []string     `json:"to"`
 	Cc          []string     `json:"cc,omitempty"`
 	Bcc         []string     `json:"bcc,omitempty"`
@@ -19,6 +20,4 @@ type Attachment struct {
 }
 
 type mailApiResponse struct {
-
 }
-

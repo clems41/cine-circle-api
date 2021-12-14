@@ -4,6 +4,7 @@ package webserviceConst
 const (
 	BadRequestMessage          = "Bad request, some fields are wrong or missing"
 	UnauthorizedMessage        = "Unauthorized user to access this route"
+	ForbiddenMessage           = "User doesn't have access to this resource"
 	UnprocessableEntityMessage = "Body request cannot be proceed"
 	NotFoundMessage            = "Resource cannot be found"
 )

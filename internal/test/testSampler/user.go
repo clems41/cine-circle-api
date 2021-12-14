@@ -27,7 +27,6 @@ func (sampler *Sampler) GetUserWithEmailToken() (user *model.User) {
 		LastName:       fake.LastName(),
 		FirstName:      fake.FirstName(),
 		Email:          fakeData.UniqueEmail(),
-		Role:           "",
 		Active:         true,
 		EmailToken:     "toto",
 	}
@@ -48,7 +47,6 @@ func (sampler *Sampler) GetUserWithPasswordToken() (user *model.User) {
 		LastName:       fake.LastName(),
 		FirstName:      fake.FirstName(),
 		Email:          fakeData.UniqueEmail(),
-		Role:           "",
 		Active:         true,
 		PasswordToken:  "toto",
 	}
