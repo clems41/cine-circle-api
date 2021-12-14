@@ -24,7 +24,11 @@ func (ce *CustomError) WrapErrorf(format string, a ...interface{}) *CustomError 
 }
 
 func (ce *CustomError) Error() string {
-	return fmt.Sprintf("%s [%d] - %s", ce.code, ce.httpStatus, ce.error.Error())
+	str := fmt.Sprintf("%s [%d]", ce.code, ce.httpStatus)
+	if ce.error != nil {
+		str += fmt.Sprintf(" - %s", ce.error.Error())
+	}
+	return str
 }
 
 func (ce *CustomError) HttpStatus() int {

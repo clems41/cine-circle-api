@@ -5,7 +5,7 @@ import "cine-circle-api/pkg/utils/httpUtils"
 /* Routes */
 
 const (
-	basePath = "/v1/login"
+	basePath = "/v1/users"
 
 	signInPath                 = "/sign-in"
 	signUpPath                 = "/sign-up"

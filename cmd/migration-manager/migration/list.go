@@ -1,7 +1,6 @@
 package migration
 
 import (
-	"cine-circle-api/cmd/migration-manager/jobs"
 	"gorm.io/gorm"
 )
 
@@ -36,7 +35,7 @@ type Migration interface {
 
 func GetMigrationJobs() []Migration {
 	var migrations []Migration
-	migrations = append(migrations, jobs.CreationPostgresExtensions{})
+	//migrations = append(migrations, jobs.ExampleJob{})
 	// ^ INSERT NEW JOBS HERE, ALWAYS AT THE BOTTOM, AND BE CAREFUL WHILE MERGING
 	return migrations
 }
