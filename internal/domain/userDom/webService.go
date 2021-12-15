@@ -133,7 +133,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "Informations récupérées", GetOwnInfoView{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
-		Filter(middleware.AuthenticateUser()). // Tous les users ont accès à cette route, pas besoin de préciser de rôle autorisé
+		Filter(middleware.AuthenticateUser()).
 		To(hd.GetOwnInfo))
 
 	return wsUser
@@ -212,9 +212,13 @@ func (hd *handler) ConfirmEmail(req *restful.Request, res *restful.Response) {
 }
 
 func (hd *handler) SendResetPasswordEmail(req *restful.Request, res *restful.Response) {
-	login := req.PathParameter(loginParameter.Name)
+	login, err := loginParameter.GetValueFromPathParameter(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
+		return
+	}
 	form := SendResetPasswordEmailForm{Login: login}
-	err := hd.service.SendResetPasswordEmail(form)
+	err = hd.service.SendResetPasswordEmail(form)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, err)
 		return

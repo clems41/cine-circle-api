@@ -6,11 +6,11 @@ import "cine-circle-api/pkg/utils/httpUtils"
 
 var (
 	loginParameter = httpUtils.Parameter{
-		Name:         "login",
-		Description:  "Login (username or email) to use to reset password",
-		DefaultValue: nil,
-		DataType:     "string",
-		Required:     true,
+		Name:            "login",
+		Description:     "Login (username or email) to use to reset password",
+		DefaultValueStr: "",
+		DataType:        "string",
+		Required:        true,
 	}
 )
 

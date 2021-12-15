@@ -7,6 +7,15 @@ import (
 	"net/http"
 )
 
+type Request struct {
+	Url               string
+	Method            string
+	ContentType       string
+	QueryParameters   map[string]string
+	HeadersParameters map[string]string
+	Body              interface{}
+}
+
 // SendRequest will send http request based on fields from Request.
 // If body response is expected, you can specify your custom struct with bodyResponse parameter to unmarshall http response into this struct.
 // You also can specify custom http.Client in order specify some parameters (timeout for example). If nil, default http.Client will be used.

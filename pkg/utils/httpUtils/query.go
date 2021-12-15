@@ -5,15 +5,16 @@ import (
 	"github.com/emicklei/go-restful"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // UnmarshallQueryParameters will loop overs fields from out interface one by one and fill them with value from query parameters based on json tag.
 // Out interface should be pointer on struct.
 // Out interface fields should be of following types : int (classic, 8, 16, 32 or 64), string, float (32 or 64), bool or array of previous types (ex: []string).
 // Error will be returned if not.
-// You can specify default values with map[string]interface{} (can be nil), meaning that if there is no query parameter for specific field, defaultValue will be used if found in map.
+// You can specify default values with map[string]string (can be nil), meaning that if there is no query parameter for specific field, defaultValue will be used if found in map.
 // In this case, jsonTag name should be used as key of this map.
-func UnmarshallQueryParameters(req *restful.Request, out interface{}, defaultValues map[string]interface{}) (err error) {
+func UnmarshallQueryParameters(req *restful.Request, out interface{}, defaultValues map[string]string) (err error) {
 	// Check that out interface is type of pointer on struct
 	outValue := reflect.ValueOf(out)
 	outKind := outValue.Kind()
@@ -28,7 +29,7 @@ func UnmarshallQueryParameters(req *restful.Request, out interface{}, defaultVal
 	}
 
 	if defaultValues == nil {
-		defaultValues = make(map[string]interface{})
+		defaultValues = make(map[string]string)
 	}
 
 	// Loop over all struct fields with recursive diving until we got a usable field
@@ -36,7 +37,7 @@ func UnmarshallQueryParameters(req *restful.Request, out interface{}, defaultVal
 	return
 }
 
-func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value, defaultValues map[string]interface{}) (err error) {
+func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value, defaultValues map[string]string) (err error) {
 	if err != nil {
 		return
 	}
@@ -53,31 +54,28 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 		case reflect.Slice:
 			valuesStr := req.QueryParameters(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
-			if len(valuesStr) > 0 {
+			if len(valuesStr) == 0 && defaultValue != "" {
+				valuesStr = strings.Split(defaultValue, ",")
+			}
+			if len(valuesStr) != 0 {
 				err = setFieldValues(valuesStr, &outValueFieldValue)
 				if err != nil {
 					return
-				}
-			} else if defaultValue != nil {
-				// check that default and field are both slices but also both slices of same types (ex: []string and []string and not []string and []int)
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Slice &&
-					reflect.TypeOf(defaultValue).Elem().Kind() == reflect.TypeOf(outValueFieldValue.Interface()).Elem().Kind() {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
 				}
 			}
 		case reflect.String:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
-			if valueStr != "" {
-				outValueFieldValue.Set(reflect.ValueOf(valueStr))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.String {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
+			if valueStr == "" {
+				valueStr = defaultValue
 			}
+			outValueFieldValue.Set(reflect.ValueOf(valueStr))
 		case reflect.Int:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value int
 				value, err = strconv.Atoi(valueStr)
@@ -85,14 +83,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(value))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Int {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Int8:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value int
 				value, err = strconv.Atoi(valueStr)
@@ -100,14 +97,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(int8(value)))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Int8 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Int16:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value int
 				value, err = strconv.Atoi(valueStr)
@@ -115,14 +111,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(int16(value)))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Int16 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Int32:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value int
 				value, err = strconv.Atoi(valueStr)
@@ -130,14 +125,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(int32(value)))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Int32 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Int64:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value int
 				value, err = strconv.Atoi(valueStr)
@@ -145,14 +139,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(int64(value)))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Int64 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Bool:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value bool
 				value, err = strconv.ParseBool(valueStr)
@@ -160,14 +153,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(value))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Bool {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Float32:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value float64
 				value, err = strconv.ParseFloat(valueStr, 64)
@@ -175,14 +167,13 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(float32(value)))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Float32 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		case reflect.Float64:
 			valueStr := req.QueryParameter(outValueFieldTag)
 			defaultValue := defaultValues[outValueFieldTag]
+			if valueStr == "" {
+				valueStr = defaultValue
+			}
 			if valueStr != "" {
 				var value float64
 				value, err = strconv.ParseFloat(valueStr, 64)
@@ -190,10 +181,6 @@ func loopOverAllFieldsRecursively(req *restful.Request, outValue *reflect.Value,
 					return
 				}
 				outValueFieldValue.Set(reflect.ValueOf(value))
-			} else if defaultValue != nil {
-				if reflect.TypeOf(defaultValue).Kind() == reflect.Float64 {
-					outValueFieldValue.Set(reflect.ValueOf(defaultValue))
-				}
 			}
 		}
 	}

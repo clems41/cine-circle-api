@@ -3,6 +3,7 @@ package mediaDom
 import (
 	"cine-circle-api/internal/constant/swaggerConst"
 	"cine-circle-api/internal/constant/webserviceConst"
+	"cine-circle-api/pkg/customError"
 	"cine-circle-api/pkg/httpServer/httpError"
 	"cine-circle-api/pkg/httpServer/middleware"
 	"cine-circle-api/pkg/utils/httpUtils"
@@ -58,11 +59,15 @@ func (hd *handler) WebService() *restful.WebService {
 }
 
 func (hd *handler) Get(req *restful.Request, res *restful.Response) {
-	mediaId := req.PathParameter(mediaIdParameter.Name)
-	var form GetForm
-	err := httpUtils.UnmarshallQueryParameters(req, &form, defaultQueryParametersValues)
+	mediaId, err := mediaIdParameter.GetValueFromPathParameter(req)
 	if err != nil {
-		httpError.HandleHTTPError(req, res, err)
+		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
+		return
+	}
+	var form GetForm
+	err = httpUtils.UnmarshallQueryParameters(req, &form, defaultQueryParametersValues)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
 	form.MediaId = mediaId

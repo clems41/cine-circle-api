@@ -1,16 +1,12 @@
 package mediaProvider
 
 import (
-	"cine-circle-api/internal/constant/languageConst"
-	"cine-circle-api/pkg/utils/sliceUtils"
 	"time"
 )
 
 type Language string
 
-func (l Language) Valid() bool {
-	return sliceUtils.SliceContainsStr(languageConst.AllowedLanguages(), string(l))
-}
+type MediaType string
 
 /* Get media */
 
@@ -30,6 +26,7 @@ type MediaView struct {
 type MediaForm struct {
 	Id       string
 	Language Language
+	Type     MediaType
 }
 
 /* Search media */
@@ -43,8 +40,9 @@ type MediaShortView struct {
 }
 
 type SearchForm struct {
-	Page    int
-	Keyword string
+	Page     int
+	Language Language
+	Keyword  string
 }
 
 type SearchView struct {
