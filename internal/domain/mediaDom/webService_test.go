@@ -70,6 +70,13 @@ func TestHandler_Search(t *testing.T) {
 	}
 }
 
+// TestHandler_SearchThenGet will check the following workflow
+//  - search for movies
+//  - save all result into database with provider name and id
+//  - mark result as uncompleted
+//  - try to get one movie from result
+//  - get movie from provider using previous provider id stored in database
+//  - store now movie with all info from provider into database
 func TestHandler_SearchThenGet(t *testing.T) {
 	db, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()
@@ -126,6 +133,7 @@ func TestHandler_SearchThenGet(t *testing.T) {
 	})
 }
 
+// TestHandler_Get_AlreadyCompletedMovie will test that movie returned is the one already stored in database
 func TestHandler_Get_AlreadyCompletedMovie(t *testing.T) {
 	_, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()
@@ -167,6 +175,7 @@ func TestHandler_Get_AlreadyCompletedMovie(t *testing.T) {
 	})
 }
 
+// TestHandler_Get_UncompletedMovie will test that movie info are filled when uncompleted movie is requested
 func TestHandler_Get_UncompletedMovie(t *testing.T) {
 	db, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()

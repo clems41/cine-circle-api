@@ -112,6 +112,9 @@ func GetUserInfoFromTokenClaims(claims jwt.MapClaims, user interface{}) (err err
 func ValidateToken(tokenStr string) (claims jwt.MapClaims, err error) {
 	// Get RSA public key
 	publicKey, err := GetRsaPublicKey()
+	if err != nil {
+		return
+	}
 
 	// Parse the JWT string and store the result in `claims`.
 	// Note that we are passing the key in this method as well. This method will return an error

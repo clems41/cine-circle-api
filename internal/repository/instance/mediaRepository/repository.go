@@ -12,6 +12,7 @@ type Repository interface {
 	GetMovie(movieId uint) (movie model.Movie, ok bool, err error)
 	Save(movie *model.Movie) (err error)
 	Create(movie *model.Movie) (err error)
+	GetMovieFromProvider(mediaProviderName, mediaProviderId string) (movie model.Movie, ok bool, err error)
 }
 
 type repository struct {
@@ -44,4 +45,18 @@ func (repo *repository) Save(movie *model.Movie) (err error) {
 func (repo *repository) Create(movie *model.Movie) (err error) {
 	err = repo.DB.Create(movie).Error
 	return
+}
+
+func (repo *repository) GetMovieFromProvider(mediaProviderName, mediaProviderId string) (movie model.Movie, ok bool, err error) {
+	err = repo.DB.
+		Take(&movie, "media_provider_name = ? AND media_provider_id = ?", mediaProviderName, mediaProviderId).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return movie, false, nil
+		} else {
+			return movie, false, errors.WithStack(err)
+		}
+	}
+	return movie, true, nil
 }

@@ -1,6 +1,7 @@
 package mediaDom
 
 import (
+	"cine-circle-api/internal/repository/instance/mediaRepository"
 	"cine-circle-api/internal/repository/model"
 	"cine-circle-api/internal/service/mediaProvider"
 )
@@ -12,18 +13,12 @@ type Service interface {
 	Search(form SearchForm) (view SearchView, err error)
 }
 
-type Repository interface {
-	GetMovie(movieId uint) (movie model.Movie, ok bool, err error)
-	Save(movie *model.Movie) (err error)
-	Create(movie *model.Movie) (err error)
-}
-
 type service struct {
 	mediaProvider mediaProvider.Service
-	repository    Repository
+	repository    mediaRepository.Repository
 }
 
-func NewService(mediaProvider mediaProvider.Service, repository Repository) Service {
+func NewService(mediaProvider mediaProvider.Service, repository mediaRepository.Repository) Service {
 	return &service{
 		repository:    repository,
 		mediaProvider: mediaProvider,
@@ -81,15 +76,24 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 	// Save all movie result into database and marked them as not completed and fill view
 	for _, media := range result.Result {
-		movie := model.Movie{
-			MediaProviderName: svc.mediaProvider.GetProviderName(),
-			MediaProviderId:   media.Id,
-			Completed:         false,
-		}
-		// TODO Create only if not already exists, if already exists get previous ID to add it into result
-		err = svc.repository.Create(&movie)
+		// Create only if not already exists, if already exists get previous ID to add it into result
+		var alreadyExists bool
+		var movie model.Movie
+		movie, alreadyExists, err = svc.repository.GetMovieFromProvider(svc.mediaProvider.GetProviderName(), media.Id)
 		if err != nil {
 			return
+		}
+		if !alreadyExists {
+			// Stored new movie from research if not already exists
+			movie = model.Movie{
+				MediaProviderName: svc.mediaProvider.GetProviderName(),
+				MediaProviderId:   media.Id,
+				Completed:         false,
+			}
+			err = svc.repository.Create(&movie)
+			if err != nil {
+				return
+			}
 		}
 		view.Result = append(view.Result, ResultView{
 			Id:            movie.ID,

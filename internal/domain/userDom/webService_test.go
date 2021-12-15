@@ -469,7 +469,7 @@ func TestHandler_UpdatePassword(t *testing.T) {
 /* Get own info */
 
 func TestHandler_GetOwnInfo(t *testing.T) {
-	testPath := basePath + ownInfoPath
+	testPath := basePath + ownUserPath
 	_, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()
 
@@ -503,7 +503,7 @@ func TestHandler_GetOwnInfo(t *testing.T) {
 /* Update */
 
 func TestHandler_Update(t *testing.T) {
-	testPath := basePath
+	testPath := basePath + ownUserPath
 	db, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()
 
@@ -603,7 +603,7 @@ func TestHandler_Update(t *testing.T) {
 /* Delete */
 
 func TestHandler_Delete(t *testing.T) {
-	testPath := basePath
+	testPath := basePath + ownUserPath
 	db, httpMock, sampler, _, tearDown := setupTestcase(t, true)
 	defer tearDown()
 

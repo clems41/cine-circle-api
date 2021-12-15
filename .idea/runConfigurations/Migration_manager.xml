@@ -4,6 +4,7 @@
     <working_directory value="$PROJECT_DIR$" />
     <envs>
       <env name="APPLICATION_NAME" value="cine-circle-api" />
+      <env name="DB_NAME" value="cine-circle-api" />
     </envs>
     <kind value="PACKAGE" />
     <package value="cine-circle-api/cmd/migration-manager" />
