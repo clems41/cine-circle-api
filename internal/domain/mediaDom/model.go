@@ -24,7 +24,7 @@ type GetView struct {
 
 type SearchForm struct {
 	searchUtils.PaginationRequest
-	Keyword string
+	Keyword string `json:"keyword"`
 }
 
 type SearchView struct {

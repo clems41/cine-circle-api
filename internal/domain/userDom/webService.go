@@ -100,7 +100,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Filter(middleware.AuthenticateUser()).
 		To(hd.UpdatePassword))
 
-	wsUser.Route(wsUser.PUT("/").
+	wsUser.Route(wsUser.PUT(ownUserPath).
 		Consumes(restful.MIME_JSON).
 		Writes(restful.MIME_JSON).
 		Doc("Modification des informations de l'user authentifié").
@@ -114,7 +114,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Update))
 
-	wsUser.Route(wsUser.DELETE("/").
+	wsUser.Route(wsUser.DELETE(ownUserPath).
 		Consumes(restful.MIME_JSON).
 		Doc("Suppression du compte de l'user authentifié").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
@@ -127,7 +127,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Delete))
 
-	wsUser.Route(wsUser.GET(ownInfoPath).
+	wsUser.Route(wsUser.GET(ownUserPath).
 		Doc("Récupérer les informations de l'user actuel (token)").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Returns(http.StatusOK, "Informations récupérées", GetOwnInfoView{}).

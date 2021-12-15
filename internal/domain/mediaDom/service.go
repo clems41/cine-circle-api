@@ -86,6 +86,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 			MediaProviderId:   media.Id,
 			Completed:         false,
 		}
+		// TODO Create only if not already exists, if already exists get previous ID to add it into result
 		err = svc.repository.Create(&movie)
 		if err != nil {
 			return

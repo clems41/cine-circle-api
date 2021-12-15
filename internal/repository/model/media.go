@@ -35,6 +35,10 @@ func MigrateMedia(DB *gorm.DB) (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	err = DB.Exec("ALTER TABLE movies ADD UNIQUE (media_provider_id, media_provider_name)").Error
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	err = DB.
 		AutoMigrate(&TvShow{})
 	if err != nil {

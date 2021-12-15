@@ -26,7 +26,7 @@ const (
 	sendResetPasswordEmailPath = "/send-reset-password-email"
 	resetPasswordPath          = "/reset-password"
 
-	ownInfoPath        = "/me"
+	ownUserPath        = "/me"
 	updatePasswordPath = "/password"
 )
 
