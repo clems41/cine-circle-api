@@ -4,13 +4,9 @@ import (
 	"time"
 )
 
-type Language string
+/* Get movie */
 
-type MediaType string
-
-/* Get media */
-
-type MediaView struct {
+type MovieView struct {
 	Id            string
 	Title         string
 	BackdropUrl   string
@@ -23,15 +19,13 @@ type MediaView struct {
 	Runtime       time.Duration
 }
 
-type MediaForm struct {
-	Id       string
-	Language Language
-	Type     MediaType
+type MovieForm struct {
+	Id string
 }
 
-/* Search media */
+/* Search movie */
 
-type MediaShortView struct {
+type MovieShortView struct {
 	Id            string
 	Title         string
 	Language      string
@@ -40,14 +34,13 @@ type MediaShortView struct {
 }
 
 type SearchForm struct {
-	Page     int
-	Language Language
-	Keyword  string
+	Page    int
+	Keyword string
 }
 
 type SearchView struct {
 	NumberOfItems int
 	NumberOfPages int
 	CurrentPage   int
-	Result        []MediaShortView
+	Result        []MovieShortView
 }

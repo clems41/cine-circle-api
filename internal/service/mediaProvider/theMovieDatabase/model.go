@@ -1,5 +1,7 @@
 package theMovieDatabase
 
+/* Get Movie */
+
 type MovieView struct {
 	Adult               bool                `json:"adult"`
 	BackdropPath        string              `json:"backdrop_path"`
@@ -56,4 +58,35 @@ type SpokenLanguage struct {
 	EnglishName string `json:"english_name"`
 	Iso6391     string `json:"iso_639_1"`
 	Name        string `json:"name"`
+}
+
+/* Search */
+
+type SearchView struct {
+	Page         int               `json:"page"`
+	Results      []SearchMovieView `json:"results"`
+	TotalPages   int               `json:"total_pages"`
+	TotalResults int               `json:"total_results"`
+}
+
+type SearchMovieView struct {
+	BackdropPath     string   `json:"backdrop_path"`
+	FirstAirDate     string   `json:"first_air_date,omitempty"`
+	GenreIds         []int    `json:"genre_ids"`
+	Id               int      `json:"id"`
+	MediaType        string   `json:"media_type"`
+	Name             string   `json:"name,omitempty"`
+	OriginCountry    []string `json:"origin_country,omitempty"`
+	OriginalLanguage string   `json:"original_language"`
+	OriginalName     string   `json:"original_name,omitempty"`
+	Overview         string   `json:"overview"`
+	Popularity       float64  `json:"popularity"`
+	PosterPath       string   `json:"poster_path"`
+	VoteAverage      float64  `json:"vote_average"`
+	VoteCount        int      `json:"vote_count"`
+	Adult            bool     `json:"adult,omitempty"`
+	OriginalTitle    string   `json:"original_title,omitempty"`
+	ReleaseDate      string   `json:"release_date,omitempty"`
+	Title            string   `json:"title,omitempty"`
+	Video            bool     `json:"video,omitempty"`
 }

@@ -9,8 +9,9 @@ import (
 var _ Repository = (*repository)(nil)
 
 type Repository interface {
-	Get(mediaId uint) (media model.Media, ok bool, err error)
-	Save(media *model.Media) (err error)
+	GetMovie(movieId uint) (movie model.Movie, ok bool, err error)
+	Save(movie *model.Movie) (err error)
+	Create(movie *model.Movie) (err error)
 }
 
 type repository struct {
@@ -21,13 +22,13 @@ func New(DB *gorm.DB) *repository {
 	return &repository{DB: DB}
 }
 
-func (repo *repository) Get(mediaId uint) (media model.Media, ok bool, err error) {
+func (repo *repository) GetMovie(movieId uint) (movie model.Movie, ok bool, err error) {
 	err = repo.DB.
-		Take(&media, mediaId).
+		Take(&movie, movieId).
 		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return media, false, nil
+			return movie, false, nil
 		}
 	} else {
 		ok = true
@@ -35,7 +36,12 @@ func (repo *repository) Get(mediaId uint) (media model.Media, ok bool, err error
 	return
 }
 
-func (repo *repository) Save(media *model.Media) (err error) {
-	err = repo.DB.Save(media).Error
+func (repo *repository) Save(movie *model.Movie) (err error) {
+	err = repo.DB.Save(movie).Error
+	return
+}
+
+func (repo *repository) Create(movie *model.Movie) (err error) {
+	err = repo.DB.Create(movie).Error
 	return
 }

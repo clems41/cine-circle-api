@@ -29,11 +29,10 @@ func (hd *handler) WebService() *restful.WebService {
 
 	wsMedia.Path(basePath)
 
-	wsMedia.Route(wsMedia.GET(fmt.Sprintf("/%s", mediaIdParameter.Joker())).
+	wsMedia.Route(wsMedia.GET(fmt.Sprintf("/%s", mediaIdPathParameter.Joker())).
 		Doc("Get media (movie or tv show) by id").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
-		Param(mediaIdParameter.PathParameter()).
-		Param(languageParameter.QueryParameter()).
+		Param(mediaIdPathParameter.PathParameter()).
 		Returns(http.StatusOK, "Media found", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
@@ -43,8 +42,9 @@ func (hd *handler) WebService() *restful.WebService {
 
 	wsMedia.Route(wsMedia.GET("/").
 		Produces(restful.MIME_JSON).
-		Param(languageParameter.QueryParameter()).
-		Param(keywordParameter.QueryParameter()).
+		Param(pageQueryParameter.QueryParameter()).
+		Param(pageSizeQueryParameter.QueryParameter()).
+		Param(keywordQueryParameter.QueryParameter()).
 		Doc("Search among medias ones that are matching with keyword").
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Writes(SearchView{}).
@@ -59,13 +59,13 @@ func (hd *handler) WebService() *restful.WebService {
 }
 
 func (hd *handler) Get(req *restful.Request, res *restful.Response) {
-	mediaId, err := mediaIdParameter.GetValueFromPathParameter(req)
+	mediaId, err := mediaIdPathParameter.GetValueFromPathParameterAsUint(req)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
 	var form GetForm
-	err = httpUtils.UnmarshallQueryParameters(req, &form, defaultQueryParametersValues)
+	err = httpUtils.UnmarshallQueryParameters(req, &form, nil)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
@@ -82,9 +82,9 @@ func (hd *handler) Get(req *restful.Request, res *restful.Response) {
 
 func (hd *handler) Search(req *restful.Request, res *restful.Response) {
 	var form SearchForm
-	err := httpUtils.UnmarshallQueryParameters(req, &form, defaultQueryParametersValues)
+	err := httpUtils.UnmarshallQueryParameters(req, &form, defaultSearchQueryParameterValues)
 	if err != nil {
-		httpError.HandleHTTPError(req, res, err)
+		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
 	view, err := hd.service.Search(form)

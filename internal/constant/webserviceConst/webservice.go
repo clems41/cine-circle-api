@@ -8,18 +8,3 @@ const (
 	UnprocessableEntityMessage = "Body request cannot be proceed"
 	NotFoundMessage            = "Resource cannot be found"
 )
-
-// Query parameters
-const (
-	PageQueryName        = "page"
-	PageQueryDescription = "Page to return"
-	PageQueryType        = "int"
-
-	PageSizeQueryName        = "pageSize"
-	PageSizeQueryDescription = "Number of element by page"
-	PageSizeQueryType        = "int"
-
-	SortQueryName        = "sort"
-	SortQueryDescription = "Sort result array using specific fields (more than one can be used)"
-	SortQueryType        = "string"
-)
