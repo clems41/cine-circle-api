@@ -82,7 +82,7 @@ func (svc *service) Get(form mediaProvider.MovieForm) (view mediaProvider.MovieV
 		Overview:      movie.Overview,
 		PosterUrl:     svc.getImageUrl(movie.PosterPath),
 		ReleaseDate:   releasedDate,
-		Runtime:       time.Duration(movie.Runtime) * time.Minute,
+		Runtime:       movie.Runtime,
 	}
 
 	return

@@ -16,7 +16,7 @@ type MovieView struct {
 	Overview      string
 	PosterUrl     string
 	ReleaseDate   time.Time
-	Runtime       time.Duration
+	Runtime       int
 }
 
 type MovieForm struct {

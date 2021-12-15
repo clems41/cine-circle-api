@@ -55,7 +55,7 @@ func (svc *service) Get(form mediaProvider.MovieForm) (view mediaProvider.MovieV
 		Overview:      fake.Sentences(),
 		PosterUrl:     fake.StreetAddress(),
 		ReleaseDate:   fakeData.FakeTimeBefore(time.Now()),
-		Runtime:       time.Duration(fakeData.FakeIntBetween(35, 236)) * time.Minute,
+		Runtime:       fakeData.FakeIntBetween(35, 236),
 	}
 	return
 }

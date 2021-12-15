@@ -21,7 +21,7 @@ type Movie struct {
 	Overview          string
 	PosterUrl         string
 	ReleaseDate       time.Time
-	Runtime           time.Duration
+	Runtime           int
 }
 
 type TvShow struct {

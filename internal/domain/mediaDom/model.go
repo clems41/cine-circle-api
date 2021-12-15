@@ -10,16 +10,16 @@ type GetForm struct {
 }
 
 type GetView struct {
-	Id            uint          `json:"id"`
-	Title         string        `json:"title"`
-	BackdropUrl   string        `json:"backdropUrl"`
-	Genres        []string      `json:"genres"`
-	Language      string        `json:"language"`
-	OriginalTitle string        `json:"originalTitle"`
-	Overview      string        `json:"overview"`
-	PosterUrl     string        `json:"posterUrl"`
-	ReleaseDate   time.Time     `json:"releaseDate"`
-	Runtime       time.Duration `json:"runtime"`
+	Id            uint      `json:"id"`
+	Title         string    `json:"title"`
+	BackdropUrl   string    `json:"backdropUrl"`
+	Genres        []string  `json:"genres"`
+	Language      string    `json:"language"`
+	OriginalTitle string    `json:"originalTitle"`
+	Overview      string    `json:"overview"`
+	PosterUrl     string    `json:"posterUrl"`
+	ReleaseDate   time.Time `json:"releaseDate"`
+	Runtime       int       `json:"runtime"`
 }
 
 type SearchForm struct {
