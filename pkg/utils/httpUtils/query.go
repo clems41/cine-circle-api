@@ -3,10 +3,19 @@ package httpUtils
 import (
 	"fmt"
 	"github.com/emicklei/go-restful"
+	"github.com/go-playground/validator/v10"
 	"reflect"
 	"strconv"
 	"strings"
 )
+
+var (
+	validate *validator.Validate
+)
+
+func init() {
+	validate = validator.New()
+}
 
 // UnmarshallQueryParameters will loop overs fields from out interface one by one and fill them with value from query parameters based on json tag.
 // Out interface should be pointer on struct.
@@ -34,6 +43,21 @@ func UnmarshallQueryParameters(req *restful.Request, out interface{}, defaultVal
 
 	// Loop over all struct fields with recursive diving until we got a usable field
 	err = loopOverAllFieldsRecursively(req, &outValue, defaultValues)
+	if err != nil {
+		return
+	}
+	// Check struct and return error if required fields are missing
+	err = validate.Struct(out)
+	if err != nil {
+		validationErrors, ok := err.(validator.ValidationErrors)
+		if ok {
+			var incorrectFields []string
+			for _, validationErr := range validationErrors {
+				incorrectFields = append(incorrectFields, validationErr.Field())
+			}
+			return fmt.Errorf("structure is not correct, some fields are incorrects : %s", strings.Join(incorrectFields, ","))
+		}
+	}
 	return
 }
 

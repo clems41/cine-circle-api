@@ -56,12 +56,12 @@ func (repo *repository) GetUser(userId uint) (user model.User, ok bool, err erro
 
 func (repo *repository) Create(user *model.User) (err error) {
 	err = repo.DB.Create(user).Error
-	return
+	return errors.WithStack(err)
 }
 
 func (repo *repository) Save(user *model.User) (err error) {
 	err = repo.DB.Save(user).Error
-	return
+	return errors.WithStack(err)
 }
 
 func (repo *repository) Delete(userId uint) (ok bool, err error) {
