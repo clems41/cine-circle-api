@@ -7,7 +7,7 @@ import (
 
 type SearchForm struct {
 	gormUtils.PaginationQuery
-	CircleName string
+	UserId uint
 }
 
 type SearchView struct {

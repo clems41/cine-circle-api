@@ -1,6 +1,7 @@
 package testSampler
 
 import (
+	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"gorm.io/gorm"
 	"testing"
 )
@@ -33,4 +34,16 @@ func New(t *testing.T, DB *gorm.DB, populateDatabase bool) (sampler *Sampler) {
 // populateDatabase si à true, des données vont être insérées avant le lancement du test.
 // Cela permet d'avoir une base de donnée non vierge, ce qui se rapproche plus des conditions de production.
 func (sampler *Sampler) populateDatabase() {
+	for range fakeData.FakeRange(5, 8) {
+		sampler.GetUser()
+	}
+	for range fakeData.FakeRange(1, 3) {
+		sampler.GetCircleWithUsers()
+	}
+	for range fakeData.FakeRange(5, 10) {
+		sampler.GetUncompletedMovie()
+	}
+	for range fakeData.FakeRange(5, 10) {
+		sampler.GetCompletedMovie()
+	}
 }

@@ -9,6 +9,7 @@ import (
 type CommonForm struct {
 	Name        string `json:"name" validate:"required"`
 	Description string `json:"description"`
+	UserId      uint   `json:"-"` // Get it from token
 }
 
 type UserView struct {
@@ -38,8 +39,9 @@ type CreateView struct {
 /* Add user */
 
 type AddUserForm struct {
-	UserId   uint `json:"-"` // Champ récupéré depuis le path parameter de la route
-	CircleId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	UserIdToAdd uint `json:"-"` // Get it from path parameter
+	UserId      uint `json:"-"` // Get it from token
+	CircleId    uint `json:"-"` // Get it from path parameter
 }
 
 type AddUserView struct {
@@ -49,8 +51,9 @@ type AddUserView struct {
 /* Delete user */
 
 type DeleteUserForm struct {
-	UserId   uint `json:"-"` // Champ récupéré depuis le path parameter de la route
-	CircleId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	UserIdToDelete uint `json:"-"` // Get it from path parameter
+	UserId         uint `json:"-"` // Get it from token
+	CircleId       uint `json:"-"` // Get it from path parameter
 }
 
 type DeleteUserView struct {
@@ -60,7 +63,7 @@ type DeleteUserView struct {
 /* Update */
 
 type UpdateForm struct {
-	CircleId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	CircleId uint `json:"-"` // Get it from path parameter
 	CommonForm
 }
 
@@ -71,13 +74,15 @@ type UpdateView struct {
 /* Delete */
 
 type DeleteForm struct {
-	CircleId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	UserId   uint `json:"-"` // Get it from token
+	CircleId uint `json:"-"` // Get it from path parameter
 }
 
 /* Get */
 
 type GetForm struct {
-	CircleId uint `json:"-"` // Champ récupéré depuis le path parameter de la route
+	UserId   uint `json:"-"` // Get it from token
+	CircleId uint `json:"-"` // Get it from path parameter
 }
 
 type GetView struct {
@@ -88,7 +93,7 @@ type GetView struct {
 
 type SearchForm struct {
 	searchUtils.PaginationRequest
-	CircleName string `json:"name" validate:"required"`
+	UserId uint `json:"-"` // Get it from token
 }
 
 type SearchView struct {

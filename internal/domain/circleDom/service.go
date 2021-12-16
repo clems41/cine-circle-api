@@ -2,6 +2,7 @@ package circleDom
 
 import (
 	"cine-circle-api/internal/repository/instance/circleRepository"
+	"cine-circle-api/internal/repository/instance/userRepository"
 	"cine-circle-api/internal/repository/model"
 	"cine-circle-api/pkg/sql/gormUtils"
 )
@@ -19,21 +20,32 @@ type Service interface {
 }
 
 type service struct {
-	repository circleRepository.Repository
+	repository     circleRepository.Repository
+	userRepository userRepository.Repository
 }
 
-func NewService(repository circleRepository.Repository) Service {
+func NewService(repository circleRepository.Repository, userRepository userRepository.Repository) Service {
 	return &service{
-		repository: repository,
+		repository:     repository,
+		userRepository: userRepository,
 	}
 }
 
 func (svc *service) Create(form CreateForm) (view CreateView, err error) {
-	circle := svc.fromFormToModel(form.CommonForm)
+	circle := model.Circle{
+		Name:        form.Name,
+		Description: form.Description,
+	}
 	err = svc.repository.Create(&circle)
 	if err != nil {
 		return
 	}
+
+	err = svc.repository.AddUser(form.UserId, &circle)
+	if err != nil {
+		return
+	}
+
 	view.CommonView = svc.fromModelToView(circle)
 	return
 }
@@ -46,7 +58,14 @@ func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
 	if !ok {
 		return view, errCircleNotFound
 	}
-	circle = svc.fromFormToModel(form.CommonForm)
+
+	found := svc.userIsInCircle(form.UserId, circle)
+	if !found {
+		return view, errCircleNotFound
+	}
+
+	circle.Name = form.Name
+	circle.Description = form.Description
 	circle.ID = form.CircleId
 	err = svc.repository.Save(&circle)
 	if err != nil {
@@ -64,16 +83,27 @@ func (svc *service) Get(form GetForm) (view GetView, err error) {
 	if !ok {
 		return view, errCircleNotFound
 	}
+
+	found := svc.userIsInCircle(form.UserId, circle)
+	if !found {
+		return view, errCircleNotFound
+	}
+
 	view.CommonView = svc.fromModelToView(circle)
 	return
 }
 
 func (svc *service) Delete(form DeleteForm) (err error) {
-	_, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.repository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
 	if !ok {
+		return errCircleNotFound
+	}
+
+	found := svc.userIsInCircle(form.UserId, circle)
+	if !found {
 		return errCircleNotFound
 	}
 
@@ -90,7 +120,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 			Page:     form.Page,
 			PageSize: form.PageSize,
 		},
-		CircleName: form.CircleName,
+		UserId: form.UserId,
 	}
 
 	repoView, err := svc.repository.Search(repoForm)
@@ -109,10 +139,56 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 }
 
 func (svc *service) AddUser(form AddUserForm) (view AddUserView, err error) {
+	circle, ok, err := svc.repository.Get(form.CircleId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return view, errCircleNotFound
+	}
+
+	found := svc.userIsInCircle(form.UserId, circle)
+	if !found {
+		return view, errCircleNotFound
+	}
+
+	_, ok, err = svc.userRepository.GetUser(form.UserIdToAdd)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return view, errUserNotFound
+	}
+
+	err = svc.repository.AddUser(form.UserIdToAdd, &circle)
+	view.CommonView = svc.fromModelToView(circle)
 	return
 }
 
 func (svc *service) DeleteUser(form DeleteUserForm) (view DeleteUserView, err error) {
+	circle, ok, err := svc.repository.Get(form.CircleId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return view, errCircleNotFound
+	}
+
+	found := svc.userIsInCircle(form.UserId, circle)
+	if !found {
+		return view, errCircleNotFound
+	}
+
+	_, ok, err = svc.userRepository.GetUser(form.UserIdToDelete)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return view, errUserNotFound
+	}
+
+	err = svc.repository.DeleteUser(form.UserIdToDelete, &circle)
+	view.CommonView = svc.fromModelToView(circle)
 	return
 }
 
@@ -135,10 +211,12 @@ func (svc *service) fromModelToView(circle model.Circle) (view CommonView) {
 	return
 }
 
-func (svc *service) fromFormToModel(form CommonForm) (circle model.Circle) {
-	circle = model.Circle{
-		Name:        form.Name,
-		Description: form.Description,
+func (svc *service) userIsInCircle(userId uint, circle model.Circle) (isIn bool) {
+	isIn = false
+	for _, circleUser := range circle.Users {
+		if userId == circleUser.ID {
+			isIn = true
+		}
 	}
 	return
 }

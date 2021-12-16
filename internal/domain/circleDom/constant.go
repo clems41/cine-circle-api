@@ -20,13 +20,6 @@ var (
 		DataType:        "int",
 		Required:        true,
 	}
-	circleNameQueryParameter = httpUtils.Parameter{
-		Name:            "name",
-		Description:     "Name of the circle to find",
-		DefaultValueStr: "",
-		DataType:        "string",
-		Required:        true,
-	}
 	pageQueryParameter = httpUtils.Parameter{
 		Name:            "page",
 		Description:     "Page number to return",

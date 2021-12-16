@@ -4,6 +4,7 @@ import (
 	"cine-circle-api/internal/constant/swaggerConst"
 	"cine-circle-api/internal/constant/webserviceConst"
 	"cine-circle-api/pkg/customError"
+	"cine-circle-api/pkg/httpServer/authentication"
 	"cine-circle-api/pkg/httpServer/httpError"
 	"cine-circle-api/pkg/httpServer/middleware"
 	"cine-circle-api/pkg/utils/httpUtils"
@@ -112,11 +113,10 @@ func (hd *handler) WebService() *restful.WebService {
 		Produces(restful.MIME_JSON).
 		Param(pageQueryParameter.QueryParameter()).
 		Param(pageSizeQueryParameter.QueryParameter()).
-		Param(circleNameQueryParameter.QueryParameter()).
-		Doc(fmt.Sprintf("Search among circles by %s", circleNameQueryParameter.Name)).
+		Doc(fmt.Sprintf("List circles with user in it")).
 		Metadata(restfulspec.KeyOpenAPITags, tags).
 		Writes(SearchView{}).
-		Returns(http.StatusOK, "Liste récupérée", SearchView{}).
+		Returns(http.StatusOK, "OK", SearchView{}).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
@@ -132,6 +132,14 @@ func (hd *handler) Create(req *restful.Request, res *restful.Response) {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
+
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
+
 	view, err := hd.service.Create(form)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, err)
@@ -146,15 +154,22 @@ func (hd *handler) AddUser(req *restful.Request, res *restful.Response) {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
-	userId, err := userIdPathParameter.GetValueFromPathParameterAsUint(req)
+	userIdToAdd, err := userIdPathParameter.GetValueFromPathParameterAsUint(req)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
 	form := AddUserForm{
-		UserId:   userId,
-		CircleId: circleId,
+		UserIdToAdd: userIdToAdd,
+		CircleId:    circleId,
 	}
+
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
 
 	view, err := hd.service.AddUser(form)
 	if err != nil {
@@ -170,15 +185,22 @@ func (hd *handler) DeleteUser(req *restful.Request, res *restful.Response) {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
-	userId, err := userIdPathParameter.GetValueFromPathParameterAsUint(req)
+	userIdToDelete, err := userIdPathParameter.GetValueFromPathParameterAsUint(req)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
 	form := DeleteUserForm{
-		UserId:   userId,
-		CircleId: circleId,
+		UserIdToDelete: userIdToDelete,
+		CircleId:       circleId,
 	}
+
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
 
 	view, err := hd.service.DeleteUser(form)
 	if err != nil {
@@ -202,6 +224,13 @@ func (hd *handler) Update(req *restful.Request, res *restful.Response) {
 	}
 	form.CircleId = circleId
 
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
+
 	view, err := hd.service.Update(form)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, err)
@@ -217,6 +246,13 @@ func (hd *handler) Delete(req *restful.Request, res *restful.Response) {
 		return
 	}
 	form := DeleteForm{CircleId: circleId}
+
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
 
 	err = hd.service.Delete(form)
 	if err != nil {
@@ -234,6 +270,13 @@ func (hd *handler) Get(req *restful.Request, res *restful.Response) {
 	}
 	form := GetForm{CircleId: circleId}
 
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
+
 	view, err := hd.service.Get(form)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, err)
@@ -249,6 +292,14 @@ func (hd *handler) Search(req *restful.Request, res *restful.Response) {
 		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
 		return
 	}
+
+	user, err := authentication.WhoAmI(req)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewForbidden().WrapError(err))
+		return
+	}
+	form.UserId = user.Id
+
 	view, err := hd.service.Search(form)
 	if err != nil {
 		httpError.HandleHTTPError(req, res, err)
