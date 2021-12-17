@@ -12,6 +12,31 @@ var (
 		DataType:        "string",
 		Required:        true,
 	}
+	keywordQueryParameter = httpUtils.Parameter{
+		Name:            "keyword",
+		Description:     "Keyword to search among users on firstname, lastname and username fields",
+		DefaultValueStr: "",
+		DataType:        "string",
+		Required:        true,
+	}
+	pageQueryParameter = httpUtils.Parameter{
+		Name:            "page",
+		Description:     "Page number to return",
+		DefaultValueStr: "1",
+		DataType:        "int",
+		Required:        false,
+	}
+	pageSizeQueryParameter = httpUtils.Parameter{
+		Name:            "pageSize",
+		Description:     "Number of element by page",
+		DefaultValueStr: "10",
+		DataType:        "int",
+		Required:        false,
+	}
+	defaultSearchQueryParameterValues = map[string]string{
+		pageQueryParameter.Name:     pageQueryParameter.DefaultValueStr,
+		pageSizeQueryParameter.Name: pageSizeQueryParameter.DefaultValueStr,
+	}
 )
 
 /* Routes */

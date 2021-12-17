@@ -1,6 +1,7 @@
 package userDom
 
 import (
+	"cine-circle-api/pkg/utils/searchUtils"
 	"time"
 )
 
@@ -107,4 +108,16 @@ type GetOwnInfoView struct {
 type DeleteForm struct {
 	UserId   uint   `json:"-"` // Champ récupéré depuis le path parameter de la route
 	Password string `json:"password"`
+}
+
+/* Search */
+
+type SearchForm struct {
+	searchUtils.PaginationRequest
+	Keyword string `json:"keyword" validate:"required,min=3"`
+}
+
+type SearchView struct {
+	searchUtils.Page
+	Users []CommonView `json:"users"`
 }

@@ -90,27 +90,9 @@ func (repo *repository) Delete(userId uint) (ok bool, err error) {
 
 func (repo *repository) Search(form SearchForm) (view SearchView, err error) {
 	query := repo.DB
-	if form.FirstNameKeyword != "" {
-		query = query.Where("first_name ilike ?", "%"+form.FirstNameKeyword+"%")
-	}
-	if form.LastNameKeyword != "" {
-		query = query.Where("last_name ilike ?", "%"+form.LastNameKeyword+"%")
-	}
-	if form.EmailKeyword != "" {
-		query = query.Where("email ilike ?", "%"+form.EmailKeyword+"%")
-	}
-	if form.UsernameKeyword != "" {
-		query = query.Where("username ilike ?", "%"+form.UsernameKeyword+"%")
-	}
-	if form.RoleKeyword != "" {
-		query = query.Where("role ilike ?", "%"+form.RoleKeyword+"%")
-	}
-	if form.ActiveKeyword != "" {
-		if form.ActiveKeyword == "true" {
-			query = query.Where("active = true")
-		} else if form.ActiveKeyword == "false" {
-			query = query.Where("active = false")
-		}
+	if form.Keyword != "" {
+		query = query.Where("first_name ILIKE ? OR last_name ILIKE ? OR username ilike ?",
+			"%"+form.Keyword+"%", "%"+form.Keyword+"%", "%"+form.Keyword+"%")
 	}
 
 	err = query.

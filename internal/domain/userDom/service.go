@@ -1,10 +1,12 @@
 package userDom
 
 import (
+	"cine-circle-api/internal/repository/instance/userRepository"
 	"cine-circle-api/internal/repository/model"
 	"cine-circle-api/internal/service/mailService"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/httpServer/authentication"
+	"cine-circle-api/pkg/sql/gormUtils"
 	"cine-circle-api/pkg/utils/securityUtils"
 	"fmt"
 	"github.com/google/uuid"
@@ -25,22 +27,15 @@ type Service interface {
 	Update(form UpdateForm) (view UpdateView, err error)
 	UpdatePassword(form UpdatePasswordForm) (err error)
 	Delete(form DeleteForm) (err error)
-}
-
-type repository interface {
-	GetUserFromLogin(login string) (user model.User, ok bool, err error)
-	GetUser(userId uint) (user model.User, ok bool, err error)
-	Create(user *model.User) (err error)
-	Save(user *model.User) (err error)
-	Delete(userId uint) (ok bool, err error)
+	Search(form SearchForm) (view SearchView, err error)
 }
 
 type service struct {
-	repository  repository
+	repository  userRepository.Repository
 	serviceMail mailService.Service
 }
 
-func NewService(serviceMail mailService.Service, repository repository) *service {
+func NewService(serviceMail mailService.Service, repository userRepository.Repository) *service {
 	return &service{
 		repository:  repository,
 		serviceMail: serviceMail,
@@ -309,6 +304,29 @@ func (svc *service) Delete(form DeleteForm) (err error) {
 	}
 	if !ok {
 		return errUserCannotBeDeleted
+	}
+	return
+}
+
+func (svc *service) Search(form SearchForm) (view SearchView, err error) {
+	repoForm := userRepository.SearchForm{
+		PaginationQuery: gormUtils.PaginationQuery{
+			Page:     form.Page,
+			PageSize: form.PageSize,
+		},
+		Keyword: form.Keyword,
+	}
+
+	repoView, err := svc.repository.Search(repoForm)
+	if err != nil {
+		return
+	}
+
+	view.Page = form.BuildResult(repoView.Total)
+	view.Users = make([]CommonView, 0)
+
+	for _, user := range repoView.Users {
+		view.Users = append(view.Users, svc.fromModelToView(user))
 	}
 	return
 }

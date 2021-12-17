@@ -7,7 +7,9 @@ import (
 	"cine-circle-api/pkg/httpServer/authentication"
 	"cine-circle-api/pkg/httpServer/httpError"
 	"cine-circle-api/pkg/httpServer/middleware"
+	"cine-circle-api/pkg/utils/httpUtils"
 	"cine-circle-api/pkg/utils/validationUtils"
+	"fmt"
 	"github.com/emicklei/go-restful"
 	restfulspec "github.com/emicklei/go-restful-openapi"
 	"net/http"
@@ -135,6 +137,21 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.GetOwnInfo))
+
+	wsUser.Route(wsUser.GET("/").
+		Produces(restful.MIME_JSON).
+		Param(pageQueryParameter.QueryParameter()).
+		Param(pageSizeQueryParameter.QueryParameter()).
+		Param(keywordQueryParameter.QueryParameter()).
+		Doc(fmt.Sprintf("List users matching keyword")).
+		Metadata(restfulspec.KeyOpenAPITags, tags).
+		Writes(SearchView{}).
+		Returns(http.StatusOK, "OK", SearchView{}).
+		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
+		Filter(middleware.AuthenticateUser()).
+		To(hd.Search))
 
 	return wsUser
 }
@@ -329,4 +346,21 @@ func (hd *handler) Delete(req *restful.Request, res *restful.Response) {
 	}
 
 	res.WriteHeaderAndEntity(http.StatusOK, "")
+}
+
+func (hd *handler) Search(req *restful.Request, res *restful.Response) {
+	var form SearchForm
+	err := httpUtils.UnmarshallQueryParameters(req, &form, defaultSearchQueryParameterValues)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, customError.NewBadRequest().WrapError(err))
+		return
+	}
+
+	view, err := hd.service.Search(form)
+	if err != nil {
+		httpError.HandleHTTPError(req, res, err)
+		return
+	}
+
+	res.WriteHeaderAndEntity(http.StatusOK, view)
 }

@@ -8,12 +8,7 @@ import (
 type SearchForm struct {
 	gormUtils.PaginationQuery
 	gormUtils.SortQuery
-	FirstNameKeyword string
-	LastNameKeyword  string
-	EmailKeyword     string
-	UsernameKeyword  string
-	RoleKeyword      string
-	ActiveKeyword    string
+	Keyword string
 }
 
 type SearchView struct {

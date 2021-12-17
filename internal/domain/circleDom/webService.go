@@ -41,6 +41,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusCreated, "Circle created", CreateView{}).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, webserviceConst.UnprocessableEntityMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Create))
@@ -55,6 +56,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Writes(UpdateView{}).
 		Returns(http.StatusOK, "User added", UpdateView{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusNotFound, webserviceConst.NotFoundMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.AddUser))
@@ -69,6 +71,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Writes(UpdateView{}).
 		Returns(http.StatusOK, "User deleted", UpdateView{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusNotFound, webserviceConst.NotFoundMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.DeleteUser))
@@ -84,6 +87,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "Circle updated", UpdateView{}).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusNotFound, webserviceConst.NotFoundMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnprocessableEntity, webserviceConst.UnprocessableEntityMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
@@ -95,6 +99,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Param(circleIdPathParameter.PathParameter()).
 		Returns(http.StatusOK, "Circle deleted", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusNotFound, webserviceConst.NotFoundMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Delete))
@@ -105,6 +110,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Param(circleIdPathParameter.PathParameter()).
 		Returns(http.StatusOK, "OK", nil).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusNotFound, webserviceConst.NotFoundMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Get))
@@ -119,6 +125,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Returns(http.StatusOK, "OK", SearchView{}).
 		Returns(http.StatusBadRequest, webserviceConst.BadRequestMessage, httpError.FormattedJsonError{}).
 		Returns(http.StatusUnauthorized, webserviceConst.UnauthorizedMessage, httpError.FormattedJsonError{}).
+		Returns(http.StatusForbidden, webserviceConst.ForbiddenMessage, httpError.FormattedJsonError{}).
 		Filter(middleware.AuthenticateUser()).
 		To(hd.Search))
 

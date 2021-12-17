@@ -14,6 +14,7 @@ import (
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"encoding/base64"
+	"fmt"
 	"github.com/icrowley/fake"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
@@ -634,6 +635,84 @@ func TestHandler_Delete(t *testing.T) {
 		Take(&user, user.ID).
 		Error
 	require.Error(t, err)
+}
+
+func TestHandler_Search(t *testing.T) {
+	testPath := basePath
+	_, httpMock, sampler, _, tearDown := setupTestcase(t, true)
+	defer tearDown()
+
+	// Create testing data
+	keyword := fake.Word() + fake.Word()
+	user := sampler.GetUser()
+	var users []*model.User
+	nbUsersFirstnameMatching := 6
+	nbUsersLastnameMatching := 3
+	nbUsersUsernameMatching := 4
+	for idx := range fakeData.FakeRange(18, 30) { // create between 18 and 30 circles (random number) but only 6 + 3 + 4 with matching keyword
+		if idx < nbUsersFirstnameMatching {
+			users = append(users, sampler.GetUserWithFirstName(fakeData.UniqueUsername()+keyword+fakeData.UniqueUsername()))
+		} else if idx < nbUsersFirstnameMatching+nbUsersLastnameMatching {
+			users = append(users, sampler.GetUserWithLastName(keyword+fakeData.UniqueUsername()))
+		} else if idx < nbUsersFirstnameMatching+nbUsersLastnameMatching+nbUsersUsernameMatching {
+			users = append(users, sampler.GetUserWithUsername(fakeData.UniqueUsername()+keyword))
+		}
+	}
+	page := 1
+	pageSize := 20 // should fit on one page with keyword
+
+	// Try without authentication --> NOK 403
+	resp := httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, keyword))
+	require.Equal(t, http.StatusForbidden, resp.StatusCode)
+
+	// Try with no keyword --> NOK 400
+	wrongKeyword := ""
+	httpMock.AuthenticateUserPermanently(user)
+	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, wrongKeyword))
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with incorrect keyword (len < 3) --> NOK 400
+	wrongKeyword = "ad"
+	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, wrongKeyword))
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with correct keyword --> OK 200
+	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, keyword))
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Check view that contains all users matching keyword
+	var view SearchView
+	httpMock.DecodeResponse(resp, &view)
+	require.Equal(t, page, view.CurrentPage)
+	require.Equal(t, pageSize, view.PageSize)
+	require.Equal(t, 1, view.NumberOfPages)
+	require.Equal(t, nbUsersFirstnameMatching+nbUsersLastnameMatching+nbUsersUsernameMatching, view.NumberOfItems)
+	require.Equal(t, nbUsersFirstnameMatching+nbUsersLastnameMatching+nbUsersUsernameMatching, len(view.Users))
+
+	// Check that users contains keyword
+	for _, userView := range view.Users {
+		match := false
+		if strings.Contains(strings.ToLower(userView.FirstName), strings.ToLower(keyword)) {
+			match = true
+		}
+		if strings.Contains(strings.ToLower(userView.LastName), strings.ToLower(keyword)) {
+			match = true
+		}
+		if strings.Contains(strings.ToLower(userView.Username), strings.ToLower(keyword)) {
+			match = true
+		}
+		require.True(t, match, "userView %v should match with keyword %s", userView, keyword)
+	}
+}
+
+// searchQueryParameters will return queryParameters based on search parameters
+func searchQueryParameters(page, pageSize int, keyword string) (queryParameters map[string][]string) {
+	queryParameters = map[string][]string{
+		pageQueryParameter.Name:     {fmt.Sprintf("%d", page)},
+		pageSizeQueryParameter.Name: {fmt.Sprintf("%d", pageSize)},
+		keywordQueryParameter.Name:  {keyword},
+	}
+	return
 }
 
 // setupTestcase will instantiate project and return all objects that can be needed for testing

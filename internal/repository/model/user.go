@@ -10,8 +10,8 @@ type User struct {
 	gormUtils.Metadata
 	Username       string `gorm:"uniqueIndex;check:username <> ''"` // Doit être unique et non vide, car utilisé pour l'authentification
 	HashedPassword string `gorm:"check:hashed_password <> ''"`      // Doit être non vide, car utilisé pour l'authentification
-	LastName       string `gorm:"check:last_name <> ''"`            // Doit être non vide, car nécessaire pour identifier les utilisateurs
-	FirstName      string `gorm:"check:first_name <> ''"`           // Doit être non vide, car nécessaire pour identifier les utilisateurs
+	LastName       string `gorm:"index;check:last_name <> ''"`      // Doit être non vide, car nécessaire pour identifier les utilisateurs
+	FirstName      string `gorm:"index;check:first_name <> ''"`     // Doit être non vide, car nécessaire pour identifier les utilisateurs
 	Email          string `gorm:"uniqueIndex;check:email <> ''"`    // Doit être unique et non nul, car utilisé pour l'authentification
 	Active         bool
 	EmailToken     string // Utilisé pour valider l'email
