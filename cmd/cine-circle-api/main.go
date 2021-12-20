@@ -5,9 +5,11 @@ import (
 	"cine-circle-api/internal/domain/adminDom/healthCheckDom"
 	"cine-circle-api/internal/domain/circleDom"
 	"cine-circle-api/internal/domain/mediaDom"
+	"cine-circle-api/internal/domain/recommendationDom"
 	"cine-circle-api/internal/domain/userDom"
 	"cine-circle-api/internal/repository/instance/circleRepository"
 	"cine-circle-api/internal/repository/instance/mediaRepository"
+	"cine-circle-api/internal/repository/instance/recommendationRepository"
 	"cine-circle-api/internal/repository/instance/userRepository"
 	"cine-circle-api/internal/service/mailService/mailServiceMock"
 	"cine-circle-api/internal/service/mediaProvider/theMovieDatabase"
@@ -38,13 +40,17 @@ func main() {
 	serviceMail := mailServiceMock.New()
 	mediaProvider := theMovieDatabase.New()
 	userRepo := userRepository.New(DB)
+	mediaRepo := mediaRepository.New(DB)
+	circleRepo := circleRepository.New(DB)
+	recommendationRepo := recommendationRepository.New(DB)
 
 	// Add all new handlers in restfulContainer : here you can define all project endpoints
 	restfulContainer.AddHandlers(
 		healthCheckDom.NewHandler(),
 		userDom.NewHandler(userDom.NewService(serviceMail, userRepo)),
-		mediaDom.NewHandler(mediaDom.NewService(mediaProvider, mediaRepository.New(DB))),
-		circleDom.NewHandler(circleDom.NewService(circleRepository.New(DB), userRepo)),
+		mediaDom.NewHandler(mediaDom.NewService(mediaProvider, mediaRepo)),
+		circleDom.NewHandler(circleDom.NewService(circleRepo, userRepo)),
+		recommendationDom.NewHandler(recommendationDom.NewService(recommendationRepo, userRepo, mediaRepo, circleRepo)),
 	)
 
 	// Add endpoint for getting swagger.json file (based on documentation from each webService)

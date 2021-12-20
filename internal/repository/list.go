@@ -26,6 +26,7 @@ func list() (migrationList []MigrationFunction) {
 	migrationList = append(migrationList, model.MigrateUser)
 	migrationList = append(migrationList, model.MigrateMedia)
 	migrationList = append(migrationList, model.MigrateCircle)
+	migrationList = append(migrationList, model.MigrateRecommendation)
 	// TODO add your new repository migration method here
 	return
 }

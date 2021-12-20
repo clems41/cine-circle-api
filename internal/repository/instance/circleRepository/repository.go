@@ -105,7 +105,7 @@ func (repo *repository) AddUser(userId uint, circle *model.Circle) (err error) {
 
 func (repo *repository) DeleteUser(userId uint, circle *model.Circle) (err error) {
 	err = repo.DB.
-		Raw("DELETE FROM circle_users where user_id = ? and circle_id = ?", userId, circle.ID).
+		Exec("DELETE FROM circle_users where user_id = ? and circle_id = ?", userId, circle.ID).
 		Error
 	if err != nil {
 		return errors.WithStack(err)

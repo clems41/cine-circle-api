@@ -30,7 +30,7 @@ func ReadEntityAndValidateStruct(req *restful.Request, out interface{}) (err err
 			for _, validationErr := range validationErrors {
 				incorrectFields = append(incorrectFields, validationErr.Field())
 			}
-			return fmt.Errorf("structure is not correct, some fields are incorrects : %s", strings.Join(incorrectFields, ","))
+			return fmt.Errorf("some structure fields are incorrects : %s", strings.Join(incorrectFields, ","))
 		}
 	}
 	return
