@@ -50,7 +50,7 @@ func (hd *handler) WebService() *restful.WebService {
 		Produces(restful.MIME_JSON).
 		Param(pageQueryParameter.QueryParameter()).
 		Param(pageSizeQueryParameter.QueryParameter()).
-		Param(movieIdQueryParameter.QueryParameter()).
+		Param(mediaIdQueryParameter.QueryParameter()).
 		Param(recommendationTypeQueryParameter.QueryParameter()).
 		Doc(fmt.Sprintf("List recommendations with pagination, sort and filters")).
 		Metadata(restfulspec.KeyOpenAPITags, tags).

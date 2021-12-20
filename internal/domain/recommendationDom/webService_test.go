@@ -41,7 +41,7 @@ func TestHandler_Send(t *testing.T) {
 	}
 	correctForm := SendForm{CommonForm{
 		CirclesIds: circleIds,
-		MovieId:    movie.ID,
+		MediaId:    movie.ID,
 		Text:       fake.Sentences(),
 	}}
 
@@ -58,13 +58,13 @@ func TestHandler_Send(t *testing.T) {
 
 	// Try with wrong form (missing movieId) --> NOK 400
 	wrongForm = correctForm
-	wrongForm.MovieId = 0
+	wrongForm.MediaId = 0
 	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	// Try with wrong form (non-existing movieId) --> NOK 404
 	wrongForm = correctForm
-	wrongForm.MovieId = 999
+	wrongForm.MediaId = 999
 	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
@@ -182,7 +182,7 @@ func TestHandler_Search(t *testing.T) {
 	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, recommendationConst.AllType, 0))
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Check view that contains no circles
+	// Check view
 	var view SearchView
 	httpMock.DecodeResponse(resp, &view)
 	require.Equal(t, page, view.CurrentPage)
@@ -196,39 +196,56 @@ func TestHandler_Search(t *testing.T) {
 	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, recommendationConst.SentType, 0))
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Check view that contains no circles
+	// Check view
 	httpMock.DecodeResponse(resp, &view)
 	require.Equal(t, page, view.CurrentPage)
 	require.Equal(t, pageSize, view.PageSize)
 	require.Equal(t, 1, view.NumberOfPages)
 	require.Equal(t, nbSentRecommendations+nbRecommendationsForMovie, view.NumberOfItems)
 	require.Equal(t, nbSentRecommendations+nbRecommendationsForMovie, len(view.Recommendations))
+	for _, recommendation := range view.Recommendations {
+		require.Equal(t, user.ID, recommendation.Sender.Id)
+	}
 
 	// Try with user with received filter
 	httpMock.AuthenticateUserPermanently(user)
 	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, recommendationConst.ReceivedType, 0))
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Check view that contains no circles
+	// Check view
 	httpMock.DecodeResponse(resp, &view)
 	require.Equal(t, page, view.CurrentPage)
 	require.Equal(t, pageSize, view.PageSize)
 	require.Equal(t, 1, view.NumberOfPages)
 	require.Equal(t, nbReceivedRecommendations, view.NumberOfItems)
 	require.Equal(t, nbReceivedRecommendations, len(view.Recommendations))
+	for _, recommendation := range view.Recommendations {
+		var userFound bool
+		for _, circle := range recommendation.Circles {
+			for _, userCircle := range circle.Users {
+				if userCircle.Id == user.ID {
+					userFound = true
+				}
+			}
+		}
+		require.True(t, userFound, "user %d should be in one of circle from recommendation", user.ID)
+	}
 
 	// Try with user with movie
 	httpMock.AuthenticateUserPermanently(user)
 	resp = httpMock.SendRequestWithQueryParameters(testPath, http.MethodGet, searchQueryParameters(page, pageSize, recommendationConst.AllType, movie.ID))
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	// Check view that contains no circles
+	// Check view
 	httpMock.DecodeResponse(resp, &view)
 	require.Equal(t, page, view.CurrentPage)
 	require.Equal(t, pageSize, view.PageSize)
 	require.Equal(t, 1, view.NumberOfPages)
 	require.Equal(t, nbRecommendationsForMovie, view.NumberOfItems)
 	require.Equal(t, nbRecommendationsForMovie, len(view.Recommendations))
+	for _, recommendation := range view.Recommendations {
+		require.Equal(t, movie.ID, recommendation.Movie.Id)
+	}
 }
 
 // setupTestcase will instantiate project and return all objects that can be needed for testing
@@ -247,16 +264,16 @@ func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *
 }
 
 // searchQueryParameters will return queryParameters based on search parameters
-func searchQueryParameters(page, pageSize int, recommendationType string, movieId uint) (queryParameters map[string][]string) {
+func searchQueryParameters(page, pageSize int, recommendationType string, mediaId uint) (queryParameters map[string][]string) {
 	queryParameters = map[string][]string{
 		pageQueryParameter.Name:     {fmt.Sprintf("%d", page)},
 		pageSizeQueryParameter.Name: {fmt.Sprintf("%d", pageSize)},
 	}
 	if recommendationType != "" {
-		queryParameters[recommendationTypeQueryParameter.Name] = []string{string(recommendationType)}
+		queryParameters[recommendationTypeQueryParameter.Name] = []string{recommendationType}
 	}
-	if movieId != 0 {
-		queryParameters[movieIdQueryParameter.Name] = []string{fmt.Sprintf("%d", movieId)}
+	if mediaId != 0 {
+		queryParameters[mediaIdQueryParameter.Name] = []string{fmt.Sprintf("%d", mediaId)}
 	}
 	return
 }

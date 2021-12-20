@@ -40,7 +40,11 @@ func (repo *repository) Create(recommendation *model.Recommendation) (err error)
 }
 
 func (repo *repository) Search(form SearchForm) (view SearchView, err error) {
-	query := repo.DB
+	query := repo.DB.
+		Preload("Movie").
+		Preload("Circles").
+		Preload("Circles.Users").
+		Preload("Sender")
 
 	if form.MovieId != 0 {
 		query = query.Where("movie_id = ?", form.MovieId)

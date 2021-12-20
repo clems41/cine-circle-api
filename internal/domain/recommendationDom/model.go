@@ -10,7 +10,7 @@ import (
 type CommonForm struct {
 	SenderId   uint   `json:"-"` // Get it from token
 	CirclesIds []uint `json:"circlesIds" validate:"min=1"`
-	MovieId    uint   `json:"movieId" validate:"ne=0"`
+	MediaId    uint   `json:"mediaId" validate:"ne=0"`
 	Text       string `json:"text" validate:"required"`
 }
 
@@ -65,7 +65,7 @@ type SendView struct {
 
 type SearchForm struct {
 	searchUtils.PaginationRequest
-	MovieId int    `json:"movieId"`
+	MovieId int    `json:"mediaId"`
 	Type    string `json:"type" validate:"oneof=all sent received"`
 	UserId  uint   `json:"-"` // Get it from token
 }

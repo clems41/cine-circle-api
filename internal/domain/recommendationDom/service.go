@@ -36,12 +36,12 @@ func NewService(repository recommendationRepository.Repository, userRepository u
 }
 
 func (svc *service) Send(form SendForm) (view SendView, err error) {
-	movie, ok, err := svc.mediaRepository.GetMovie(form.MovieId)
+	movie, ok, err := svc.mediaRepository.GetMovie(form.MediaId)
 	if err != nil {
 		return
 	}
 	if !ok {
-		return view, errMovieNotFound
+		return view, errMediaNotFound
 	}
 	var circles []model.Circle
 	for _, circleId := range form.CirclesIds {

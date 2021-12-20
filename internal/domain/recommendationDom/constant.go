@@ -29,9 +29,9 @@ var (
 		DataType:        "string",
 		Required:        false,
 	}
-	movieIdQueryParameter = httpUtils.Parameter{
-		Name:            "movieId",
-		Description:     "Filter on specific movie",
+	mediaIdQueryParameter = httpUtils.Parameter{
+		Name:            "mediaId",
+		Description:     "Filter on specific media",
 		DefaultValueStr: "",
 		DataType:        "int",
 		Required:        false,
@@ -40,6 +40,6 @@ var (
 		pageQueryParameter.Name:               pageQueryParameter.DefaultValueStr,
 		pageSizeQueryParameter.Name:           pageSizeQueryParameter.DefaultValueStr,
 		recommendationTypeQueryParameter.Name: recommendationTypeQueryParameter.DefaultValueStr,
-		movieIdQueryParameter.Name:            movieIdQueryParameter.DefaultValueStr,
+		mediaIdQueryParameter.Name:            mediaIdQueryParameter.DefaultValueStr,
 	}
 )
