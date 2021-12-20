@@ -1,0 +1,1081 @@
+{
+	"info": {
+		"_postman_id": "e17b4cc5-d5ea-44bb-bce4-6c6b2430b0f6",
+		"name": "Cine Circle API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Cine Circle (Import)",
+			"item": [
+				{
+					"name": "Imdb",
+					"item": [
+						{
+							"name": "/ : Get by search",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://www.omdbapi.com/?t=avengers&apikey=9d8fa748",
+									"protocol": "http",
+									"host": [
+										"www",
+										"omdbapi",
+										"com"
+									],
+									"path": [
+										""
+									],
+									"query": [
+										{
+											"key": "t",
+											"value": "avengers"
+										},
+										{
+											"key": "apikey",
+											"value": "9d8fa748"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/ : Get by Id",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://www.omdbapi.com/?i=tt0848228&apikey=9d8fa748",
+									"protocol": "http",
+									"host": [
+										"www",
+										"omdbapi",
+										"com"
+									],
+									"path": [
+										""
+									],
+									"query": [
+										{
+											"key": "i",
+											"value": "tt0848228"
+										},
+										{
+											"key": "apikey",
+											"value": "9d8fa748"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/?ids=<movieId>&key=<APIKey>&limit=<limit> : get info from ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://kgsearch.googleapis.com/v1/entities:search?ids=/m/0126b8kv&key=AIzaSyD6g_pC_OO-zO9xxFeakN24sZhjvHIVtS0&limit=1&indent=True",
+									"protocol": "https",
+									"host": [
+										"kgsearch",
+										"googleapis",
+										"com"
+									],
+									"path": [
+										"v1",
+										"entities:search"
+									],
+									"query": [
+										{
+											"key": "ids",
+											"value": "/m/0126b8kv"
+										},
+										{
+											"key": "key",
+											"value": "AIzaSyD6g_pC_OO-zO9xxFeakN24sZhjvHIVtS0"
+										},
+										{
+											"key": "limit",
+											"value": "1"
+										},
+										{
+											"key": "indent",
+											"value": "True"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/?query=<query>&key=<APIKey>&limit=<limit> : get info by search",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://kgsearch.googleapis.com/v1/entities:search?query=avengers&key=AIzaSyD6g_pC_OO-zO9xxFeakN24sZhjvHIVtS0&limit=1&indent=True",
+									"protocol": "https",
+									"host": [
+										"kgsearch",
+										"googleapis",
+										"com"
+									],
+									"path": [
+										"v1",
+										"entities:search"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "avengers"
+										},
+										{
+											"key": "key",
+											"value": "AIzaSyD6g_pC_OO-zO9xxFeakN24sZhjvHIVtS0"
+										},
+										{
+											"key": "limit",
+											"value": "1"
+										},
+										{
+											"key": "indent",
+											"value": "True"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "The movie DB",
+					"item": [
+						{
+							"name": "Search movies/tv",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://api.themoviedb.org/3/search/multi?query=dark&page=1&language=fr-FR",
+									"protocol": "https",
+									"host": [
+										"api",
+										"themoviedb",
+										"org"
+									],
+									"path": [
+										"3",
+										"search",
+										"multi"
+									],
+									"query": [
+										{
+											"key": "query",
+											"value": "dark"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "language",
+											"value": "fr-FR"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get movie",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://api.themoviedb.org/3/movie/154?language=fr-FR",
+									"protocol": "https",
+									"host": [
+										"api",
+										"themoviedb",
+										"org"
+									],
+									"path": [
+										"3",
+										"movie",
+										"154"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "fr-FR"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get tv",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://api.themoviedb.org/3/movie/154?language=fr-FR",
+									"protocol": "https",
+									"host": [
+										"api",
+										"themoviedb",
+										"org"
+									],
+									"path": [
+										"3",
+										"movie",
+										"154"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "fr-FR"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get movie images",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://api.themoviedb.org/3/movie/155/images?include_image_language=fr,en",
+									"protocol": "https",
+									"host": [
+										"api",
+										"themoviedb",
+										"org"
+									],
+									"path": [
+										"3",
+										"movie",
+										"155",
+										"images"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "fr-FR",
+											"disabled": true
+										},
+										{
+											"key": "include_image_language",
+											"value": "fr,en"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get image",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://image.tmdb.org/t/p/w500/hkBaDkMWbLaf8B1lsWsKX7Ew3Xq.jpg",
+									"protocol": "https",
+									"host": [
+										"image",
+										"tmdb",
+										"org"
+									],
+									"path": [
+										"t",
+										"p",
+										"w500",
+										"hkBaDkMWbLaf8B1lsWsKX7Ew3Xq.jpg"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get movie videos",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyNDAxNjYxOWFiMjNiMDYzNjMzYzgwZTY4MzFlN2NjYyIsInN1YiI6IjYwOGI3ZjZlOGM0MGY3MDA1N2U3ZDg4MCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.TqHh6OC7IZ0s7err6njtR054Pi87kG6UaaER5WL04k0",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://api.themoviedb.org/3/movie/155/videos?language=fr-FR",
+									"protocol": "https",
+									"host": [
+										"api",
+										"themoviedb",
+										"org"
+									],
+									"path": [
+										"3",
+										"movie",
+										"155",
+										"videos"
+									],
+									"query": [
+										{
+											"key": "language",
+											"value": "fr-FR"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "/v1/users",
+			"item": [
+				{
+					"name": "Sign in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"AccessToken\", jsonData.token.tokenString);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "cniot",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/sign-in",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"sign-in"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sign up",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Sophie\",\n    \"lastName\": \"Lantrope\",\n    \"email\": \"toto@isi.nc\",\n    \"password\": \"password\",\n    \"username\": \"sdagot\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/sign-up",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"sign-up"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send confirmation email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/send-confirmation-email",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"send-confirmation-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirm email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"emailToken\": \"toto\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/confirm-email",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"confirm-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send reset password email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/send-reset-password-email/:login",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"send-reset-password-email",
+								":login"
+							],
+							"variable": [
+								{
+									"key": "login",
+									"value": "test@isi.nc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"passwordToken\": \"tata\",\n    \"login\": \"test@isi.nc\",\n    \"newPassword\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/reset-password",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"reset-password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update password",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldPassword\": \"password\",\n    \"newPassword\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/password",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update info",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"toto\",\n    \"lastName\": \"tatatiti\",\n    \"email\": \"test@isi.nc\",\n    \"username\": \"test\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/me",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete account",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/me",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get own info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/users/me",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/v1/medias",
+			"item": [
+				{
+					"name": "Search media",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/medias?keyword=dark knight&page=1&pageSize=10",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"medias"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "dark knight"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get media",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/medias/:mediaId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"medias",
+								":mediaId"
+							],
+							"variable": [
+								{
+									"key": "mediaId",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/v1/circles",
+			"item": [
+				{
+					"name": "List circles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create circle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"KCDQ\",\n    \"description\": \"Le meilleur des cercles\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update circle",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"KCDQ v2\",\n    \"description\": \"Description v2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles/:circleId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								":circleId"
+							],
+							"variable": [
+								{
+									"key": "circleId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get circle",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles/:circleId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								":circleId"
+							],
+							"variable": [
+								{
+									"key": "circleId",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete circle",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles/:circleId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								":circleId"
+							],
+							"variable": [
+								{
+									"key": "circleId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add user to circle",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles/:circleId/:userId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								":circleId",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "circleId",
+									"value": "2"
+								},
+								{
+									"key": "userId",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete user from circle",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/circles/:circleId/:userId",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"circles",
+								":circleId",
+								":userId"
+							],
+							"variable": [
+								{
+									"key": "circleId",
+									"value": "2"
+								},
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "/v1/recommendations",
+			"item": [
+				{
+					"name": "Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{hucoServer}}/v1/recommendations?page=1&pageSize=10",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"recommendations"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								},
+								{
+									"key": "movieId",
+									"value": "5",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "all",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send recommendation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"circlesIds\": [],\n    \"movieId\": 0,\n    \"text\": \"Vraiment top, belle intrigue !\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{hucoServer}}/v1/recommendations",
+							"host": [
+								"{{hucoServer}}"
+							],
+							"path": [
+								"v1",
+								"recommendations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{AccessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
