@@ -7,6 +7,7 @@ import (
 	"cine-circle-api/internal/domain/mediaDom"
 	"cine-circle-api/internal/domain/recommendationDom"
 	"cine-circle-api/internal/domain/userDom"
+	"cine-circle-api/internal/repository"
 	"cine-circle-api/internal/repository/instance/circleRepository"
 	"cine-circle-api/internal/repository/instance/mediaRepository"
 	"cine-circle-api/internal/repository/instance/recommendationRepository"
@@ -31,6 +32,15 @@ func main() {
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
+
+	// Since we don't use ISI CI, migration-manager will not be run, so we need to migrate repositories at the start of the application
+	tx := DB.Begin()
+	err = repository.Migrate(tx)
+	if err != nil {
+		tx.Rollback()
+		logger.Fatalf("Cannot migrate repositories : %s", err.Error())
+	}
+	tx.Commit()
 
 	// Create restful container that will be used to start HTTP server
 	restfulContainer := httpServer.NewRestfulContainer()
