@@ -110,10 +110,14 @@ func TestHandler_SignIn(t *testing.T) {
 
 func TestHandler_SignUp(t *testing.T) {
 	testPath := basePath + signUpPath
-	db, httpMock, _, ruler, tearDown := setupTestcase(t, false)
+	db, httpMock, sampler, ruler, tearDown := setupTestcase(t, true)
 	defer tearDown()
 
 	// Create testing data
+	usernameAlreadyTaken := fakeData.UniqueUsername()
+	sampler.GetUserWithUsername(usernameAlreadyTaken)
+	emailAlreadyTaken := fakeData.UniqueEmail()
+	sampler.GetUserWithEmail(emailAlreadyTaken)
 	correctForm := SignUpForm{
 		CommonForm: CommonForm{
 			FirstName: fake.FirstName(),
@@ -181,6 +185,18 @@ func TestHandler_SignUp(t *testing.T) {
 	// Try with invalid username (not only lowercase) --> NOK 400
 	wrongForm = correctForm
 	wrongForm.FirstName = strings.ToLower(strings.ToLower(fakeData.UniqueUsername()))
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with username already taken --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Username = usernameAlreadyTaken
+	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// Try with email already taken --> NOK 400
+	wrongForm = correctForm
+	wrongForm.Email = emailAlreadyTaken
 	resp = httpMock.SendRequestWithBody(testPath, http.MethodPost, wrongForm)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 

@@ -16,6 +16,8 @@ type Repository interface {
 	Save(user *model.User) (err error)
 	Delete(userId uint) (ok bool, err error)
 	Search(form SearchForm) (view SearchView, err error)
+	UsernameAlreadyExists(username string) (exists bool, err error)
+	EmailAlreadyExists(email string) (exists bool, err error)
 }
 
 type repository struct {
@@ -109,4 +111,34 @@ func (repo *repository) Search(form SearchForm) (view SearchView, err error) {
 		return view, errors.WithStack(err)
 	}
 	return
+}
+
+func (repo *repository) UsernameAlreadyExists(username string) (exists bool, err error) {
+	err = repo.DB.
+		Select("username").
+		Take(&model.User{}, "username = ?", username).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		} else {
+			return false, errors.WithStack(err)
+		}
+	}
+	return true, nil
+}
+
+func (repo *repository) EmailAlreadyExists(email string) (exists bool, err error) {
+	err = repo.DB.
+		Select("email").
+		Take(&model.User{}, "email = ?", email).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		} else {
+			return false, errors.WithStack(err)
+		}
+	}
+	return true, nil
 }

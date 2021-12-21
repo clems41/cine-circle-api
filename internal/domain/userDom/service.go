@@ -77,6 +77,22 @@ func (svc *service) SignIn(form SignInForm) (view SignInView, err error) {
 }
 
 func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
+	usernameExists, err := svc.repository.UsernameAlreadyExists(form.Username)
+	if err != nil {
+		return
+	}
+	if usernameExists {
+		return view, errUsernameAlreadyExists
+	}
+
+	emailExists, err := svc.repository.EmailAlreadyExists(form.Email)
+	if err != nil {
+		return
+	}
+	if emailExists {
+		return view, errEmailAlreadyExists
+	}
+
 	hashedPassword, err := securityUtils.HashAndSaltPassword(form.Password)
 	if err != nil {
 		return view, errors.WithStack(err)
