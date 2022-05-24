@@ -1,13 +1,13 @@
 package mediaDom
 
 import (
-	"cine-circle-api/internal/repository/instance/mediaRepository"
-	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/service/mediaProvider/mediaProviderMock"
-	"cine-circle-api/internal/test/setupTestCase"
-	"cine-circle-api/internal/test/testSampler"
+	"cine-circle-api/external/mediaProvider/mediaProviderMock"
+	"cine-circle-api/internal/model/testSampler"
+	"cine-circle-api/internal/repository"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
+	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"fmt"
 	"github.com/icrowley/fake"
@@ -57,7 +57,7 @@ func TestHandler_Search(t *testing.T) {
 	for _, result := range view.Result {
 		ids = append(ids, result.Id)
 	}
-	var movies []model.Movie
+	var movies []pgModel.Movie
 	err := db.Find(&movies, "id in ?", ids).Error
 	require.NoError(t, err)
 
@@ -111,7 +111,7 @@ func TestHandler_SearchThenGet(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Check that now movie is completed
-	var movie model.Movie
+	var movie pgModel.Movie
 	err := db.Take(&movie, uncompletedExistingMovieId).Error
 	require.NoError(t, err)
 	require.Equal(t, true, movie.Completed)
@@ -225,7 +225,7 @@ func TestHandler_Get_UncompletedMovie(t *testing.T) {
 // setupTestcase will instantiate project and return all objects that can be needed for testing
 func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *httpServerMock.Server, sampler *testSampler.Sampler, ruler *testRuler.Ruler, tearDown func()) {
 	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
-	repo := mediaRepository.New(db)
+	repo := repository.New(db)
 	mock := mediaProviderMock.New()
 	svc := NewService(mock, repo)
 	ws := NewHandler(svc)

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"cine-circle-api/external/mailService/mailServiceMock"
+	"cine-circle-api/external/mediaProvider/theMovieDatabase"
 	"cine-circle-api/internal/constant/swaggerConst"
 	"cine-circle-api/internal/domain/adminDom/healthCheckDom"
 	"cine-circle-api/internal/domain/circleDom"
@@ -8,12 +10,7 @@ import (
 	"cine-circle-api/internal/domain/recommendationDom"
 	"cine-circle-api/internal/domain/userDom"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/instance/circleRepository"
-	"cine-circle-api/internal/repository/instance/mediaRepository"
-	"cine-circle-api/internal/repository/instance/recommendationRepository"
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/service/mailService/mailServiceMock"
-	"cine-circle-api/internal/service/mediaProvider/theMovieDatabase"
+	"cine-circle-api/internal/repository/postgres/pgRepositories"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/logger"
 	"cine-circle-api/pkg/sql/sqlConnection"
@@ -35,7 +32,7 @@ func main() {
 
 	// Since we don't use ISI CI, migration-manager will not be run, so we need to migrate repositories at the start of the application
 	tx := DB.Begin()
-	err = repository.Migrate(tx)
+	err = pgRepositories.Migrate(tx)
 	if err != nil {
 		tx.Rollback()
 		logger.Fatalf("Cannot migrate repositories : %s", err.Error())
@@ -49,10 +46,10 @@ func main() {
 	// Create useful services
 	serviceMail := mailServiceMock.New()
 	mediaProvider := theMovieDatabase.New()
-	userRepo := userRepository.New(DB)
-	mediaRepo := mediaRepository.New(DB)
-	circleRepo := circleRepository.New(DB)
-	recommendationRepo := recommendationRepository.New(DB)
+	userRepo := repository.New(DB)
+	mediaRepo := repository.New(DB)
+	circleRepo := repository.New(DB)
+	recommendationRepo := repository.New(DB)
 
 	// Add all new handlers in restfulContainer : here you can define all project endpoints
 	restfulContainer.AddHandlers(

@@ -1,9 +1,10 @@
 package userDom
 
 import (
+	mailService2 "cine-circle-api/external/mailService"
+	"cine-circle-api/internal/repository"
 	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/service/mailService"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/httpServer/authentication"
 	"cine-circle-api/pkg/sql/gormUtils"
@@ -31,11 +32,11 @@ type Service interface {
 }
 
 type service struct {
-	repository  userRepository.Repository
-	serviceMail mailService.Service
+	repository  repository.Repository
+	serviceMail mailService2.Service
 }
 
-func NewService(serviceMail mailService.Service, repository userRepository.Repository) *service {
+func NewService(serviceMail mailService2.Service, repository repository.Repository) *service {
 	return &service{
 		repository:  repository,
 		serviceMail: serviceMail,
@@ -97,7 +98,7 @@ func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
 	if err != nil {
 		return view, errors.WithStack(err)
 	}
-	user := model.User{
+	user := pgModel.User{
 		Username:       form.Username,
 		HashedPassword: hashedPassword,
 		LastName:       form.LastName,
@@ -129,7 +130,7 @@ func (svc *service) SendEmailConfirmation(form SendEmailConfirmationForm) (err e
 	// Generate and send email
 	emailBody := strings.Replace(sendConfirmationEmailBody, sendConfirmationEmailFirstNameJoker, user.FirstName, 1)
 	emailBody = strings.Replace(emailBody, sendConfirmationEmailTokenJoker, token, 1)
-	emailForm := mailService.SendEmailForm{
+	emailForm := mailService2.SendEmailForm{
 		To:      []string{user.Email},
 		Subject: sendConfirmationEmailSubject,
 		Message: emailBody,
@@ -192,7 +193,7 @@ func (svc *service) SendResetPasswordEmail(form SendResetPasswordEmailForm) (err
 	// Generate and send email
 	emailBody := strings.Replace(sendResetPasswordEmailBody, sendResetPasswordEmailFirstNameJoker, user.FirstName, 1)
 	emailBody = strings.Replace(emailBody, sendResetPasswordTokenJoker, token, 1)
-	emailForm := mailService.SendEmailForm{
+	emailForm := mailService2.SendEmailForm{
 		To:      []string{user.Email},
 		Subject: sendResetPasswordEmailSubject,
 		Message: emailBody,
@@ -349,7 +350,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(user model.User) (view CommonView) {
+func (svc *service) fromModelToView(user pgModel.User) (view CommonView) {
 	view = CommonView{
 		Id:             user.ID,
 		FirstName:      user.FirstName,
@@ -361,8 +362,8 @@ func (svc *service) fromModelToView(user model.User) (view CommonView) {
 	return
 }
 
-func (svc *service) fromFormToModel(form CommonForm) (user model.User) {
-	user = model.User{
+func (svc *service) fromFormToModel(form CommonForm) (user pgModel.User) {
+	user = pgModel.User{
 		Username:  form.Username,
 		LastName:  form.LastName,
 		FirstName: form.FirstName,

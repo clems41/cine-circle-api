@@ -1,9 +1,9 @@
 package circleDom
 
 import (
+	"cine-circle-api/internal/repository"
 	"cine-circle-api/internal/repository/instance/circleRepository"
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/model"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/sql/gormUtils"
 )
 
@@ -20,11 +20,11 @@ type Service interface {
 }
 
 type service struct {
-	repository     circleRepository.Repository
-	userRepository userRepository.Repository
+	repository     repository.Repository
+	userRepository repository.Repository
 }
 
-func NewService(repository circleRepository.Repository, userRepository userRepository.Repository) Service {
+func NewService(repository repository.Repository, userRepository repository.Repository) Service {
 	return &service{
 		repository:     repository,
 		userRepository: userRepository,
@@ -32,7 +32,7 @@ func NewService(repository circleRepository.Repository, userRepository userRepos
 }
 
 func (svc *service) Create(form CreateForm) (view CreateView, err error) {
-	circle := model.Circle{
+	circle := pgModel.Circle{
 		Name:        form.Name,
 		Description: form.Description,
 	}
@@ -194,7 +194,7 @@ func (svc *service) DeleteUser(form DeleteUserForm) (view DeleteUserView, err er
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(circle model.Circle) (view CommonView) {
+func (svc *service) fromModelToView(circle pgModel.Circle) (view CommonView) {
 	view = CommonView{
 		Id:          circle.ID,
 		Name:        circle.Name,
@@ -211,7 +211,7 @@ func (svc *service) fromModelToView(circle model.Circle) (view CommonView) {
 	return
 }
 
-func (svc *service) userIsInCircle(userId uint, circle model.Circle) (isIn bool) {
+func (svc *service) userIsInCircle(userId uint, circle pgModel.Circle) (isIn bool) {
 	isIn = false
 	for _, circleUser := range circle.Users {
 		if userId == circleUser.ID {

@@ -2,7 +2,7 @@ package migration
 
 import (
 	"cine-circle-api/internal/constant/settingsConst"
-	"cine-circle-api/internal/test/setupTestCase"
+	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/pathUtils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

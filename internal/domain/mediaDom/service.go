@@ -1,9 +1,9 @@
 package mediaDom
 
 import (
-	"cine-circle-api/internal/repository/instance/mediaRepository"
-	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/service/mediaProvider"
+	mediaProvider2 "cine-circle-api/external/mediaProvider"
+	"cine-circle-api/internal/repository"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 )
 
 var _ Service = (*service)(nil)
@@ -14,11 +14,11 @@ type Service interface {
 }
 
 type service struct {
-	mediaProvider mediaProvider.Service
-	repository    mediaRepository.Repository
+	mediaProvider mediaProvider2.Service
+	repository    repository.Repository
 }
 
-func NewService(mediaProvider mediaProvider.Service, repository mediaRepository.Repository) Service {
+func NewService(mediaProvider mediaProvider2.Service, repository repository.Repository) Service {
 	return &service{
 		repository:    repository,
 		mediaProvider: mediaProvider,
@@ -37,8 +37,8 @@ func (svc *service) Get(form GetForm) (view GetView, err error) {
 
 	// If movie is not completed, fill info from mediaProvider, then mark it as completed
 	if !movie.Completed {
-		var movieFromMediaProvider mediaProvider.MovieView
-		movieFromMediaProvider, err = svc.mediaProvider.Get(mediaProvider.MovieForm{Id: movie.MediaProviderId})
+		var movieFromMediaProvider mediaProvider2.MovieView
+		movieFromMediaProvider, err = svc.mediaProvider.Get(mediaProvider2.MovieForm{Id: movie.MediaProviderId})
 		if err != nil {
 			return
 		}
@@ -65,7 +65,7 @@ func (svc *service) Get(form GetForm) (view GetView, err error) {
 
 func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 	// Call mediaProvider to get result
-	formMediaProvider := mediaProvider.SearchForm{
+	formMediaProvider := mediaProvider2.SearchForm{
 		Page:    form.Page,
 		Keyword: form.Keyword,
 	}
@@ -78,14 +78,14 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 	for _, media := range result.Result {
 		// Create only if not already exists, if already exists get previous ID to add it into result
 		var alreadyExists bool
-		var movie model.Movie
+		var movie pgModel.Movie
 		movie, alreadyExists, err = svc.repository.GetMovieFromProvider(svc.mediaProvider.GetProviderName(), media.Id)
 		if err != nil {
 			return
 		}
 		if !alreadyExists {
 			// Stored new movie from research if not already exists
-			movie = model.Movie{
+			movie = pgModel.Movie{
 				MediaProviderName: svc.mediaProvider.GetProviderName(),
 				MediaProviderId:   media.Id,
 				Completed:         false,
@@ -115,7 +115,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 /* PRIVATE METHODS */
 
-func (svc *service) fromModelToView(movie model.Movie) (view GetView) {
+func (svc *service) fromModelToView(movie pgModel.Movie) (view GetView) {
 	view = GetView{
 		Id:            movie.ID,
 		Title:         movie.Title,

@@ -2,15 +2,12 @@ package recommendationDom
 
 import (
 	"cine-circle-api/internal/constant/recommendationConst"
-	"cine-circle-api/internal/repository/instance/circleRepository"
-	"cine-circle-api/internal/repository/instance/mediaRepository"
-	"cine-circle-api/internal/repository/instance/recommendationRepository"
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/test/setupTestCase"
-	"cine-circle-api/internal/test/testSampler"
+	"cine-circle-api/internal/model/testSampler"
+	"cine-circle-api/internal/repository"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
+	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"fmt"
@@ -32,7 +29,7 @@ func TestHandler_Send(t *testing.T) {
 	// Create testing data
 	sender := sampler.GetUser()
 	movie := sampler.GetCompletedMovie()
-	var circles []*model.Circle
+	var circles []*pgModel.Circle
 	var circleIds []uint
 	for range fakeData.FakeRange(1, 3) {
 		circle := sampler.GetCircleWithUsers()
@@ -121,7 +118,7 @@ func TestHandler_Send(t *testing.T) {
 	}
 
 	// Check that circle has been created into database
-	var recommendation model.Recommendation
+	var recommendation pgModel.Recommendation
 	err := db.
 		Preload("Movie").
 		Preload("Circles").
@@ -153,7 +150,7 @@ func TestHandler_Search(t *testing.T) {
 	nbSentRecommendations := 6
 	nbRecommendationsForMovie := 2
 	nbReceivedRecommendations := 4
-	var recommendations []*model.Recommendation
+	var recommendations []*pgModel.Recommendation
 	for idx := range fakeData.FakeRange(14, 20) { // create between 14 and 20 recommendations (random number) but only 6 + 4 + 2 will match with user
 		if idx < nbSentRecommendations {
 			recommendations = append(recommendations, sampler.GetRecommendationSentBySpecificUser(user))
@@ -251,10 +248,10 @@ func TestHandler_Search(t *testing.T) {
 // setupTestcase will instantiate project and return all objects that can be needed for testing
 func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *httpServerMock.Server, sampler *testSampler.Sampler, ruler *testRuler.Ruler, tearDown func()) {
 	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
-	repo := recommendationRepository.New(db)
-	userRepo := userRepository.New(db)
-	mediaRepo := mediaRepository.New(db)
-	circleRepo := circleRepository.New(db)
+	repo := repository.New(db)
+	userRepo := repository.New(db)
+	mediaRepo := repository.New(db)
+	circleRepo := repository.New(db)
 	svc := NewService(repo, userRepo, mediaRepo, circleRepo)
 	ws := NewHandler(svc)
 	httpMock = httpServerMock.New(t, logger.Logger(), ws)

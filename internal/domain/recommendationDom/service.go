@@ -2,11 +2,9 @@ package recommendationDom
 
 import (
 	"cine-circle-api/internal/constant/recommendationConst"
-	"cine-circle-api/internal/repository/instance/circleRepository"
-	"cine-circle-api/internal/repository/instance/mediaRepository"
+	"cine-circle-api/internal/repository"
 	"cine-circle-api/internal/repository/instance/recommendationRepository"
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/model"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/sql/gormUtils"
 	"time"
 )
@@ -19,14 +17,14 @@ type Service interface {
 }
 
 type service struct {
-	repository       recommendationRepository.Repository
-	userRepository   userRepository.Repository
-	mediaRepository  mediaRepository.Repository
-	circleRepository circleRepository.Repository
+	repository       repository.Repository
+	userRepository   repository.Repository
+	mediaRepository  repository.Repository
+	circleRepository repository.Repository
 }
 
-func NewService(repository recommendationRepository.Repository, userRepository userRepository.Repository,
-	mediaRepository mediaRepository.Repository, circleRepository circleRepository.Repository) Service {
+func NewService(repository repository.Repository, userRepository repository.Repository,
+	mediaRepository repository.Repository, circleRepository repository.Repository) Service {
 	return &service{
 		repository:       repository,
 		userRepository:   userRepository,
@@ -43,9 +41,9 @@ func (svc *service) Send(form SendForm) (view SendView, err error) {
 	if !ok {
 		return view, errMediaNotFound
 	}
-	var circles []model.Circle
+	var circles []pgModel.Circle
 	for _, circleId := range form.CirclesIds {
-		var circle model.Circle
+		var circle pgModel.Circle
 		circle, ok, err = svc.circleRepository.Get(circleId)
 		if err != nil {
 			return
@@ -55,7 +53,7 @@ func (svc *service) Send(form SendForm) (view SendView, err error) {
 		}
 		circles = append(circles, circle)
 	}
-	recommendation := model.Recommendation{
+	recommendation := pgModel.Recommendation{
 		SenderId: form.SenderId,
 		Circles:  circles,
 		MovieId:  movie.ID,
@@ -99,7 +97,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(recommendation model.Recommendation, userId uint) (view CommonView) {
+func (svc *service) fromModelToView(recommendation pgModel.Recommendation, userId uint) (view CommonView) {
 	view = CommonView{
 		Id: recommendation.ID,
 		Sender: UserView{

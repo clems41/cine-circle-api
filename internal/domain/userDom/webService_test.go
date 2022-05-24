@@ -1,15 +1,15 @@
 package userDom
 
 import (
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/model"
-	"cine-circle-api/internal/service/mailService/mailServiceMock"
-	"cine-circle-api/internal/test/setupTestCase"
-	"cine-circle-api/internal/test/testSampler"
+	"cine-circle-api/external/mailService/mailServiceMock"
+	"cine-circle-api/internal/model/testSampler"
+	"cine-circle-api/internal/repository"
+	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/httpServer/authentication"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
+	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/securityUtils"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
@@ -219,7 +219,7 @@ func TestHandler_SignUp(t *testing.T) {
 	})
 
 	// Check that user has been successfully stored into database
-	var user model.User
+	var user pgModel.User
 	err := db.
 		Take(&user, view.Id).
 		Error
@@ -661,7 +661,7 @@ func TestHandler_Search(t *testing.T) {
 	// Create testing data
 	keyword := fake.Word() + fake.Word()
 	user := sampler.GetUser()
-	var users []*model.User
+	var users []*pgModel.User
 	nbUsersFirstnameMatching := 6
 	nbUsersLastnameMatching := 3
 	nbUsersUsernameMatching := 4
@@ -734,7 +734,7 @@ func searchQueryParameters(page, pageSize int, keyword string) (queryParameters 
 // setupTestcase will instantiate project and return all objects that can be needed for testing
 func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *httpServerMock.Server, sampler *testSampler.Sampler, ruler *testRuler.Ruler, tearDown func()) {
 	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
-	repo := userRepository.New(db)
+	repo := repository.New(db)
 	mailMock := mailServiceMock.New()
 	svc := NewService(mailMock, repo)
 	ws := NewHandler(svc)
