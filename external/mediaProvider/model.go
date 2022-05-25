@@ -4,9 +4,7 @@ import (
 	"time"
 )
 
-/* Get movie */
-
-type MovieView struct {
+type Media struct {
 	Id            string
 	Title         string
 	BackdropUrl   string
@@ -19,13 +17,7 @@ type MovieView struct {
 	Runtime       int
 }
 
-type MovieForm struct {
-	Id string
-}
-
-/* Search movie */
-
-type MovieShortView struct {
+type MediaShort struct {
 	Id            string
 	Title         string
 	Language      string
@@ -36,11 +28,4 @@ type MovieShortView struct {
 type SearchForm struct {
 	Page    int
 	Keyword string
-}
-
-type SearchView struct {
-	NumberOfItems int
-	NumberOfPages int
-	CurrentPage   int
-	Result        []MovieShortView
 }

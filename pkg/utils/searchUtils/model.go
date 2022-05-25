@@ -1,10 +1,10 @@
 package searchUtils
 
 type Page struct {
-	NumberOfItems int `json:"numberOfItems"`
-	NumberOfPages int `json:"numberOfPages"`
-	PageSize      int `json:"pageSize"`
-	CurrentPage   int `json:"currentPage"`
+	NumberOfItems int64 `json:"numberOfItems"`
+	NumberOfPages int   `json:"numberOfPages"`
+	PageSize      int   `json:"pageSize"`
+	CurrentPage   int   `json:"currentPage"`
 }
 
 type SortingRequest struct {

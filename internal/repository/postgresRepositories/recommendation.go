@@ -1,10 +1,9 @@
-package pgRepositories
+package postgresRepositories
 
 import (
 	"cine-circle-api/internal/constant/recommendationConst"
 	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -22,7 +21,7 @@ func NewRecommendation(DB *gorm.DB) *recommendationPgRepository {
 
 func (repo *recommendationPgRepository) Migrate() (err error) {
 	err = repo.DB.
-		AutoMigrate(&pgModel.Recommendation{})
+		AutoMigrate(&model.Recommendation{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -46,15 +45,15 @@ func (repo *recommendationPgRepository) Create(recommendation *model.Recommendat
 	return errors.WithStack(err)
 }
 
-func (repo *recommendationPgRepository) Search(form repository.RecommendationSearchForm) (view repository.RecommendationSearchView, err error) {
+func (repo *recommendationPgRepository) Search(form repository.RecommendationSearchForm) (recommendations []model.Recommendation, total int64, err error) {
 	query := repo.DB.
 		Preload("Movie").
 		Preload("Circles").
 		Preload("Circles.Users").
 		Preload("Sender")
 
-	if form.MovieId != 0 {
-		query = query.Where("movie_id = ?", form.MovieId)
+	if form.MediaId != 0 {
+		query = query.Where("media_id = ?", form.MediaId)
 	}
 	switch form.Type {
 	case recommendationConst.SentType:
@@ -70,14 +69,14 @@ func (repo *recommendationPgRepository) Search(form repository.RecommendationSea
 	err = query.
 		Offset(form.Offset()).
 		Limit(form.PageSize).
-		Find(&view.Recommendations).
+		Find(&recommendations).
 		Limit(-1).
 		Offset(-1).
-		Count(&view.Total).
+		Count(&total).
 		Error
 
 	if err != nil {
-		return view, errors.WithStack(err)
+		return nil, 0, errors.WithStack(err)
 	}
 	return
 }

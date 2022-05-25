@@ -1,10 +1,9 @@
 package circleDom
 
 import (
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/instance/circleRepository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
-	"cine-circle-api/pkg/sql/gormUtils"
+	"cine-circle-api/pkg/utils/searchUtils"
 )
 
 var _ Service = (*service)(nil)
@@ -20,28 +19,28 @@ type Service interface {
 }
 
 type service struct {
-	repository     repository.Repository
-	userRepository repository.Repository
+	circleRepository repository.Circle
+	userRepository   repository.User
 }
 
-func NewService(repository repository.Repository, userRepository repository.Repository) Service {
+func NewService(circleRepository repository.Circle, userRepository repository.User) Service {
 	return &service{
-		repository:     repository,
-		userRepository: userRepository,
+		circleRepository: circleRepository,
+		userRepository:   userRepository,
 	}
 }
 
 func (svc *service) Create(form CreateForm) (view CreateView, err error) {
-	circle := pgModel.Circle{
+	circle := model.Circle{
 		Name:        form.Name,
 		Description: form.Description,
 	}
-	err = svc.repository.Create(&circle)
+	err = svc.circleRepository.Save(&circle)
 	if err != nil {
 		return
 	}
 
-	err = svc.repository.AddUser(form.UserId, &circle)
+	err = svc.circleRepository.AddUser(form.UserId, &circle)
 	if err != nil {
 		return
 	}
@@ -51,7 +50,7 @@ func (svc *service) Create(form CreateForm) (view CreateView, err error) {
 }
 
 func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
-	circle, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.circleRepository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -67,7 +66,7 @@ func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
 	circle.Name = form.Name
 	circle.Description = form.Description
 	circle.ID = form.CircleId
-	err = svc.repository.Save(&circle)
+	err = svc.circleRepository.Save(&circle)
 	if err != nil {
 		return
 	}
@@ -76,7 +75,7 @@ func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
 }
 
 func (svc *service) Get(form GetForm) (view GetView, err error) {
-	circle, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.circleRepository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -94,7 +93,7 @@ func (svc *service) Get(form GetForm) (view GetView, err error) {
 }
 
 func (svc *service) Delete(form DeleteForm) (err error) {
-	circle, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.circleRepository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -107,7 +106,7 @@ func (svc *service) Delete(form DeleteForm) (err error) {
 		return errCircleNotFound
 	}
 
-	err = svc.repository.Delete(form.CircleId)
+	err = svc.circleRepository.Delete(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -115,23 +114,23 @@ func (svc *service) Delete(form DeleteForm) (err error) {
 }
 
 func (svc *service) Search(form SearchForm) (view SearchView, err error) {
-	repoForm := circleRepository.SearchForm{
-		PaginationQuery: gormUtils.PaginationQuery{
+	repoForm := repository.CircleSearchForm{
+		PaginationRequest: searchUtils.PaginationRequest{
 			Page:     form.Page,
 			PageSize: form.PageSize,
 		},
 		UserId: form.UserId,
 	}
 
-	repoView, err := svc.repository.Search(repoForm)
+	circles, total, err := svc.circleRepository.Search(repoForm)
 	if err != nil {
 		return
 	}
 
-	view.Page = form.BuildResult(repoView.Total)
+	view.Page = form.BuildResult(total)
 	view.Circles = make([]CommonView, 0)
 
-	for _, circle := range repoView.Circles {
+	for _, circle := range circles {
 		view.Circles = append(view.Circles, svc.fromModelToView(circle))
 	}
 
@@ -139,7 +138,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 }
 
 func (svc *service) AddUser(form AddUserForm) (view AddUserView, err error) {
-	circle, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.circleRepository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -152,7 +151,7 @@ func (svc *service) AddUser(form AddUserForm) (view AddUserView, err error) {
 		return view, errCircleNotFound
 	}
 
-	_, ok, err = svc.userRepository.GetUser(form.UserIdToAdd)
+	_, ok, err = svc.userRepository.Get(form.UserIdToAdd)
 	if err != nil {
 		return
 	}
@@ -160,13 +159,13 @@ func (svc *service) AddUser(form AddUserForm) (view AddUserView, err error) {
 		return view, errUserNotFound
 	}
 
-	err = svc.repository.AddUser(form.UserIdToAdd, &circle)
+	err = svc.circleRepository.AddUser(form.UserIdToAdd, &circle)
 	view.CommonView = svc.fromModelToView(circle)
 	return
 }
 
 func (svc *service) DeleteUser(form DeleteUserForm) (view DeleteUserView, err error) {
-	circle, ok, err := svc.repository.Get(form.CircleId)
+	circle, ok, err := svc.circleRepository.Get(form.CircleId)
 	if err != nil {
 		return
 	}
@@ -179,7 +178,7 @@ func (svc *service) DeleteUser(form DeleteUserForm) (view DeleteUserView, err er
 		return view, errCircleNotFound
 	}
 
-	_, ok, err = svc.userRepository.GetUser(form.UserIdToDelete)
+	_, ok, err = svc.userRepository.Get(form.UserIdToDelete)
 	if err != nil {
 		return
 	}
@@ -187,14 +186,14 @@ func (svc *service) DeleteUser(form DeleteUserForm) (view DeleteUserView, err er
 		return view, errUserNotFound
 	}
 
-	err = svc.repository.DeleteUser(form.UserIdToDelete, &circle)
+	err = svc.circleRepository.DeleteUser(form.UserIdToDelete, &circle)
 	view.CommonView = svc.fromModelToView(circle)
 	return
 }
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(circle pgModel.Circle) (view CommonView) {
+func (svc *service) fromModelToView(circle model.Circle) (view CommonView) {
 	view = CommonView{
 		Id:          circle.ID,
 		Name:        circle.Name,
@@ -211,7 +210,7 @@ func (svc *service) fromModelToView(circle pgModel.Circle) (view CommonView) {
 	return
 }
 
-func (svc *service) userIsInCircle(userId uint, circle pgModel.Circle) (isIn bool) {
+func (svc *service) userIsInCircle(userId uint, circle model.Circle) (isIn bool) {
 	isIn = false
 	for _, circleUser := range circle.Users {
 		if userId == circleUser.ID {

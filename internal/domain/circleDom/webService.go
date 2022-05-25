@@ -15,6 +15,10 @@ import (
 	"net/http"
 )
 
+const (
+	basePath = "/v1/circles"
+)
+
 type handler struct {
 	service Service
 }

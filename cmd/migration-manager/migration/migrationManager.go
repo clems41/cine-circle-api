@@ -1,7 +1,7 @@
 package migration
 
 import (
-	"cine-circle-api/internal/repository/postgres/pgRepositories"
+	"cine-circle-api/internal/repository/postgresRepositories"
 	"cine-circle-api/pkg/logger"
 	"fmt"
 	"github.com/pkg/errors"
@@ -49,7 +49,7 @@ func RunMigrations(DB *gorm.DB) (currentVersion int, upToDateVersion int, err er
 	}
 
 	// First migrate all new tables before inserting any new data
-	err = pgRepositories.Migrate(tx)
+	err = postgresRepositories.Migrate(tx)
 	if err != nil {
 		rollback(err)
 		return currentState.Version, upToDateVersion, err

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -12,15 +13,19 @@ const (
 )
 
 type Media struct {
-	ID            uint      `json:"id"`
-	Title         string    `json:"title"`
-	BackdropUrl   string    `json:"backdrop_url"`
-	Genres        []string  `json:"genres"`
-	Language      string    `json:"language"`
-	OriginalTitle string    `json:"original_title"`
-	Overview      string    `json:"overview"`
-	PosterUrl     string    `json:"poster_url"`
-	ReleaseDate   time.Time `json:"release_date"`
-	Runtime       int       `json:"runtime"`
-	MediaType     MediaType `json:"media_type"`
+	ID uint `gorm:"primarykey" json:"id"`
+	Metadata
+	Title             string         `json:"title"`
+	MediaProviderId   string         `json:"mediaProviderId" gorm:"check:media_provider_id <> ''"`
+	MediaProviderName string         `json:"mediaProviderName" gorm:"check:media_provider_name <> ''"`
+	Completed         bool           `json:"completed"`
+	BackdropUrl       string         `json:"backdropUrl"`
+	Genres            pq.StringArray `json:"genres" gorm:"type:varchar(64)[]"`
+	Language          string         `json:"language"`
+	OriginalTitle     string         `json:"originalTitle"`
+	Overview          string         `json:"overview"`
+	PosterUrl         string         `json:"posterUrl"`
+	ReleaseDate       time.Time      `json:"releaseDate"`
+	Runtime           int            `json:"runtime"`
+	MediaType         MediaType      `json:"media_type"`
 }

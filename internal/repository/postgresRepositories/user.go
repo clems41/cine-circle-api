@@ -1,9 +1,8 @@
-package pgRepositories
+package postgresRepositories
 
 import (
 	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -22,7 +21,7 @@ func NewUser(DB *gorm.DB) *userPgRepository {
 
 func (repo *userPgRepository) Migrate() (err error) {
 	err = repo.DB.
-		AutoMigrate(&pgModel.User{})
+		AutoMigrate(&model.User{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -86,7 +85,7 @@ func (repo *userPgRepository) Delete(userId uint) (ok bool, err error) {
 	return true, nil
 }
 
-func (repo *userPgRepository) Search(form repository.UserSearchForm) (view repository.UserSearchView, err error) {
+func (repo *userPgRepository) Search(form repository.UserSearchForm) (users []model.User, total int64, err error) {
 	query := repo.DB
 	if form.Keyword != "" {
 		query = query.Where("first_name ILIKE ? OR last_name ILIKE ? OR username ilike ?",
@@ -97,14 +96,14 @@ func (repo *userPgRepository) Search(form repository.UserSearchForm) (view repos
 		Offset(form.Offset()).
 		Limit(form.PageSize).
 		Order(form.OrderSQL()).
-		Find(&view.Users).
+		Find(users).
 		Limit(-1).
 		Offset(-1).
-		Count(&view.Total).
+		Count(&total).
 		Error
 
 	if err != nil {
-		return view, errors.WithStack(err)
+		return nil, 0, errors.WithStack(err)
 	}
 	return
 }

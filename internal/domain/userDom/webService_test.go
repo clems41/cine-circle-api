@@ -2,14 +2,13 @@ package userDom
 
 import (
 	"cine-circle-api/external/mailService/mailServiceMock"
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/model/testSampler"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/httpServer/authentication"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
-	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/securityUtils"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
@@ -219,7 +218,7 @@ func TestHandler_SignUp(t *testing.T) {
 	})
 
 	// Check that user has been successfully stored into database
-	var user pgModel.User
+	var user model.User
 	err := db.
 		Take(&user, view.Id).
 		Error
@@ -661,7 +660,7 @@ func TestHandler_Search(t *testing.T) {
 	// Create testing data
 	keyword := fake.Word() + fake.Word()
 	user := sampler.GetUser()
-	var users []*pgModel.User
+	var users []*model.User
 	nbUsersFirstnameMatching := 6
 	nbUsersLastnameMatching := 3
 	nbUsersUsernameMatching := 4

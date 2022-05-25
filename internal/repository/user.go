@@ -11,17 +11,12 @@ type UserSearchForm struct {
 	Keyword string
 }
 
-type UserSearchView struct {
-	searchUtils.Page
-	Users []model.User
-}
-
 type User interface {
 	GetFromLogin(login string) (user model.User, ok bool, err error)
 	Get(userId uint) (user model.User, ok bool, err error)
 	Save(user *model.User) (err error)
 	Delete(userId uint) (ok bool, err error)
-	Search(form UserSearchForm) (view UserSearchView, err error)
+	Search(form UserSearchForm) (users []model.User, total int64, err error)
 	UsernameAlreadyExists(username string) (exists bool, err error)
 	EmailAlreadyExists(email string) (exists bool, err error)
 }

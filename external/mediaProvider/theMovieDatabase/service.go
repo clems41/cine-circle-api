@@ -1,7 +1,7 @@
 package theMovieDatabase
 
 import (
-	mediaProvider2 "cine-circle-api/external/mediaProvider"
+	"cine-circle-api/external/mediaProvider"
 	"cine-circle-api/pkg/logger"
 	"cine-circle-api/pkg/utils/httpUtils"
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var _ mediaProvider2.Service = (*service)(nil)
+var _ mediaProvider.Service = (*service)(nil)
 
 type service struct {
 }
@@ -24,7 +24,7 @@ func (svc *service) GetProviderName() (name string) {
 	return providerName
 }
 
-func (svc *service) Search(form mediaProvider2.SearchForm) (view mediaProvider2.SearchView, err error) {
+func (svc *service) Search(form mediaProvider.SearchForm) (medias []mediaProvider.MediaShort, total int64, err error) {
 	url := apiUrl + searchSuffix
 
 	queryParameters := map[string]string{
@@ -37,11 +37,9 @@ func (svc *service) Search(form mediaProvider2.SearchForm) (view mediaProvider2.
 		return
 	}
 
-	view.NumberOfItems = search.TotalResults
-	view.CurrentPage = search.Page
-	view.NumberOfPages = search.TotalPages
+	total = int64(search.TotalResults)
 	for _, result := range search.Results {
-		view.Result = append(view.Result, mediaProvider2.MovieShortView{
+		medias = append(medias, mediaProvider.MediaShort{
 			Id:            fmt.Sprintf("%d", result.Id),
 			Title:         result.Title,
 			Language:      result.OriginalLanguage,
@@ -53,8 +51,8 @@ func (svc *service) Search(form mediaProvider2.SearchForm) (view mediaProvider2.
 	return
 }
 
-func (svc *service) Get(form mediaProvider2.MovieForm) (view mediaProvider2.MovieView, err error) {
-	url := apiUrl + movieSuffix + form.Id
+func (svc *service) Get(mediaId string) (media mediaProvider.Media, err error) {
+	url := apiUrl + movieSuffix + mediaId
 
 	var movie MovieView
 	err = svc.askProvider(url, http.MethodGet, nil, nil, &movie)
@@ -72,7 +70,7 @@ func (svc *service) Get(form mediaProvider2.MovieForm) (view mediaProvider2.Movi
 		genres = append(genres, genre.Name)
 	}
 
-	view = mediaProvider2.MovieView{
+	media = mediaProvider.Media{
 		Id:            fmt.Sprintf("%d", movie.Id),
 		Title:         movie.Title,
 		BackdropUrl:   svc.getImageUrl(movie.BackdropPath),

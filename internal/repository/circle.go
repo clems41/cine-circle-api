@@ -10,16 +10,11 @@ type CircleSearchForm struct {
 	UserId uint
 }
 
-type CircleSearchView struct {
-	searchUtils.Page
-	Circles []model.Circle
-}
-
 type Circle interface {
 	Get(circleId uint) (circle model.Circle, ok bool, err error)
 	Save(circle *model.Circle) (err error)
 	Delete(circleId uint) (err error)
-	Search(form CircleSearchForm) (view CircleSearchView, err error)
+	Search(form CircleSearchForm) (circles []model.Circle, total int64, err error)
 	AddUser(userId uint, circle *model.Circle) (err error)
 	DeleteUser(userId uint, circle *model.Circle) (err error)
 }

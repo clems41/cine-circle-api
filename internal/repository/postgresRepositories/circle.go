@@ -1,9 +1,8 @@
-package pgRepositories
+package postgresRepositories
 
 import (
 	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -21,7 +20,7 @@ func NewCircle(DB *gorm.DB) *circlePgRepository {
 
 func (repo *circlePgRepository) Migrate() (err error) {
 	err = repo.DB.
-		AutoMigrate(&pgModel.Circle{})
+		AutoMigrate(&model.Circle{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -60,26 +59,26 @@ func (repo *circlePgRepository) Delete(circleId uint) (err error) {
 		return errors.WithStack(err)
 	}
 	err = repo.DB.
-		Delete(&pgModel.Circle{}, circleId).
+		Delete(&model.Circle{}, circleId).
 		Error
 	return errors.WithStack(err)
 }
 
-func (repo *circlePgRepository) Search(form repository.CircleSearchForm) (view repository.CircleSearchView, err error) {
+func (repo *circlePgRepository) Search(form repository.CircleSearchForm) (circles []model.Circle, total int64, err error) {
 	query := repo.DB
 
 	err = query.
 		Where("id IN (SELECT circle_id FROM circle_users WHERE user_id = ?)", form.UserId).
 		Offset(form.Offset()).
 		Limit(form.PageSize).
-		Find(&view.Circles).
+		Find(&circles).
 		Limit(-1).
 		Offset(-1).
-		Count(&view.Total).
+		Count(&total).
 		Error
 
 	if err != nil {
-		return view, errors.WithStack(err)
+		return nil, 0, errors.WithStack(err)
 	}
 	return
 }

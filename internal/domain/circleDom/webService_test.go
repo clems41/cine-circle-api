@@ -1,12 +1,12 @@
 package circleDom
 
 import (
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/model/testSampler"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
-	"cine-circle-api/pkg/test/setupTestCase"
+	"cine-circle-api/pkg/sql/sqlTest"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"fmt"
@@ -61,7 +61,7 @@ func TestHandler_Create(t *testing.T) {
 	require.Len(t, view.Users, 1) // user that created circle should be automatically added into it
 
 	// Check that circle has been created into database
-	var circle pgModel.Circle
+	var circle model.Circle
 	err := db.
 		Preload("Users").
 		Take(&circle, view.Id).
@@ -230,7 +230,7 @@ func TestHandler_Search(t *testing.T) {
 	// Create testing data
 	userNotFromCircle := sampler.GetUser()
 	userFromCircle := sampler.GetUser()
-	var circles []*pgModel.Circle
+	var circles []*model.Circle
 	nbCirclesNameMatching := 6
 	for idx := range fakeData.FakeRange(12, 18) { // create between 12 and 18 circles (random number) but only 6 with matching name
 		if idx < nbCirclesNameMatching {
@@ -420,7 +420,7 @@ func TestHandler_DeleteUser(t *testing.T) {
 
 // setupTestcase will instantiate project and return all objects that can be needed for testing
 func setupTestcase(t *testing.T, populateDatabase bool) (db *gorm.DB, httpMock *httpServerMock.Server, sampler *testSampler.Sampler, ruler *testRuler.Ruler, tearDown func()) {
-	db, tearDown = setupTestCase.OpenCleanDatabaseFromTemplate(t)
+	db, tearDown = sqlTest.OpenCleanDatabaseFromTemplate(t)
 	repo := repository.New(db)
 	userRepo := repository.New(db)
 	svc := NewService(repo, userRepo)

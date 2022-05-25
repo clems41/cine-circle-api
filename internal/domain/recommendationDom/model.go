@@ -18,7 +18,7 @@ type CommonView struct {
 	Id      uint         `json:"id"`
 	Sender  UserView     `json:"sender"`
 	Circles []CircleView `json:"circles"`
-	Movie   MovieView    `json:"movie"`
+	Media   MediaView    `json:"movie"`
 	Text    string       `json:"text"`
 	Date    time.Time    `json:"date"`
 	Type    string       `json:"type"`
@@ -38,7 +38,7 @@ type CircleView struct {
 	Users       []UserView `json:"users"`
 }
 
-type MovieView struct {
+type MediaView struct {
 	Id            uint      `json:"id"`
 	Title         string    `json:"title"`
 	BackdropUrl   string    `json:"backdropUrl"`
@@ -65,7 +65,7 @@ type SendView struct {
 
 type SearchForm struct {
 	searchUtils.PaginationRequest
-	MovieId int    `json:"mediaId"`
+	MediaId int    `json:"mediaId"`
 	Type    string `json:"type" validate:"oneof=all sent received"`
 	UserId  uint   `json:"-"` // Get it from token
 }

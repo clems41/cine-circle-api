@@ -1,13 +1,12 @@
 package userDom
 
 import (
-	mailService2 "cine-circle-api/external/mailService"
+	"cine-circle-api/external/mailService"
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/instance/userRepository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer"
 	"cine-circle-api/pkg/httpServer/authentication"
-	"cine-circle-api/pkg/sql/gormUtils"
+	"cine-circle-api/pkg/utils/searchUtils"
 	"cine-circle-api/pkg/utils/securityUtils"
 	"fmt"
 	"github.com/google/uuid"
@@ -32,11 +31,11 @@ type Service interface {
 }
 
 type service struct {
-	repository  repository.Repository
-	serviceMail mailService2.Service
+	repository  repository.User
+	serviceMail mailService.Service
 }
 
-func NewService(serviceMail mailService2.Service, repository repository.Repository) *service {
+func NewService(serviceMail mailService.Service, repository repository.User) *service {
 	return &service{
 		repository:  repository,
 		serviceMail: serviceMail,
@@ -47,7 +46,7 @@ func NewService(serviceMail mailService2.Service, repository repository.Reposito
 
 func (svc *service) SignIn(form SignInForm) (view SignInView, err error) {
 	// Check if user exists
-	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
+	user, ok, err := svc.repository.GetFromLogin(form.Login)
 	if err != nil {
 		return
 	}
@@ -98,7 +97,7 @@ func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
 	if err != nil {
 		return view, errors.WithStack(err)
 	}
-	user := pgModel.User{
+	user := model.User{
 		Username:       form.Username,
 		HashedPassword: hashedPassword,
 		LastName:       form.LastName,
@@ -106,7 +105,7 @@ func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
 		Email:          form.Email,
 		EmailConfirmed: false,
 	}
-	err = svc.repository.Create(&user)
+	err = svc.repository.Save(&user)
 	if err != nil {
 		return
 	}
@@ -116,7 +115,7 @@ func (svc *service) SignUp(form SignUpForm) (view SignUpView, err error) {
 
 func (svc *service) SendEmailConfirmation(form SendEmailConfirmationForm) (err error) {
 	// Get user info
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -130,7 +129,7 @@ func (svc *service) SendEmailConfirmation(form SendEmailConfirmationForm) (err e
 	// Generate and send email
 	emailBody := strings.Replace(sendConfirmationEmailBody, sendConfirmationEmailFirstNameJoker, user.FirstName, 1)
 	emailBody = strings.Replace(emailBody, sendConfirmationEmailTokenJoker, token, 1)
-	emailForm := mailService2.SendEmailForm{
+	emailForm := mailService.SendEmailForm{
 		To:      []string{user.Email},
 		Subject: sendConfirmationEmailSubject,
 		Message: emailBody,
@@ -154,7 +153,7 @@ func (svc *service) SendEmailConfirmation(form SendEmailConfirmationForm) (err e
 
 func (svc *service) ConfirmEmail(form ConfirmEmailForm) (err error) {
 	// Get user info
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -179,7 +178,7 @@ func (svc *service) ConfirmEmail(form ConfirmEmailForm) (err error) {
 
 func (svc *service) SendResetPasswordEmail(form SendResetPasswordEmailForm) (err error) {
 	// Get user info
-	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
+	user, ok, err := svc.repository.GetFromLogin(form.Login)
 	if err != nil {
 		return
 	}
@@ -193,7 +192,7 @@ func (svc *service) SendResetPasswordEmail(form SendResetPasswordEmailForm) (err
 	// Generate and send email
 	emailBody := strings.Replace(sendResetPasswordEmailBody, sendResetPasswordEmailFirstNameJoker, user.FirstName, 1)
 	emailBody = strings.Replace(emailBody, sendResetPasswordTokenJoker, token, 1)
-	emailForm := mailService2.SendEmailForm{
+	emailForm := mailService.SendEmailForm{
 		To:      []string{user.Email},
 		Subject: sendResetPasswordEmailSubject,
 		Message: emailBody,
@@ -215,7 +214,7 @@ func (svc *service) SendResetPasswordEmail(form SendResetPasswordEmailForm) (err
 }
 
 func (svc *service) ResetPassword(form ResetPasswordForm) (err error) { // Get user info
-	user, ok, err := svc.repository.GetUserFromLogin(form.Login)
+	user, ok, err := svc.repository.GetFromLogin(form.Login)
 	if err != nil {
 		return
 	}
@@ -243,7 +242,7 @@ func (svc *service) ResetPassword(form ResetPasswordForm) (err error) { // Get u
 }
 
 func (svc *service) GetOwnInfo(form GetOwnInfoForm) (view GetOwnInfoView, err error) {
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -255,7 +254,7 @@ func (svc *service) GetOwnInfo(form GetOwnInfoForm) (view GetOwnInfoView, err er
 }
 
 func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -276,7 +275,7 @@ func (svc *service) Update(form UpdateForm) (view UpdateView, err error) {
 
 func (svc *service) UpdatePassword(form UpdatePasswordForm) (err error) {
 	// Check if old password is correct
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -303,7 +302,7 @@ func (svc *service) UpdatePassword(form UpdatePasswordForm) (err error) {
 
 func (svc *service) Delete(form DeleteForm) (err error) {
 	// Check if password is correct
-	user, ok, err := svc.repository.GetUser(form.UserId)
+	user, ok, err := svc.repository.Get(form.UserId)
 	if err != nil {
 		return
 	}
@@ -326,23 +325,23 @@ func (svc *service) Delete(form DeleteForm) (err error) {
 }
 
 func (svc *service) Search(form SearchForm) (view SearchView, err error) {
-	repoForm := userRepository.SearchForm{
-		PaginationQuery: gormUtils.PaginationQuery{
+	repoForm := repository.UserSearchForm{
+		PaginationRequest: searchUtils.PaginationRequest{
 			Page:     form.Page,
 			PageSize: form.PageSize,
 		},
 		Keyword: form.Keyword,
 	}
 
-	repoView, err := svc.repository.Search(repoForm)
+	users, total, err := svc.repository.Search(repoForm)
 	if err != nil {
 		return
 	}
 
-	view.Page = form.BuildResult(repoView.Total)
+	view.Page = form.BuildResult(total)
 	view.Users = make([]CommonView, 0)
 
-	for _, user := range repoView.Users {
+	for _, user := range users {
 		view.Users = append(view.Users, svc.fromModelToView(user))
 	}
 	return
@@ -350,7 +349,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(user pgModel.User) (view CommonView) {
+func (svc *service) fromModelToView(user model.User) (view CommonView) {
 	view = CommonView{
 		Id:             user.ID,
 		FirstName:      user.FirstName,
@@ -362,8 +361,8 @@ func (svc *service) fromModelToView(user pgModel.User) (view CommonView) {
 	return
 }
 
-func (svc *service) fromFormToModel(form CommonForm) (user pgModel.User) {
-	user = pgModel.User{
+func (svc *service) fromFormToModel(form CommonForm) (user model.User) {
+	user = model.User{
 		Username:  form.Username,
 		LastName:  form.LastName,
 		FirstName: form.FirstName,

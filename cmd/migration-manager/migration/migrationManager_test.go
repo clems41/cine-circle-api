@@ -2,7 +2,7 @@ package migration
 
 import (
 	"cine-circle-api/internal/constant/settingsConst"
-	"cine-circle-api/pkg/test/setupTestCase"
+	"cine-circle-api/pkg/sql/sqlTest"
 	"cine-circle-api/pkg/utils/pathUtils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +23,7 @@ var (
 
 // TestMigrationJobs check that migrations jobs are still working from the beginning with a new clean database
 func TestMigrationJobs(t *testing.T) {
-	DB, clean := setupTestCase.OpenCleanDatabaseFromTemplate(t)
+	DB, clean := sqlTest.OpenCleanDatabaseFromTemplate(t)
 	defer clean()
 
 	// Run the main process

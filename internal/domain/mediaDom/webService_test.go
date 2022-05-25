@@ -4,10 +4,8 @@ import (
 	"cine-circle-api/external/mediaProvider/mediaProviderMock"
 	"cine-circle-api/internal/model/testSampler"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
-	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"fmt"
 	"github.com/icrowley/fake"
@@ -57,7 +55,7 @@ func TestHandler_Search(t *testing.T) {
 	for _, result := range view.Result {
 		ids = append(ids, result.Id)
 	}
-	var movies []pgModel.Movie
+	var movies []model.Movie
 	err := db.Find(&movies, "id in ?", ids).Error
 	require.NoError(t, err)
 
@@ -111,7 +109,7 @@ func TestHandler_SearchThenGet(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Check that now movie is completed
-	var movie pgModel.Movie
+	var movie model.Movie
 	err := db.Take(&movie, uncompletedExistingMovieId).Error
 	require.NoError(t, err)
 	require.Equal(t, true, movie.Completed)

@@ -1,4 +1,4 @@
-package pgRepositories
+package postgresRepositories
 
 import (
 	"gorm.io/gorm"
@@ -23,9 +23,9 @@ func Migrate(tx *gorm.DB) (err error) {
 // list return all migration functions that should be called during database migration.
 // Please add here your new migration method.
 func repositories(tx *gorm.DB) (repositories []PgRepository) {
-	repositories = append(repositories, NewCircle(tx))
-	repositories = append(repositories, NewMedia(tx))
-	repositories = append(repositories, NewRecommendation(tx))
 	repositories = append(repositories, NewUser(tx))
+	repositories = append(repositories, NewMedia(tx))
+	repositories = append(repositories, NewCircle(tx))
+	repositories = append(repositories, NewRecommendation(tx))
 	return
 }

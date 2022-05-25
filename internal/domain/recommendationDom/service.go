@@ -2,10 +2,9 @@ package recommendationDom
 
 import (
 	"cine-circle-api/internal/constant/recommendationConst"
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/instance/recommendationRepository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
-	"cine-circle-api/pkg/sql/gormUtils"
+	"cine-circle-api/pkg/utils/searchUtils"
 	"time"
 )
 
@@ -17,14 +16,14 @@ type Service interface {
 }
 
 type service struct {
-	repository       repository.Repository
-	userRepository   repository.Repository
-	mediaRepository  repository.Repository
-	circleRepository repository.Repository
+	repository       repository.Recommendation
+	userRepository   repository.User
+	mediaRepository  repository.Media
+	circleRepository repository.Circle
 }
 
-func NewService(repository repository.Repository, userRepository repository.Repository,
-	mediaRepository repository.Repository, circleRepository repository.Repository) Service {
+func NewService(repository repository.Recommendation, userRepository repository.User,
+	mediaRepository repository.Media, circleRepository repository.Circle) Service {
 	return &service{
 		repository:       repository,
 		userRepository:   userRepository,
@@ -34,16 +33,16 @@ func NewService(repository repository.Repository, userRepository repository.Repo
 }
 
 func (svc *service) Send(form SendForm) (view SendView, err error) {
-	movie, ok, err := svc.mediaRepository.GetMovie(form.MediaId)
+	media, ok, err := svc.mediaRepository.Get(form.MediaId)
 	if err != nil {
 		return
 	}
 	if !ok {
 		return view, errMediaNotFound
 	}
-	var circles []pgModel.Circle
+	var circles []model.Circle
 	for _, circleId := range form.CirclesIds {
-		var circle pgModel.Circle
+		var circle model.Circle
 		circle, ok, err = svc.circleRepository.Get(circleId)
 		if err != nil {
 			return
@@ -53,10 +52,20 @@ func (svc *service) Send(form SendForm) (view SendView, err error) {
 		}
 		circles = append(circles, circle)
 	}
-	recommendation := pgModel.Recommendation{
-		SenderId: form.SenderId,
+	sender, ok, err := svc.userRepository.Get(form.SenderId)
+	if err != nil {
+		return
+	}
+	if !ok {
+		return view, errMediaNotFound
+	}
+
+	recommendation := model.Recommendation{
+		SenderID: form.SenderId,
+		Sender:   sender,
 		Circles:  circles,
-		MovieId:  movie.ID,
+		Media:    media,
+		MediaID:  media.ID,
 		Text:     form.Text,
 		Date:     time.Now(),
 	}
@@ -70,25 +79,25 @@ func (svc *service) Send(form SendForm) (view SendView, err error) {
 }
 
 func (svc *service) Search(form SearchForm) (view SearchView, err error) {
-	repoForm := recommendationRepository.SearchForm{
-		PaginationQuery: gormUtils.PaginationQuery{
+	repoForm := repository.RecommendationSearchForm{
+		PaginationRequest: searchUtils.PaginationRequest{
 			Page:     form.Page,
 			PageSize: form.PageSize,
 		},
 		UserId:  form.UserId,
-		MovieId: uint(form.MovieId),
+		MediaId: uint(form.MediaId),
 		Type:    form.Type,
 	}
 
-	repoView, err := svc.repository.Search(repoForm)
+	recommendations, total, err := svc.repository.Search(repoForm)
 	if err != nil {
 		return
 	}
 
-	view.Page = form.BuildResult(repoView.Total)
+	view.Page = form.BuildResult(total)
 	view.Recommendations = make([]CommonView, 0)
 
-	for _, recommendation := range repoView.Recommendations {
+	for _, recommendation := range recommendations {
 		view.Recommendations = append(view.Recommendations, svc.fromModelToView(recommendation, form.UserId))
 	}
 
@@ -97,7 +106,7 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 
 /* Private methods below */
 
-func (svc *service) fromModelToView(recommendation pgModel.Recommendation, userId uint) (view CommonView) {
+func (svc *service) fromModelToView(recommendation model.Recommendation, userId uint) (view CommonView) {
 	view = CommonView{
 		Id: recommendation.ID,
 		Sender: UserView{
@@ -107,17 +116,17 @@ func (svc *service) fromModelToView(recommendation pgModel.Recommendation, userI
 			Username:  recommendation.Sender.Username,
 		},
 		Circles: nil,
-		Movie: MovieView{
-			Id:            recommendation.Movie.ID,
-			Title:         recommendation.Movie.Title,
-			BackdropUrl:   recommendation.Movie.BackdropUrl,
-			Genres:        recommendation.Movie.Genres,
-			Language:      recommendation.Movie.Language,
-			OriginalTitle: recommendation.Movie.OriginalTitle,
-			Overview:      recommendation.Movie.Overview,
-			PosterUrl:     recommendation.Movie.PosterUrl,
-			ReleaseDate:   recommendation.Movie.ReleaseDate,
-			Runtime:       recommendation.Movie.Runtime,
+		Media: MediaView{
+			Id:            recommendation.Media.ID,
+			Title:         recommendation.Media.Title,
+			BackdropUrl:   recommendation.Media.BackdropUrl,
+			Genres:        recommendation.Media.Genres,
+			Language:      recommendation.Media.Language,
+			OriginalTitle: recommendation.Media.OriginalTitle,
+			Overview:      recommendation.Media.Overview,
+			PosterUrl:     recommendation.Media.PosterUrl,
+			ReleaseDate:   recommendation.Media.ReleaseDate,
+			Runtime:       recommendation.Media.Runtime,
 		},
 		Text: recommendation.Text,
 		Date: recommendation.Date,

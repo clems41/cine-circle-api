@@ -2,12 +2,11 @@ package recommendationDom
 
 import (
 	"cine-circle-api/internal/constant/recommendationConst"
+	"cine-circle-api/internal/model"
 	"cine-circle-api/internal/model/testSampler"
 	"cine-circle-api/internal/repository"
-	"cine-circle-api/internal/repository/postgres/pgModel"
 	"cine-circle-api/pkg/httpServer/httpServerMock"
 	"cine-circle-api/pkg/logger"
-	"cine-circle-api/pkg/test/setupTestCase"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"cine-circle-api/pkg/utils/testUtils/testRuler"
 	"fmt"
@@ -29,7 +28,7 @@ func TestHandler_Send(t *testing.T) {
 	// Create testing data
 	sender := sampler.GetUser()
 	movie := sampler.GetCompletedMovie()
-	var circles []*pgModel.Circle
+	var circles []*model.Circle
 	var circleIds []uint
 	for range fakeData.FakeRange(1, 3) {
 		circle := sampler.GetCircleWithUsers()
@@ -118,7 +117,7 @@ func TestHandler_Send(t *testing.T) {
 	}
 
 	// Check that circle has been created into database
-	var recommendation pgModel.Recommendation
+	var recommendation model.Recommendation
 	err := db.
 		Preload("Movie").
 		Preload("Circles").
@@ -150,7 +149,7 @@ func TestHandler_Search(t *testing.T) {
 	nbSentRecommendations := 6
 	nbRecommendationsForMovie := 2
 	nbReceivedRecommendations := 4
-	var recommendations []*pgModel.Recommendation
+	var recommendations []*model.Recommendation
 	for idx := range fakeData.FakeRange(14, 20) { // create between 14 and 20 recommendations (random number) but only 6 + 4 + 2 will match with user
 		if idx < nbSentRecommendations {
 			recommendations = append(recommendations, sampler.GetRecommendationSentBySpecificUser(user))

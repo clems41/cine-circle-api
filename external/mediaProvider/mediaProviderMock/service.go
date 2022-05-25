@@ -1,14 +1,14 @@
 package mediaProviderMock
 
 import (
-	mediaProvider2 "cine-circle-api/external/mediaProvider"
+	"cine-circle-api/external/mediaProvider"
 	"cine-circle-api/pkg/utils/testUtils/fakeData"
 	"fmt"
 	"github.com/icrowley/fake"
 	"time"
 )
 
-var _ mediaProvider2.Service = (*service)(nil)
+var _ mediaProvider.Service = (*service)(nil)
 
 type service struct {
 }
@@ -21,12 +21,10 @@ func (svc *service) GetProviderName() (name string) {
 	return "mediaProviderMock"
 }
 
-func (svc *service) Search(form mediaProvider2.SearchForm) (view mediaProvider2.SearchView, err error) {
-	view.CurrentPage = form.Page
-	view.NumberOfPages = fakeData.FakeIntBetween(1, 10)
-	view.NumberOfItems = fakeData.FakeIntBetween(1, 100)
+func (svc *service) Search(form mediaProvider.SearchForm) (medias []mediaProvider.MediaShort, total int64, err error) {
+	total = int64(fakeData.FakeIntBetween(32, 100))
 	for range fakeData.FakeRange(5, 32) {
-		view.Result = append(view.Result, mediaProvider2.MovieShortView{
+		medias = append(medias, mediaProvider.MediaShort{
 			Id:            fakeData.UuidWithOnlyAlphaNumeric(),
 			Title:         fake.Title() + form.Keyword + fake.Title(),
 			Language:      fake.Language(),
@@ -37,16 +35,16 @@ func (svc *service) Search(form mediaProvider2.SearchForm) (view mediaProvider2.
 	return
 }
 
-func (svc *service) Get(form mediaProvider2.MovieForm) (view mediaProvider2.MovieView, err error) {
-	if form.Id == "fake" { // Useful to test errors
-		return view, fmt.Errorf("movie %s cannot be found", form.Id)
+func (svc *service) Get(mediaId string) (media mediaProvider.Media, err error) {
+	if mediaId == "fake" { // Useful to test errors
+		return media, fmt.Errorf("media %s cannot be found", media.Id)
 	}
 	var genres []string
 	for range fakeData.FakeRange(1, 5) {
 		genres = append(genres, fake.Word())
 	}
-	view = mediaProvider2.MovieView{
-		Id:            form.Id,
+	media = mediaProvider.Media{
+		Id:            mediaId,
 		Title:         fake.Title(),
 		BackdropUrl:   fake.StreetAddress(),
 		Genres:        fake.GetLangs(),
