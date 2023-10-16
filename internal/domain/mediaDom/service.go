@@ -97,10 +97,10 @@ func (svc *service) Search(form SearchForm) (view SearchView, err error) {
 		}
 		view.Result = append(view.Result, ResultView{
 			Id:            media.ID,
-			Title:         media.Title,
-			Language:      media.Language,
-			OriginalTitle: media.OriginalTitle,
-			PosterUrl:     media.PosterUrl,
+			Title:         resultMedia.Title,
+			Language:      resultMedia.Language,
+			OriginalTitle: resultMedia.OriginalTitle,
+			PosterUrl:     resultMedia.PosterUrl,
 		})
 	}
 

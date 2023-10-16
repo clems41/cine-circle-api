@@ -1,227 +1,97 @@
 # cine-circle-api
-**(!) WARNING :** you need postgres database for running this API
+**(!) ATTENTION :** pour fonctionner, ce projet nécessite l'installation de Docker et Docker Compose. [Documentation](https://docs.docker.com/engine/install/).
 
-## PostgresSQL
-This project is using PostgresSQL Database.   
-For getting one on your machine, you can use docker.  
-**(!) (Don't forget to replace value in `<>`)**
-```bash
-docker run --rm -d --name pg-cine-circle \
-  -e POSTGRES_PASSWORD=<postgres_password> \
-  -e POSTGRES_USER=<postgres_user> \
-  -e PGDATA=/var/lib/postgresql/data/pgdata \
-  -v /custom/mount:/var/lib/postgresql/data \
-  -p <port_to_use>:5432 \
-  postgres:10
-```
+## Fonctionnement
 
-## Docker
-### Build
-Simple way of building API on local
-```bash
-docker build . -t cine-circle-webService
-```
+Ce projet fonctionne avec une base de données Postgres pour sauvegarder l'ensemble des données utilisateurs ainsi que les données relatives aux différents médias (films et séries).
 
-### Run
-Simple way to run API on local (to be used with PostgresSQl instance !)  
-**(!) (Don't forget to replace value in `<>`)**
-```bash
-docker run -d --rm --name cine-circle-webService \
-  --link pg-cine-circle \
-  -e DB_HOST=pg-cine-circle \
-  -e DB_USER=<postgres_user> \
-  -e DB_PASSWORD=<postgres_password> \
-  -e DB_NAME=<database_name> \
-  -e DB_PORT=<postgres_port> \
-  -p 8080:8080 \
-  cine-circle-webService
-```
-If you want to use default values (see below), simply run :
-```bash
-docker run -d --rm --name cine-circle-webService \
-  --link pg-cine-circle \
-  -e DB_HOST=pg-cine-circle \
-  -p 8080:8080 \
-  cine-circle-webService
-```
-Default values :
-- `DB_HOST = localhost`
-- `DB_USER = postgres`
-- `DB_PASSWORD = postgres`
-- `DB_NAME = cine-circle`
-- `DB_PORT = 5432`
+L'API [TheMovieDatabase](https://developer.themoviedb.org/reference/intro/getting-started) est utilisée pour récupérer et recercher des informations sur les médias.
 
-## API endpoints
-Postman collection can be found into `resources` directory.
-Some authentication is needed for this kind of application.  
-We'll be using OAuthv2 with JWT token.  
-But, until we get these, we are doing authentication by simply adding header into the request with the username.
-```bash
---header "username: ${USERNAME}" \
+## Démarrer l'API en local
+
+**Création des variables d'environnements**
+1. Créer un fichier vide nommé `.env` à la racine du projet. Ce fichier sera ignoré par git (cf. `.gitignore`).
+2. Copier coller le texte suivant dans le fichier `.env` :
 ```
-### Movies
-#### Search for a movie (by title)
-```bash
-MOVIE_TITLE="inception"
-curl --location --request GET "http://localhost:8080/v1/movies?title=${MOVIE_TITLE}"
+DATABASE_PASSWORD=XXX
+DATABASE_USER=postgres
+DATABASE_NAME=cine-circle
+RSA_PRIVATE_KEY=
+RSA_PUBLIC_KEY=
 ```
-#### Get movie by ID
-```bash
-MOVIE_ID="tt9484998"
-curl --location --request GET "http://localhost:8080/v1/movies/${MOVIE_ID}"
+3. Remplacer les `XXX` par le mot de passe que vous souhaitez utiliser.
+4. Générer une paire de clé RSA256 utilisée pour l'authentification et la génération des JWT tokens. Pour cela rendez vous sur : `https://travistidwell.com/jsencrypt/demo/`.
+5. Encoder les clés en base64 à l'aide de l'outil WEB [BASE64](https://www.base64encode.org/).
+5. Copier les clés encodées dans le fichier `.env` au niveau des variables correspondates : `RSA_PUBLIC_KEY` pour la clé publique et `RSA_PRIVATE_KEY` pour la clé privée.
+
+**Démarrer**
+Pour démarrer l'API et l base de données Postgres :
+```
+docker compose up -d
 ```
 
-### Users (used for app authentication)
-#### Create user
-**(!) Mandatory fields :**
-- fullname (type: string)
-- username (type: string) (SQL unique index constraints --> will be used for log in the application)
-- email (type: string)
+L'API est désormais disponible via l'URL "http://localhost:8080".
+
+Les webservices disponibles sont visibles via le [Swagger](https://petstore.swagger.io/?url=http://localhost:8080/swagger.json). 
+
+## Webservices
+
+Les webservices sont protégés par un système d'authentification utilisant des tokens JWT. Seuls 2 webservices sont accessibles sans authentification :
+- `/v1/users/sign-in` : permet de générer un token JWT à partir d'un identifiant et un mot de passe fournis en Header (Basic Auth).
+- `/v1/users/sign-up` : permet de se créer un compte pour ensuite pouvoir se connecter.
+
+Tous les autres webservices nécessite l'utilisation d'un token JWT qui doit être ajouté en Header de la requête avec le nom `Authorization` et en contenu `Bearer <jwt_token>` où `<jwt_token>` est le token généré via `/v1/users/sign-in`.
+
+Les exemples donnés ci-dessous utilise cURL, qui est un outil permettant de faire des requêtes HTTP. 
+On peut l'installer sur sa machine pour lancer les requêtes ou alors utiliser directement une version WEB [Reqbin cURL](https://reqbin.com/curl).
+Pour utiliser ce site WEB avec des requêtes en local, il faut installer le plugin Chrome [ReqBin HTTP Client
+](https://chrome.google.com/webstore/detail/reqbin-http-client/gmmkjpcadciiokjpikmkkmapphbmdjok/related).
+
+### Authentification
+
+**Création de compte**
+
 ```bash
-curl --location --request POST 'http://localhost:8080/v1/users' \
+curl --location --request POST "http://localhost:8080/v1/users/sign-up" \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "FullName": "first last",
-    "Email": "test@mail.com",
-    "Username": "user1"
+        "email": "monemail@gmail.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "password": "password",
+        "username": "johndoe"
 }'
 ```
 
-#### Update existing user
-**(!) Mandatory fields :**
-- fullname (type: string)
-- username (type: string) (SQL unique index constraints --> will be used for log in the application)
-- email (type: string)
+**Connexion/Génération de token**
+
+La connexion utilise un système de [Basic Authentification](https://developer.mozilla.org/fr/docs/Web/HTTP/Headers/Authorization#directives).
+Elle utilise un header `Authorization` dont le contenu est `Basic <credentials>` où `<credentials>` est le username et le mot de passe encodé en base64.
+Exemple avec username `johndoe` et password `password`, la phrase à encoder est `johndoe:password`, ce qui donne `am9obmRvZTpwYXNzd29yZA==`.
+
+Il est possible de générer ce Header directement via le site WEB [Blitter](https://www.blitter.se/utils/basic-authentication-header-generator/).
+
 ```bash
-USER_ID=2
-USERNAME="user1"
-curl --location --request PUT "http://localhost:8080/v1/users/${USER_ID}" \
---header "username: ${USERNAME}" \
---header 'Content-Type: application/json' \
---data-raw '{
-        "FullName": "fullName2",
-        "Username": "username2",
-        "Email": "mail2@mail.com"
-}'
+curl --location --request POST "http://localhost:8080/v1/users/sign-in" \
+--header 'Authorization: Basic am9obmRvZTpwYXNzd29yZA=='
 ```
 
-#### Search for users
-Not all fields are mandatory, you can use combination with some of thse or none or all at once.
+Vous obtenez ainsi un JWT token dans la réponse, par exemple `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4`.
+Vous pouvez désormais requêter tous les autres webservices en utilisant ce token, voir les exemples après.
+Il faudra ajouter un Header `Authorization` avec comme contenu `Bearer <jwt_token>`.
+
+### Medias
+
+**Rechercher un média**
+
 ```bash
-USERNAME="user1"
-FULLNAME="full"
-EMAIL="mail"
-curl --location --request GET "http://localhost:8080/v1/users?fullname=${FULLNAME}&username=${USERNAME}&email=${EMAIL}"
+curl --location --request GET "http://localhost:8080/v1/medias?keyword=inception" \
+--header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4'
 ```
 
-#### Get user info (using ID)
-```bash
-USER_ID="10"
-curl --location --request GET "http://localhost:8080/v1/users/${USER_ID}"
-```
+**Récupérer les informations d'un média**
 
-#### Check if username already exists (using username)
 ```bash
-USERNAME="user1"
-curl --location --request GET "http://localhost:8080/v1/users/${USERNAME}/exists"
-```
-
-#### Get all movies rated by user (using username)
-```bash
-USER_ID="10"
-curl --location --request GET "http://localhost:8080/v1/users/${USER_ID}/movies"
-```
-
-### Ratings
-#### Rate movie for specific (need to be authenticated)
-**Fields :**
-- Rating (type: float)
-- Comment (type: string)
-```bash
-MOVIE_ID="tt9484998"
-USERNAME="user1"
-curl --location --request POST "http://localhost:8080/v1/ratings/${MOVIE_ID}" \
---header "username: ${USERNAME}" \
---header 'Content-Type: application/json' \
---data-raw '{
-	"Rating": 10,
-	"Comment": "Meilleur film de tous les temps !"
-}'
-```
-
-### Circles
-#### Create new circle
-```bash
-USERNAME="user1"
-curl --location --request POST 'http://localhost:8080/v1/circles/' \
---header 'username: ${USERNAME}' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "Name": "circle name",
-    "Description": "cercle pour les films dactions du dimanche soir"
-}'
-```
-
-#### Update existing circle
-```bash
-USERNAME="user1"
-CIRCLE_ID="1"
-curl --location --request PUT "http://localhost:8080/v1/circles/${CIRCLE_ID}" \
---header "username: ${USERNAME}" \
---header 'Content-Type: application/json' \
---data-raw '{
-    "Name": "circle name",
-    "Description": "cercle pour les films dactions du dimanche soir"
-}'
-```
-
-#### Delete existing circle
-```bash
-USERNAME="user1"
-CIRCLE_ID="1"
-curl --location --request DELETE "http://localhost:8080/v1/circles/${CIRCLE_ID}" \
---header "username: ${USERNAME}"
-```
-
-#### Search for existing circles
-```bash
-USERNAME="user1"
-NAME_TO_SEARCH="my_name"
-curl --location --request GET "http://localhost:8080/v1/circles/?name=${NAME_TO_SEARCH}" \
---header "username: ${USERNAME}"
-```
-
-#### Add user to existing circle
-```bash
-USERNAME="user1"
-CIRCLE_ID="1"
-USER_ID="7"
-curl --location --request PUT "http://localhost:8080/v1/circles/${CIRCLE_ID}/${USER_ID}" \
---header "username: ${USERNAME}"
-```
-
-#### Remove user from existing circle
-```bash
-USERNAME="user1"
-CIRCLE_ID="1"
-USER_ID="7"
-curl --location --request DELETE "http://localhost:8080/v1/circles/${CIRCLE_ID}/${USER_ID}" \
---header "username: ${USERNAME}"
-```
-
-#### Get all movies rated by users from a circle
-```bash
-USERNAME="user1"
-CIRCLE_ID="1"
-SORT_PARAMETER="title:asc"
-curl --location --request GET "http://localhost:8080/v1/circles/${}CIRCLE_ID/movies?sort=${SORT_PARAMETER}" \
---header "username: ${USERNAME}"
-```
-
-## Update swagger.yaml
-(!) API should be running for updating swagger
-```bash
-cd resources
-rm swagger.yaml
-wget http://localhost:8080/api/swagger.yaml
+curl --location --request GET "http://localhost:8080/v1/medias/18" \
+--header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4'
 ```

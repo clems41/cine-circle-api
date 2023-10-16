@@ -31,7 +31,7 @@ func NewHandler(svc Service) *handler {
 
 func (hd *handler) WebService() *restful.WebService {
 	wsUser := new(restful.WebService)
-	tags := []string{swaggerConst.UserTag}
+	tags := []string{swaggerConst.CircleTag}
 
 	wsUser.Path(basePath)
 

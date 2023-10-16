@@ -34,3 +34,5 @@ coverage-report.html
 
 # Generated file using Jasper example
 test.pdf
+
+.env

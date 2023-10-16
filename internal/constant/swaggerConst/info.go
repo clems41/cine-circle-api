@@ -15,6 +15,8 @@ const (
 	UserTag  = "users"
 	MediaTag = "medias"
 	OtherTag = "other"
+	CircleTag = "circles"
+	RecommendationTag = "recommendations"
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 		UserTag:  "Managing own user info",
 		MediaTag: "Search among medias (movie and tv shows)",
 		OtherTag: "Anything else",
+		CircleTag: "Operations about circles",
+		RecommendationTag: "Send and see recommendations",
 	}
 )
 
