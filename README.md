@@ -9,23 +9,7 @@ L'API [TheMovieDatabase](https://developer.themoviedb.org/reference/intro/gettin
 
 ## Démarrer l'API en local
 
-**Création des variables d'environnements**
-1. Créer un fichier vide nommé `.env` à la racine du projet. Ce fichier sera ignoré par git (cf. `.gitignore`).
-2. Copier coller le texte suivant dans le fichier `.env` :
-```
-DATABASE_PASSWORD=XXX
-DATABASE_USER=postgres
-DATABASE_NAME=cine-circle
-RSA_PRIVATE_KEY=
-RSA_PUBLIC_KEY=
-```
-3. Remplacer les `XXX` par le mot de passe que vous souhaitez utiliser.
-4. Générer une paire de clé RSA256 utilisée pour l'authentification et la génération des JWT tokens. Pour cela rendez vous sur : `https://travistidwell.com/jsencrypt/demo/`.
-5. Encoder les clés en base64 à l'aide de l'outil WEB [BASE64](https://www.base64encode.org/).
-5. Copier les clés encodées dans le fichier `.env` au niveau des variables correspondates : `RSA_PUBLIC_KEY` pour la clé publique et `RSA_PRIVATE_KEY` pour la clé privée.
-
-**Démarrer**
-Pour démarrer l'API et l base de données Postgres :
+Pour démarrer l'API et la base de données Postgres :
 ```
 docker compose up -d
 ```
@@ -92,6 +76,6 @@ curl --location --request GET "http://localhost:8080/v1/medias?keyword=inception
 **Récupérer les informations d'un média**
 
 ```bash
-curl --location --request GET "http://localhost:8080/v1/medias/18" \
+curl --location --request GET "http://localhost:8080/v1/medias/1" \
 --header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4'
 ```
