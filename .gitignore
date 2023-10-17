@@ -1,36 +1,33 @@
-/assets
-/g.*
-.#*
-.*sw[po]
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-**/.idea/workspace.xml
-**/.idea/tasks.xml
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
 .idea
+*.iws
+*.iml
+*.ipr
 
-!.idea
-.idea/dpc.iml
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-.idea/misc.xml
-
-.idea/modules.xml
-
-.idea/vcs.xml
-
-.idea/shelf
-
-docs
-.idea/dataSources.xml
-
-.idea/inspectionProfiles/Project_Default.xml
-
-.idea/csv-plugin.xml
-
-# Files used by test script
-main
-
-# Files used for getting coverage report
-pre-coverage-report.html
-coverage-report.html
-
-# Generated file using Jasper example
-test.pdf
+### VS Code ###
+.vscode/
