@@ -1,8 +1,8 @@
 package com.teasy.CineCircleApi.services;
 
 //import com.teasy.CineCircleApi.repositories.UserRepository;
+
 import com.teasy.CineCircleApi.models.dtos.UserDto;
-import com.teasy.CineCircleApi.models.entities.UserDetails;
 import com.teasy.CineCircleApi.models.dtos.requests.SignUpRequest;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -39,6 +39,7 @@ public class UserService {
         if (user != null) {
             dto.setUsername(user.getUsername());
             dto.setEmail(user.getEmail());
+            dto.setId(user.getId());
         }
         return dto;
     }
@@ -54,7 +55,7 @@ public class UserService {
                     String.format("email %s already exists", request.email()));
         }
 
-        var user = new User(request.username(), request.email(), passwordEncoder.encode(request.password()), true);
+        var user = new User(request.username(), request.email(), passwordEncoder.encode(request.password()));
         userRepository.save(user);
 
         return entityToDto(user);

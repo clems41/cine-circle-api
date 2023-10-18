@@ -1,6 +1,5 @@
 package com.teasy.CineCircleApi.controllers;
 
-import com.teasy.CineCircleApi.models.entities.UserDetails;
 import com.teasy.CineCircleApi.models.dtos.requests.SignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
 import com.teasy.CineCircleApi.services.HttpErrorService;
@@ -12,8 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 

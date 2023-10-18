@@ -12,8 +12,6 @@ services:
       - DB_USER=${DATABASE_USER}
       - DB_PASSWORD=${DATABASE_PASSWORD}
       - DB_NAME=${DATABASE_NAME}
-      - JWT_RSA256_PRIVATE_KEY=${RSA_PRIVATE_KEY}
-      - JWT_RSA256_PUBLIC_KEY=${RSA_PUBLIC_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health/ok"]
       interval: 10s

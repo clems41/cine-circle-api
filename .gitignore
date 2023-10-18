@@ -34,3 +34,6 @@ build/
 
 ### RSA keys ###
 *.pem
+
+### Docker ###
+.env
