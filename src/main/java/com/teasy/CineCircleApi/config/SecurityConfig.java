@@ -72,7 +72,7 @@ public class SecurityConfig {
     JdbcUserDetailsManager users(DataSource dataSource) {
         JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
         jdbcUserDetailsManager.setUsersByUsernameQuery("select username, password, enabled from users where username = ?");
-        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select username, username from users where username=?");
+        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select username, 'USER' from users where username=?");
         return jdbcUserDetailsManager;
     }
 

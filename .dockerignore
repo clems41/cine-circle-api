@@ -1,2 +1,3 @@
-### RSA keys ###
-*.pem
+## RSA keys
+**/public.pem
+**/private.pem
