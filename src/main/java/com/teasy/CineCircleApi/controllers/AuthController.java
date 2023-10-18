@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -50,6 +53,11 @@ public class AuthController {
 
     @PostMapping("/hello")
     public ResponseEntity<?> hello() {
-        return ResponseEntity.ok().body("hello");
+        return ResponseEntity.ok().body(
+                String.format("hello authenticated user %s",
+                        SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName()));
     }
 }

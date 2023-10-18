@@ -1,11 +1,12 @@
 package com.teasy.CineCircleApi.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -13,9 +14,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import io.jsonwebtoken.Claims;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class TokenService {
@@ -48,6 +51,7 @@ public class TokenService {
     public String getUsernameFromToken(String token) {
         return getAllClaimsFromToken(token).get(Claims.SUBJECT).toString();
     }
+
     //for retrieving any information from token we will need the secret key
     private Map<String, Object> getAllClaimsFromToken(String token) {
         return decoder.decode(token).getClaims();
