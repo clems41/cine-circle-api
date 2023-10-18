@@ -1,0 +1,6 @@
+DB_PASSWORD: "postgres"
+DB_USER: "postgres"
+DB_HOST: "localhost"
+DB_PORT: "5432"
+DB_NAME: "cine-circle-api"
+JWT_SECRET: "TXmI6a52l04v2e27kh9lV8bohQBlvbKFEtAC9cIi5fMzDhCIHLESYR+0M9xntZxY4VUWzjvo5be68hHhNHmwsQ=="
