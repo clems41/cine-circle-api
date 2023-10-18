@@ -13,20 +13,14 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 
-//@Entity
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-//@Table(name = "users")
-public class User implements Serializable, UserDetails {
-    @Serial
-    private static final long serialVersionUID = 1L;
-
+@Table(name = "users")
+public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
     @Column(name = "username", nullable = false, unique = true)
     private String username;
 

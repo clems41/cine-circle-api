@@ -1,6 +1,23 @@
 # cine-circle-api
 **(!) ATTENTION :** pour fonctionner, ce projet nécessite l'installation de Docker et Docker Compose. [Documentation](https://docs.docker.com/engine/install/).
 
+## Pré-requis
+
+### Génération de clés
+
+```bash
+# create rsa key pair
+openssl genrsa -out keypair.pem 2048
+
+# extract public key
+openssl rsa -in keypair.pem -pubout -out public.pem
+
+# create private key in PKCS#8 format
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
+```
+
+Copier les clés dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
+
 ## Fonctionnement
 
 Ce projet fonctionne avec une base de données Postgres pour sauvegarder l'ensemble des données utilisateurs ainsi que les données relatives aux différents médias (films et séries).

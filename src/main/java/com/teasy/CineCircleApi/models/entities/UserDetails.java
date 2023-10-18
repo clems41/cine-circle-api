@@ -1,5 +1,6 @@
-package com.teasy.CineCircleApi.models.dtos;
+package com.teasy.CineCircleApi.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.teasy.CineCircleApi.models.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import java.util.Collection;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDetails implements org.springframework.security.core.userdetails.UserDetails {
+    @JsonIgnore
     private User user;
 
     @Override
@@ -48,6 +50,6 @@ public class UserDetails implements org.springframework.security.core.userdetail
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return user != null && user.isEnabled();
     }
 }

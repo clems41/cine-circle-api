@@ -1,7 +1,9 @@
 package com.teasy.CineCircleApi.controllers;
 
-import com.teasy.CineCircleApi.models.dtos.UserDetails;
+import com.teasy.CineCircleApi.models.entities.UserDetails;
+import com.teasy.CineCircleApi.models.dtos.requests.SignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
+import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.TokenService;
 import com.teasy.CineCircleApi.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @Slf4j
@@ -31,6 +34,22 @@ public class AuthController {
     @PostMapping("/sign-in")
     public ResponseEntity<?> createAuthenticationToken(Authentication authentication) {
         var token = tokenService.generateToken(authentication);
-        return ResponseEntity.ok().body(new SignInResponse(token, new UserDetails()));
+        var username = tokenService.getUsernameFromToken(token);
+        var user = userService.getUserByUsernameOrEmail(username, username);
+        return ResponseEntity.ok().body(new SignInResponse(token, user));
+    }
+
+    @PostMapping("/sign-up")
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest request) {
+        try {
+            return ResponseEntity.ok().body(userService.createUser(request));
+        } catch (ResponseStatusException e) {
+            return HttpErrorService.getEntityResponseFromException(e);
+        }
+    }
+
+    @PostMapping("/hello")
+    public ResponseEntity<?> hello() {
+        return ResponseEntity.ok().body("hello");
     }
 }

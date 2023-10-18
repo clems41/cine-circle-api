@@ -59,22 +59,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable) // (1)
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests( auth -> auth
-                        .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll() // (2)
-                        .anyRequest().authenticated() // (2)
+                        .requestMatchers(
+                                new AntPathRequestMatcher("/h2-console/**"),
+                                new AntPathRequestMatcher("/api/v1/auth/sign-up")
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 )
                 .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .oauth2ResourceServer((oauth2) -> oauth2
                         .jwt(Customizer.withDefaults()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // (3)
-                .httpBasic(Customizer.withDefaults()) // (4)
+                .httpBasic(Customizer.withDefaults())
                 .build();
     }
 
     @Bean
     JdbcUserDetailsManager users(DataSource dataSource) {
-        return new JdbcUserDetailsManager(dataSource);
+        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+        jdbcUserDetailsManager.setUsersByUsernameQuery("select username, password, enabled from users where username = ?");
+        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select username, username from users where username=?");
+        return jdbcUserDetailsManager;
     }
 
     @Bean
