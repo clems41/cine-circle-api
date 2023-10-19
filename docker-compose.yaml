@@ -12,6 +12,7 @@ services:
       - DB_USER=${DATABASE_USER}
       - DB_PASSWORD=${DATABASE_PASSWORD}
       - DB_NAME=${DATABASE_NAME}
+      - THE_MOVIE_DATABASE_TOKEN=${THE_MOVIE_DATABASE_TOKEN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health/ok"]
       interval: 10s

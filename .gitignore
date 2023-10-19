@@ -37,3 +37,6 @@ build/
 
 ### Docker ###
 .env
+
+### Env vars ###
+local.yaml

@@ -30,7 +30,6 @@ public class AuthController {
         this.tokenService = tokenService;
     }
 
-
     @PostMapping("/sign-in")
     public ResponseEntity<?> createAuthenticationToken(Authentication authentication) {
         var token = tokenService.generateToken(authentication);
