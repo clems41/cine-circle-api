@@ -18,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.net.ssl.SSLContext;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -45,9 +47,9 @@ public class CustomHttpClient {
         String finalUrl = httpClientSendRequest.getUrl();
         StringJoiner queryParameters = new StringJoiner("&");
         httpClientSendRequest.getQueryParameters().forEach((queryParameterKey, queryParameterValue) ->
-                queryParameters.add(String.format("%s=%s", queryParameterKey, queryParameterValue)));
+                queryParameters.add(String.format("%s=%s", queryParameterKey, URLEncoder.encode(queryParameterValue, StandardCharsets.UTF_8))));
         if (queryParameters.length() > 0) {
-            finalUrl = finalUrl.concat( String.format("?%s", queryParameters));
+            finalUrl = finalUrl.concat("?").concat(queryParameters.toString());
         }
 
         // build request with specified method

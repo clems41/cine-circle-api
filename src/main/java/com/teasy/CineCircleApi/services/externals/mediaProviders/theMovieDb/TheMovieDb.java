@@ -1,13 +1,18 @@
-package com.teasy.CineCircleApi.services.externals.mediaProviders;
+package com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.dtos.requests.SearchMediaRequest;
-import com.teasy.CineCircleApi.models.entities.MediaType;
+import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.externals.theMovieDb.Genre;
+import com.teasy.CineCircleApi.models.externals.theMovieDb.GenreMovieListResponse;
 import com.teasy.CineCircleApi.models.externals.theMovieDb.SearchResponse;
 import com.teasy.CineCircleApi.models.externals.theMovieDb.SearchResult;
 import com.teasy.CineCircleApi.models.utils.CustomHttpClientSendRequest;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
+import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +26,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 @Service
-@ConfigurationProperties(prefix = "the-movie-db")
 @Slf4j
 public class TheMovieDb implements MediaProvider {
+    private final static String stringArrayDelimiter = ",";
     private final static String baseUrl = "https://api.themoviedb.org/3";
     private final static String getMediaSuffix = "movie";
     private final static String searchMediaSuffix = "search/multi";
@@ -35,6 +42,11 @@ public class TheMovieDb implements MediaProvider {
     private final static String languageValue = "fr-FR";
     private final static String tokenPrefix = "Bearer";
     private final static String imageUrlPrefix = "https://image.tmdb.org/t/p/w500";
+
+    private List<Genre> genres;
+
+    @Value("${the-movie-db.genres-input-file-path}")
+    private String genresInputFilePath;
 
     @Value("${the-movie-db.token}")
     private String token;
@@ -62,15 +74,18 @@ public class TheMovieDb implements MediaProvider {
             return new ArrayList<>();
         }
 
+        // get genres list before mapping result
+        setGenresFromFile();
+
         List<MediaDto> result = new ArrayList<>();
         response.getResults().forEach(searchResult -> {
             // store result in database with internalId if not already exists
             var existingMedia = findMediaFromSearchResult(searchResult);
             if (existingMedia.isEmpty()) {
                  var newMedia = mediaRepository.save(fromSearchResultToMediaEntity(searchResult));
-                 result.add(fromMediaEntityToMediaShortDto(newMedia));
+                 result.add(fromMediaEntityToMediaDto(newMedia));
             } else {
-                result.add(fromMediaEntityToMediaShortDto(existingMedia.get()));
+                result.add(fromMediaEntityToMediaDto(existingMedia.get()));
             }
 
         });
@@ -78,21 +93,37 @@ public class TheMovieDb implements MediaProvider {
     }
 
     @Override
-    public MediaDto getMedia(Long internalId) throws ResponseStatusException {
+    public MediaDto getMedia(Long id) throws ResponseStatusException {
         // build example matcher with id
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
         var exampleMedia = new Media();
-        exampleMedia.setInternalId(internalId);
+        exampleMedia.setId(id);
 
         // get media from database
         var media = mediaRepository
                 .findOne(Example.of(exampleMedia, matcher))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        String.format("media with internalId %d cannot be found", internalId)));
-        return fromMediaEntityToMediaShortDto(media);
+                        String.format("media with id %d cannot be found", id)));
+        return fromMediaEntityToMediaDto(media);
+    }
+
+    private void setGenresFromFile() {
+        if (genres != null) {
+            return;
+        }
+        try(InputStream in = Thread.currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream(genresInputFilePath)) {
+            ObjectMapper mapper = new ObjectMapper()
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            GenreMovieListResponse result = mapper.readValue(in, GenreMovieListResponse.class);
+            genres = result.getGenres();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Optional<Media> findMediaFromSearchResult(SearchResult searchResult) {
@@ -102,39 +133,62 @@ public class TheMovieDb implements MediaProvider {
                 .withIgnoreNullValues();
         var exampleMedia = new Media();
         exampleMedia.setExternalId(String.valueOf(searchResult.getId()));
-        exampleMedia.setMediaProvider(com.teasy.CineCircleApi.models.entities.MediaProvider.THE_MOVIE_DATABASE);
+        exampleMedia.setMediaProvider(com.teasy.CineCircleApi.models.enums.MediaProvider.THE_MOVIE_DATABASE.name());
 
         return mediaRepository
                 .findOne(Example.of(exampleMedia, matcher));
     }
 
     private Media fromSearchResultToMediaEntity(SearchResult searchResult) {
-        var media = new Media();
+        var mapper = new ObjectMapper()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        Media media = mapper.convertValue(searchResult, Media.class);
         switch (searchResult.getMediaType()) {
-            case "tv" -> media.setMediaType(MediaType.TV_SHOW);
-            case "movie" -> media.setMediaType(MediaType.MOVIE);
+            case "tv" -> media.setMediaType(MediaType.TV_SHOW.name());
+            case "movie" -> media.setMediaType(MediaType.MOVIE.name());
         }
-        media.setSynopsis(searchResult.getOverview());
-        media.setTitle(searchResult.getTitle());
-        media.setOriginalTitle(searchResult.getOriginalTitle());
+        media.setOriginalTitle(searchResult.getOriginalTitle() != null ? searchResult.getOriginalTitle() : searchResult.getOriginalName());
+        media.setTitle(searchResult.getTitle() != null ? searchResult.getTitle() : searchResult.getName());
         media.setExternalId(String.valueOf(searchResult.getId()));
-        media.setReleaseDate(searchResult.getReleaseDate());
-        media.setMediaProvider(com.teasy.CineCircleApi.models.entities.MediaProvider.THE_MOVIE_DATABASE);
-        media.setPosterUrl(getCompletePosterUrl(searchResult.getPosterPath()));
+        media.setMediaProvider(com.teasy.CineCircleApi.models.enums.MediaProvider.THE_MOVIE_DATABASE.name());
+        media.setPosterUrl(getCompleteImageUrl(searchResult.getPosterPath()));
+        media.setBackdropUrl(getCompleteImageUrl(searchResult.getBackdropPath()));
+        media.setReleaseDate(searchResult.getReleaseDate() != null ? searchResult.getReleaseDate() : searchResult.getFirstAirDate());
+        media.setOriginalLanguage(searchResult.getOriginalLanguage());
+        media.setVoteAverage(searchResult.getVoteAverage());
+        media.setVoteCount(searchResult.getVoteCount());
+        if (searchResult.getOriginCountry() != null) {
+            media.setOriginCountry(String.join(stringArrayDelimiter, searchResult.getOriginCountry()));
+        }
+        if (searchResult.getGenreIds() != null) {
+            media.setGenres(String.join(stringArrayDelimiter,
+                    searchResult
+                            .getGenreIds()
+                            .stream()
+                            .map(this::getGenreFromId)
+                            .filter(s -> !s.isEmpty())
+                            .toList()
+            ));
+        }
         return media;
     }
 
-    private String getCompletePosterUrl(String posterUrl) {
+    private String getGenreFromId(Long genreId) {
+        return genres.stream()
+                .filter(genre -> Objects.equals(genre.getId(), genreId))
+                .findAny()
+                .map(Genre::getName)
+                .orElse("");
+    }
+
+    private String getCompleteImageUrl(String posterUrl) {
         return String.format("%s%s", imageUrlPrefix, posterUrl);
     }
 
-    private MediaDto fromMediaEntityToMediaShortDto(Media media) {
-        return new MediaDto(
-                media.getInternalId(),
-                media.getTitle(),
-                media.getOriginalTitle(),
-                media.getPosterUrl()
-        );
+    private MediaDto fromMediaEntityToMediaDto(Media media) {
+        var mapper = new ObjectMapper()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        return mapper.convertValue(media, MediaDto.class);
     }
 
     private Map<String, String> getDefaultQueryParameters() {

@@ -4,7 +4,7 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.requests.SearchMediaRequest;
 import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.TheMovieDb;
+import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDb;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

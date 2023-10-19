@@ -28,7 +28,7 @@ public class SearchResult {
     @JsonProperty("original_language")
     private String originalLanguage;
     @JsonProperty("genre_ids")
-    private List<Integer> genreIds;
+    private List<Long> genreIds;
     private Float popularity;
     @JsonProperty("first_air_date")
     private Date firstAirDate;

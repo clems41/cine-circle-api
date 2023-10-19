@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(RsaKeyProperties.class)
+@EnableConfigurationProperties({RsaKeyProperties.class})
 public class CineCircleApiApplication {
 
 	public static void main(String[] args) {

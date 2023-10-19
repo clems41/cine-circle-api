@@ -16,6 +16,15 @@ openssl rsa -in keypair.pem -pubout -out public.pem
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
 ```
 
+### Mettre à jour la liste des genres TheMovieDatabase
+
+```bash
+curl --request GET \
+     --url 'https://api.themoviedb.org/3/genre/movie/list?language=fr' \
+     --header 'Authorization: Bearer ${TOKEN}' \
+     --header 'accept: application/json'
+```
+
 Copier les clés dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
 
 ## Fonctionnement
