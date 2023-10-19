@@ -27,9 +27,18 @@ public class MediaController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> createUser(Pageable page, SearchMediaRequest request) {
+    public ResponseEntity<?> searchMedias(Pageable page, SearchMediaRequest request) {
         try {
             return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request));
+        } catch (ResponseStatusException e) {
+            return HttpErrorService.getEntityResponseFromException(e);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getMedia(final @PathVariable Long id) {
+        try {
+            return ResponseEntity.ok().body(mediaProvider.getMedia(id));
         } catch (ResponseStatusException e) {
             return HttpErrorService.getEntityResponseFromException(e);
         }

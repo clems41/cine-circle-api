@@ -29,6 +29,7 @@ public class Media {
 
     private String originalTitle;
 
+    @Column(columnDefinition = "TEXT")
     private String synopsis;
 
     private String posterUrl;

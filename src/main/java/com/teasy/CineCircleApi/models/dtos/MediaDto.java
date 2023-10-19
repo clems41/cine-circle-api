@@ -1,6 +1,6 @@
 package com.teasy.CineCircleApi.models.dtos;
 
-public record MediaShortDto(
+public record MediaDto(
         Long id,
         String title,
         String originalTitle,
