@@ -2,7 +2,6 @@ package com.teasy.CineCircleApi.services.utils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.teasy.CineCircleApi.models.externals.theMovieDb.SearchResponse;
 import com.teasy.CineCircleApi.models.utils.CustomHttpClientSendRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.*;
@@ -10,7 +9,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,7 +22,6 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.StringJoiner;
 
 @Slf4j

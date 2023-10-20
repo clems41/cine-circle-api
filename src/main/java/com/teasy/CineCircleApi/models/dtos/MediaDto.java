@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.models.dtos;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.teasy.CineCircleApi.models.enums.MediaType;
+import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,4 +29,6 @@ public class MediaDto{
     private Float voteAverage;
     private Integer voteCount;
     private String originCountry;
+    private String actors;
+    private String director;
 }

@@ -57,4 +57,12 @@ public class Media {
     private Integer voteCount;
 
     private String originCountry;
+
+    private Boolean completed;
+
+    @Column(columnDefinition = "TEXT")
+    private String actors;
+
+    @Column(columnDefinition = "TEXT")
+    private String director;
 }

@@ -19,10 +19,17 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out priv
 ### Mettre à jour la liste des genres TheMovieDatabase
 
 ```bash
+# movies
 curl --request GET \
      --url 'https://api.themoviedb.org/3/genre/movie/list?language=fr' \
      --header 'Authorization: Bearer ${TOKEN}' \
      --header 'accept: application/json'
+
+# tv shows
+ curl --request GET \
+ --url 'https://api.themoviedb.org/3/genre/tv/list?language=en' \
+ --header 'Authorization: Bearer ${TOKEN}' \
+ --header 'accept: application/json'
 ```
 
 Copier les clés dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
