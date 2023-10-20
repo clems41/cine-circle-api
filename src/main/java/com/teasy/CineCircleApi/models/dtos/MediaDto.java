@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @Getter
@@ -23,7 +24,7 @@ public class MediaDto{
     private String genres;
     private String mediaType;
     @JsonFormat(pattern = "dd/MM/yyyy")
-    private Date releaseDate;
+    private LocalDate releaseDate;
     private String originalLanguage;
     private Float popularity;
     private Float voteAverage;
