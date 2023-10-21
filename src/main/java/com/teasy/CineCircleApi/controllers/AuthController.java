@@ -1,6 +1,7 @@
 package com.teasy.CineCircleApi.controllers;
 
 import com.teasy.CineCircleApi.models.dtos.requests.SignUpRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.CustomErrorResponse;
 import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
 import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.TokenService;
@@ -8,6 +9,7 @@ import com.teasy.CineCircleApi.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,13 +49,21 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/hello")
+    @GetMapping("/me")
     public ResponseEntity<?> hello() {
-        return ResponseEntity.ok().body(
-                String.format("hello authenticated user %s",
-                        SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getName()));
+        try {
+            var usernameFromToken = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+            return ResponseEntity.ok().body(userService.getUserByUsername(usernameFromToken));
+        } catch (ResponseStatusException e) {
+            // here we want to return 401 if user is not found
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+            } else {
+                return HttpErrorService.getEntityResponseFromException(e);
+            }
+        }
     }
 }
