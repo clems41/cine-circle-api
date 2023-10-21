@@ -1,7 +1,7 @@
 package com.teasy.CineCircleApi.controllers;
 
 
-import com.teasy.CineCircleApi.models.dtos.requests.SearchMediaRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDb;
@@ -27,7 +27,7 @@ public class MediaController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> searchMedias(Pageable page, SearchMediaRequest request) {
+    public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request) {
         try {
             return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request));
         } catch (ResponseStatusException e) {

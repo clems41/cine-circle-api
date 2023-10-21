@@ -1,7 +1,7 @@
 package com.teasy.CineCircleApi.controllers;
 
-import com.teasy.CineCircleApi.models.dtos.requests.SignUpRequest;
-import com.teasy.CineCircleApi.models.dtos.responses.CustomErrorResponse;
+import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
 import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.TokenService;
@@ -41,7 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest request) {
+    public ResponseEntity<?> createUser(@RequestBody AuthSignUpRequest request) {
         try {
             return ResponseEntity.ok().body(userService.createUser(request));
         } catch (ResponseStatusException e) {
@@ -50,13 +50,31 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> hello() {
+    public ResponseEntity<?> me() {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()
                     .getAuthentication()
                     .getName();
             return ResponseEntity.ok().body(userService.getUserByUsername(usernameFromToken));
+        } catch (ResponseStatusException e) {
+            // here we want to return 401 if user is not found
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+            } else {
+                return HttpErrorService.getEntityResponseFromException(e);
+            }
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest) {
+        try {
+            var usernameFromToken = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+            return ResponseEntity.ok().body(userService.resetPassword(usernameFromToken, authResetPasswordRequest));
         } catch (ResponseStatusException e) {
             // here we want to return 401 if user is not found
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {

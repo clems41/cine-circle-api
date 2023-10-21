@@ -4,10 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
-import com.teasy.CineCircleApi.models.dtos.requests.SearchMediaRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.enums.MediaType;
-import com.teasy.CineCircleApi.models.externals.TheMovieDbMedia;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
@@ -28,12 +27,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Pageable;
-import org.springframework.format.datetime.DateFormatter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -60,10 +57,10 @@ public class TheMovieDb implements MediaProvider {
     }
 
     @Override
-    public List<MediaDto> searchMedia(Pageable pageable, SearchMediaRequest searchMediaRequest) {
+    public List<MediaDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest) {
         initTmdbApi();
         var multiResponse = tmdbApi.getSearch()
-                .searchMulti(searchMediaRequest.query(), language, pageable.getPageNumber())
+                .searchMulti(mediaSearchRequest.query(), language, pageable.getPageNumber())
                 .getResults();
         List<MediaDto> result = new ArrayList<>();
         multiResponse.forEach(multi -> {
