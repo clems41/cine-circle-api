@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.controllers;
 
+import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
@@ -44,6 +45,19 @@ public class AuthController {
     public ResponseEntity<?> createUser(@RequestBody AuthSignUpRequest request) {
         try {
             return ResponseEntity.ok().body(userService.createUser(request));
+        } catch (ResponseStatusException e) {
+            return HttpErrorService.getEntityResponseFromException(e);
+        }
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<?> updateUser(@RequestBody AuthMeUpdateRequest request) {
+        try {
+            var usernameFromToken = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+            return ResponseEntity.ok().body(userService.updateUser(request, usernameFromToken));
         } catch (ResponseStatusException e) {
             return HttpErrorService.getEntityResponseFromException(e);
         }

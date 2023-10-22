@@ -5,6 +5,7 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
+import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
@@ -104,6 +105,17 @@ public class UserService {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND,
                                 String.format("user cannot be found with id %d", id)));
+        return entityToDto(user);
+    }
+
+    public UserDto updateUser(AuthMeUpdateRequest request, String username) throws ResponseStatusException {
+        var user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                String.format("user cannot be found with username %s", username)));
+        user.setDisplayName(request.getDisplayName());
+        user = userRepository.save(user);
         return entityToDto(user);
     }
 
