@@ -34,10 +34,10 @@ public class AuthController {
 
     @PostMapping("/sign-in")
     public ResponseEntity<?> createAuthenticationToken(Authentication authentication) {
-        var token = tokenService.generateToken(authentication);
-        var username = tokenService.getUsernameFromToken(token);
+        var jwtToken = tokenService.generateToken(authentication);
+        var username = tokenService.getUsernameFromToken(jwtToken.tokenString());
         var user = userService.getUserByUsernameOrEmail(username, username);
-        return ResponseEntity.ok().body(new SignInResponse(token, user));
+        return ResponseEntity.ok().body(new SignInResponse(jwtToken, user));
     }
 
     @PostMapping("/sign-up")
@@ -56,7 +56,7 @@ public class AuthController {
                     .getContext()
                     .getAuthentication()
                     .getName();
-            return ResponseEntity.ok().body(userService.getUserByUsername(usernameFromToken));
+            return ResponseEntity.ok().body(userService.getUserFullInfo(usernameFromToken));
         } catch (ResponseStatusException e) {
             // here we want to return 401 if user is not found
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {

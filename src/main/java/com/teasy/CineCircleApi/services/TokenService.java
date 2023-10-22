@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.services;
 
+import com.teasy.CineCircleApi.models.dtos.JwtTokenDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
@@ -24,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class TokenService {
     private final JwtEncoder encoder;
     private JwtDecoder decoder;
+    private static final Integer hoursBeforeExpiration = 24;
 
     @Autowired
     public TokenService(JwtEncoder encoder,
@@ -32,19 +36,22 @@ public class TokenService {
         this.decoder = decoder;
     }
 
-    public String generateToken(Authentication authentication) {
+    public JwtTokenDto generateToken(Authentication authentication) {
         Instant now = Instant.now();
+        var expirationDate = now.plus(hoursBeforeExpiration, ChronoUnit.HOURS);
         String scope = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                .expiresAt(expirationDate)
                 .subject(authentication.getName())
                 .claim("scope", scope)
                 .build();
-        return this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+        var tokenString = this.encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+
+        return new JwtTokenDto(tokenString, Date.from(expirationDate));
     }
 
     //retrieve username from jwt token

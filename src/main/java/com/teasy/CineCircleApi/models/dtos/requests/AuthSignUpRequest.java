@@ -7,5 +7,6 @@ import lombok.NonNull;
 public record AuthSignUpRequest(
         @NonNull String username,
         @NonNull @Email(regexp = ".+[@].+[\\.].+") String email,
-        @NonNull @Length(min = 6) String password
+        @NonNull @Length(min = 6) String password,
+        @NonNull @Length(min = 4, max = 20) String displayName
 ) {}

@@ -36,10 +36,14 @@ public class User {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled;
 
-    public User(String username, String email, String hashPassword) {
+    @Column(name = "display_name")
+    private String displayName;
+
+    public User(String username, String email, String hashPassword, String displayName) {
         this.username = username;
         this.email = email;
         this.hashPassword = hashPassword;
+        this.displayName = displayName;
         this.enabled = true;
     }
 }
