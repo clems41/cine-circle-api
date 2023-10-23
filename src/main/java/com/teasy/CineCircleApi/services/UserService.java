@@ -5,13 +5,14 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
-import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.*;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.entities.User;
+import com.teasy.CineCircleApi.models.utils.SendEmailRequest;
 import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.services.utils.EmailService;
+import jakarta.mail.MessagingException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -22,16 +23,31 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
 @Service
+@Slf4j
 public class UserService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
+    EmailService emailService;
+
+    private final static String resetPasswordUrlKey = "resetPasswordUrl";
+    private final static String usernameKey = "username";
+    private final static String tokenKey = "token";
+    private final static String resetPasswordMailSubject = "Réinitialisation de votre mot de passe";
+    private final static String resetPasswordTemplateName = "reset-password.html";
 
     @Autowired
     public UserService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public UserDto createUser(AuthSignUpRequest request) throws ResponseStatusException {
@@ -90,6 +106,25 @@ public class UserService {
         return entityToDto(user);
     }
 
+    public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws ResponseStatusException {
+        var user = userRepository
+                .findByEmail(userResetPasswordRequest.email())
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                String.format("user cannot be found with email %s", userResetPasswordRequest.email())));
+        // check if token ius correct
+        if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    String.format("token for user with email %s is incorrect", userResetPasswordRequest.email()));
+        }
+
+        // update password
+        user.setHashPassword(passwordEncoder.encode(userResetPasswordRequest.newPassword()));
+        user.setResetPasswordToken(null);
+        userRepository.save(user);
+        return entityToDto(user);
+    }
+
     public UserFullInfoDto getUserByUsernameOrEmail(String username, String email) throws ResponseStatusException {
         var user = userRepository
                 .findByUsernameOrEmail(username, email)
@@ -138,6 +173,36 @@ public class UserService {
         var users = userRepository
                 .findAll(Example.of(exampleUser, matcher), pageable);
         return users.map(this::entityToDto);
+    }
+
+    public void sendResetPasswordEmail(String email) {
+        var result = userRepository.findByEmail(email);
+        // if user cannot be found, we should not let requester know it, it will avoid anyone knowing that an email exists in database
+        if (result.isEmpty()) {
+            return;
+        }
+        var user = result.get();
+
+        // generate token that will be used to reset password
+        var token = UUID.randomUUID().toString();
+        user.setResetPasswordToken(token);
+        userRepository.save(user);
+
+        // send email if user exists
+        Map<String, String> templateValues = new HashMap<>();
+        templateValues.put(usernameKey, user.getUsername());
+        templateValues.put(resetPasswordUrlKey, "TODO");
+        templateValues.put(tokenKey, token);
+        SendEmailRequest sendEmailRequest = new SendEmailRequest(
+                resetPasswordMailSubject,
+                email,
+                resetPasswordTemplateName,
+                templateValues);
+        try {
+            emailService.sendEmail(sendEmailRequest);
+        } catch (MessagingException e) {
+            log.error("cannot send reset password email : {}", e.getMessage());
+        }
     }
 
     private Boolean usernameAlreadyExists(String username) {

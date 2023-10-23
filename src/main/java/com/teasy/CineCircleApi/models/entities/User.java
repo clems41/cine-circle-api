@@ -36,8 +36,11 @@ public class User {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled;
 
-    @Column(name = "display_name")
+    @Column(name = "display_name", nullable = false)
     private String displayName;
+
+    @Column(name = "reset_password_token")
+    private String resetPasswordToken;
 
     public User(String username, String email, String hashPassword, String displayName) {
         this.username = username;

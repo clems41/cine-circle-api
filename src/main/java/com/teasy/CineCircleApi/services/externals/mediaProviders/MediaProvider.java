@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface MediaProvider {
-    public List<MediaDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest);
+    List<MediaDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest);
 
-    public MediaDto getMedia(Long internalId);
+    MediaDto getMedia(Long internalId);
 }

@@ -56,7 +56,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests( auth -> auth
                         .requestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
-                                new AntPathRequestMatcher("/api/v1/auth/sign-up")
+                                new AntPathRequestMatcher("/api/v1/auth/sign-up"),
+                                new AntPathRequestMatcher("/api/v1/users/reset-password")
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -1,12 +1,11 @@
 package com.teasy.CineCircleApi.controllers;
 
 
-import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.UserResetPasswordRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.UserSendResetPasswordEmailRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
 import com.teasy.CineCircleApi.services.HttpErrorService;
 import com.teasy.CineCircleApi.services.UserService;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDb;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,25 @@ public class UserController {
     public ResponseEntity<?> searchUsers(Pageable page, UserSearchRequest request) {
         try {
             return ResponseEntity.ok().body(userService.searchUsers(page, request));
+        } catch (ResponseStatusException e) {
+            return HttpErrorService.getEntityResponseFromException(e);
+        }
+    }
+
+    @GetMapping("/reset-password")
+    public ResponseEntity<?> sendResetPasswordEmail(UserSendResetPasswordEmailRequest userSendResetPasswordEmailRequest) {
+        try {
+            userService.sendResetPasswordEmail(userSendResetPasswordEmailRequest.email());
+            return ResponseEntity.ok().body("");
+        } catch (ResponseStatusException e) {
+            return HttpErrorService.getEntityResponseFromException(e);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody UserResetPasswordRequest userResetPasswordRequest) {
+        try {
+            return ResponseEntity.ok().body(userService.resetPasswordWithToken(userResetPasswordRequest));
         } catch (ResponseStatusException e) {
             return HttpErrorService.getEntityResponseFromException(e);
         }
