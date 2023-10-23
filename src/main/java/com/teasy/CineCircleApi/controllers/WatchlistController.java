@@ -43,7 +43,7 @@ public class WatchlistController {
     }
 
     @PutMapping("/{mediaId}")
-    public ResponseEntity<?> addToWatchlist(@PathVariable Long mediaId) {
+    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") Long mediaId) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()
@@ -57,7 +57,7 @@ public class WatchlistController {
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<?> removeFromWatchlist(@PathVariable Long mediaId) {
+    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") Long mediaId) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()

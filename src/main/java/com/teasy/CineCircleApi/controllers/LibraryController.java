@@ -40,7 +40,7 @@ public class LibraryController {
     }
 
     @PutMapping("/{mediaId}")
-    public ResponseEntity<?> addToLibrary(@PathVariable Long mediaId) {
+    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") Long mediaId) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()
@@ -54,7 +54,7 @@ public class LibraryController {
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<?> removeFromLibrary(@PathVariable Long mediaId) {
+    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") Long mediaId) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()

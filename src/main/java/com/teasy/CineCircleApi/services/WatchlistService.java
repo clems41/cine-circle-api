@@ -34,19 +34,8 @@ public class WatchlistService {
     }
 
     public void addToWatchlist(String username, Long mediaId) throws ResponseStatusException {
-        // check if user exist
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("user with username %s cannot be found", username)));
-
-        // check if media exists
-        var media = mediaRepository
-                .findById(mediaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("media with id %d cannot be found", mediaId)));
+        var user = getUserAndThrownIfNotExist(username);
+        var media = getMediaAndThrownIfNotExist(mediaId);
 
         // add to watchlist if both exists
         var watchlist = new Watchlist(user, media);
@@ -54,19 +43,8 @@ public class WatchlistService {
     }
 
     public void removeFromWatchlist(String username, Long mediaId) {
-        // check if user exist
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("user with username %s cannot be found", username)));
-
-        // check if media exists
-        var media = mediaRepository
-                .findById(mediaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("media with id %d cannot be found", mediaId)));
+        var user = getUserAndThrownIfNotExist(username);
+        var media = getMediaAndThrownIfNotExist(mediaId);
 
         // get existing watchlist record
         ExampleMatcher matcher = ExampleMatcher
@@ -84,13 +62,7 @@ public class WatchlistService {
     }
 
     public Page<MediaDto> getWatchlist(Pageable pageable, String username) {
-        // check if user exist
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("user with username %s cannot be found", username)));
-
+        var user = getUserAndThrownIfNotExist(username);
 
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -100,6 +72,24 @@ public class WatchlistService {
 
         var records = watchlistRepository.findAll(Example.of(matchingWatchlist, matcher), pageable);
         return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
+    }
+
+    private User getUserAndThrownIfNotExist(String username) {
+        // check if user exist
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        String.format("user with username %s cannot be found", username)));
+    }
+
+    private Media getMediaAndThrownIfNotExist(Long mediaId) {
+        // check if media exists
+        return mediaRepository
+                .findById(mediaId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        String.format("media with id %d cannot be found", mediaId)));
     }
 
     private MediaDto fromMediaEntityToMediaDto(Media media) {
