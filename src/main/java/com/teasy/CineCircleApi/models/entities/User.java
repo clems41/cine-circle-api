@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -41,6 +42,9 @@ public class User {
 
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
+
+    @OneToMany(mappedBy = "user")
+    Set<Watchlist> watchlist;
 
     public User(String username, String email, String hashPassword, String displayName) {
         this.username = username;
