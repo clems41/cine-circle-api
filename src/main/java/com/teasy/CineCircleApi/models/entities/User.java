@@ -43,9 +43,6 @@ public class User {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
-    @OneToMany(mappedBy = "user")
-    Set<Watchlist> watchlist;
-
     public User(String username, String email, String hashPassword, String displayName) {
         this.username = username;
         this.email = email;
