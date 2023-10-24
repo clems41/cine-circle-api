@@ -2,9 +2,9 @@ package com.teasy.CineCircleApi.controllers;
 
 
 import com.teasy.CineCircleApi.models.dtos.requests.UserResetPasswordRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.UserSendResetPasswordEmailRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
-import com.teasy.CineCircleApi.services.HttpErrorService;
+import com.teasy.CineCircleApi.models.dtos.requests.UserSendResetPasswordEmailRequest;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @Slf4j
@@ -31,8 +30,8 @@ public class UserController {
     public ResponseEntity<?> searchUsers(Pageable page, UserSearchRequest request) {
         try {
             return ResponseEntity.ok().body(userService.searchUsers(page, request));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -41,8 +40,8 @@ public class UserController {
         try {
             userService.sendResetPasswordEmail(userSendResetPasswordEmailRequest.email());
             return ResponseEntity.ok().body("");
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -50,8 +49,8 @@ public class UserController {
     public ResponseEntity<?> resetPassword(@RequestBody UserResetPasswordRequest userResetPasswordRequest) {
         try {
             return ResponseEntity.ok().body(userService.resetPasswordWithToken(userResetPasswordRequest));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -59,8 +58,8 @@ public class UserController {
     public ResponseEntity<?> getMedia(final @PathVariable Long id) {
         try {
             return ResponseEntity.ok().body(userService.getUser(id));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 }

@@ -7,19 +7,17 @@ import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.entities.Watchlist;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
-import com.teasy.CineCircleApi.repositories.WatchlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class LibraryService {
@@ -35,28 +33,16 @@ public class LibraryService {
         this.userRepository = userRepository;
     }
 
-    public void addToLibrary(String username, Long mediaId) throws ResponseStatusException {
-        var user = getUserAndThrownIfNotExist(username);
-        var media = getMediaAndThrownIfNotExist(mediaId);
-
-        // add to watchlist if both exists
-        var libraryRecord = new Library(user, media);
-        libraryRepository.save(libraryRecord);
+    public void addToLibrary(String username, Long mediaId) throws CustomException {
+        libraryRepository.save(newLibrary(username, mediaId));
     }
 
     public void removeFromLibrary(String username, Long mediaId) {
-        var user = getUserAndThrownIfNotExist(username);
-        var media = getMediaAndThrownIfNotExist(mediaId);
-
         // get existing library record
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
-        var matchingUser = new User();
-        matchingUser.setId(user.getId());
-        var matchingMedia = new Media();
-        matchingMedia.setId(media.getId());
-        var matchingLibrary = new Library(matchingUser, matchingMedia);
+        var matchingLibrary = newLibrary(username, mediaId);
         matchingLibrary.setAddedAt(null);
         var existingRecord = libraryRepository.findOne(Example.of(matchingLibrary, matcher));
 
@@ -64,7 +50,7 @@ public class LibraryService {
     }
 
     public Page<MediaDto> getLibrary(Pageable pageable, String username) {
-        var user = getUserAndThrownIfNotExist(username);
+        var user = getUserWithUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -76,22 +62,24 @@ public class LibraryService {
         return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));
     }
 
-    private User getUserAndThrownIfNotExist(String username) {
+    private Library newLibrary(String username, Long mediaId) {
+        var user = getUserWithUsernameOrElseThrow(username);
+        var media = getMediaWithIdOrElseThrow(mediaId);
+        return new Library(user, media);
+    }
+
+    private User getUserWithUsernameOrElseThrow(String username) {
         // check if user exist
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("user with username %s cannot be found", username)));
+                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Media getMediaAndThrownIfNotExist(Long mediaId) {
+    private Media getMediaWithIdOrElseThrow(Long mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("media with id %d cannot be found", mediaId)));
+                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
     }
 
     private MediaDto fromMediaEntityToMediaDto(Media media) {

@@ -1,9 +1,8 @@
 package com.teasy.CineCircleApi.controllers;
 
 
-import com.teasy.CineCircleApi.services.HttpErrorService;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.LibraryService;
-import com.teasy.CineCircleApi.services.WatchlistService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @Slf4j
@@ -34,8 +32,8 @@ public class LibraryController {
                     .getAuthentication()
                     .getName();
             return ResponseEntity.ok().body(libraryService.getLibrary(page, usernameFromToken));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -48,8 +46,8 @@ public class LibraryController {
                     .getName();
             libraryService.addToLibrary(usernameFromToken, mediaId);
             return ResponseEntity.ok().body("");
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -62,8 +60,8 @@ public class LibraryController {
                     .getName();
             libraryService.removeFromLibrary(usernameFromToken, mediaId);
             return ResponseEntity.ok().body("");
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 }

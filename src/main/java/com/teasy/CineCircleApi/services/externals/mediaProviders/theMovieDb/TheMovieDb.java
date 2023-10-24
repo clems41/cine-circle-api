@@ -7,6 +7,8 @@ import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
@@ -88,7 +90,7 @@ public class TheMovieDb implements MediaProvider {
     }
 
     @Override
-    public MediaDto getMedia(Long id) throws ResponseStatusException {
+    public MediaDto getMedia(Long id) throws CustomException {
         // build example matcher with id
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -99,9 +101,7 @@ public class TheMovieDb implements MediaProvider {
         // get media from database
         var media = mediaRepository
                 .findOne(Example.of(exampleMedia, matcher))
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        String.format("media with id %d cannot be found", id)));
+                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(id));
         if (!media.getCompleted()) {
             completeMedia(media);
         }

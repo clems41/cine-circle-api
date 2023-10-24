@@ -2,7 +2,7 @@ package com.teasy.CineCircleApi.controllers;
 
 
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
-import com.teasy.CineCircleApi.services.HttpErrorService;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDb;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @Slf4j
@@ -30,8 +29,8 @@ public class MediaController {
     public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request) {
         try {
             return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 
@@ -39,8 +38,8 @@ public class MediaController {
     public ResponseEntity<?> getMedia(final @PathVariable Long id) {
         try {
             return ResponseEntity.ok().body(mediaProvider.getMedia(id));
-        } catch (ResponseStatusException e) {
-            return HttpErrorService.getEntityResponseFromException(e);
+        } catch (CustomException e) {
+            return e.getEntityResponse();
         }
     }
 }

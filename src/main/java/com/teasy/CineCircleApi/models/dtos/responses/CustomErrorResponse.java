@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.models.dtos.responses;
 
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,12 +14,14 @@ import java.util.Arrays;
 @Getter
 public class CustomErrorResponse {
     private String errorMessage;
-    private String errorStack;
+    private String errorCode;
+    private StackTraceElement[] errorStack;
 
-    public CustomErrorResponse(ResponseStatusException e) {
+    public CustomErrorResponse(CustomException e) {
         if (e != null) {
-            this.errorMessage = e.getMessage();
-            this.errorStack = Arrays.toString(e.getStackTrace());
+            this.errorCode = e.getReason();
+            this.errorMessage = e.getCause().getMessage();
+            this.errorStack = e.getStackTrace();
         }
     }
 }

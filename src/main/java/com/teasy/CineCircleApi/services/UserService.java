@@ -5,9 +5,11 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
-import com.teasy.CineCircleApi.models.dtos.requests.*;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
+import com.teasy.CineCircleApi.models.dtos.requests.*;
 import com.teasy.CineCircleApi.models.entities.User;
+import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.models.utils.SendEmailRequest;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.services.utils.EmailService;
@@ -18,10 +20,8 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,54 +50,35 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    public UserDto createUser(AuthSignUpRequest request) throws ResponseStatusException {
+    public UserDto createUser(AuthSignUpRequest request) throws CustomException {
         if (usernameAlreadyExists(request.username())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    String.format("username %s already exists", request.username()));
+            throw CustomExceptionHandler.userWithUsernameAlreadyExists(request.username());
         }
 
         if (emailAlreadyExists(request.email())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    String.format("email %s already exists", request.email()));
+            throw CustomExceptionHandler.userWithEmailAlreadyExists(request.email());
         }
 
-        var user = new User(request.username(),
+        var user = new User(
+                request.username(),
                 request.email(),
                 passwordEncoder.encode(request.password()),
-                request.displayName());
+                request.displayName()
+        );
         userRepository.save(user);
 
         return entityToDto(user);
     }
 
-    public UserDto getUserByUsername(String username) throws ResponseStatusException {
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with username %s", username)));
-        return entityToDto(user);
+    public UserFullInfoDto getUserFullInfo(String username) throws CustomException {
+        return entityToFullInfoDto(getUserWithUsernameOrElseThrow(username));
     }
 
-    public UserFullInfoDto getUserFullInfo(String username) throws ResponseStatusException {
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with username %s", username)));
-        return entityToFullInfoDto(user);
-    }
-
-    public UserDto resetPassword(String username, AuthResetPasswordRequest authResetPasswordRequest) throws ResponseStatusException {
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with username %s", username)));
+    public UserDto resetPassword(String username, AuthResetPasswordRequest authResetPasswordRequest) throws CustomException {
+        var user = getUserWithUsernameOrElseThrow(username);
         // check if oldPassword i correct
         if (!passwordEncoder.matches(authResetPasswordRequest.oldPassword(), user.getHashPassword())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    String.format("oldPassword for user with username %s is incorrect", username));
+            throw CustomExceptionHandler.userWithUsernameBadCredentials(username);
         }
 
         // update password
@@ -106,16 +87,11 @@ public class UserService {
         return entityToDto(user);
     }
 
-    public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws ResponseStatusException {
-        var user = userRepository
-                .findByEmail(userResetPasswordRequest.email())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with email %s", userResetPasswordRequest.email())));
+    public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws CustomException {
+        var user = getUserWithEmailOrElseThrow(userResetPasswordRequest.email());
         // check if token ius correct
         if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    String.format("token for user with email %s is incorrect", userResetPasswordRequest.email()));
+            throw CustomExceptionHandler.userWithEmailBadCredentials(userResetPasswordRequest.email());
         }
 
         // update password
@@ -125,39 +101,25 @@ public class UserService {
         return entityToDto(user);
     }
 
-    public UserFullInfoDto getUserByUsernameOrEmail(String username, String email) throws ResponseStatusException {
-        var user = userRepository
-                .findByUsernameOrEmail(username, email)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with username %s or email %s", username, email)));
-        return entityToFullInfoDto(user);
+    public UserFullInfoDto getUserFullInfoByUsernameOrEmail(String username, String email) throws CustomException {
+        return entityToFullInfoDto(getUserWithUsernameOrEmailOrElseThrow(username, email));
     }
 
-    public UserDto getUser(Long id) throws ResponseStatusException {
-        var user = userRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with id %d", id)));
-        return entityToDto(user);
+    public UserDto getUser(Long id) throws CustomException {
+        return entityToDto(getUserWithIdOrElseThrow(id));
     }
 
-    public UserDto updateUser(AuthMeUpdateRequest request, String username) throws ResponseStatusException {
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.NOT_FOUND,
-                                String.format("user cannot be found with username %s", username)));
+    public UserDto updateUser(AuthMeUpdateRequest request, String username) throws CustomException {
+        var user = getUserWithUsernameOrElseThrow(username);
         user.setDisplayName(request.getDisplayName());
         user = userRepository.save(user);
         return entityToDto(user);
     }
 
-    public Page<UserDto> searchUsers(Pageable pageable, UserSearchRequest request) throws ResponseStatusException {
+    public Page<UserDto> searchUsers(Pageable pageable, UserSearchRequest request) throws CustomException {
         // check query content
         if (request.query().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "query cannot be empty");
+            throw CustomExceptionHandler.userSearchQueryEmpty();
         }
         // create example with query that can match username, email or displayName
         ExampleMatcher matcher = ExampleMatcher
@@ -203,6 +165,30 @@ public class UserService {
         } catch (MessagingException e) {
             log.error("cannot send reset password email : {}", e.getMessage());
         }
+    }
+
+    private User getUserWithUsernameOrElseThrow(String username) throws CustomException {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+    }
+
+    private User getUserWithEmailOrElseThrow(String email) throws CustomException {
+        return userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> CustomExceptionHandler.userWithEmailNotFound(email));
+    }
+
+    private User getUserWithUsernameOrEmailOrElseThrow(String username, String email) throws CustomException {
+        return userRepository
+                .findByUsernameOrEmail(username, email)
+                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameOrEmailNotFound(username, email));
+    }
+
+    private User getUserWithIdOrElseThrow(Long id) throws CustomException {
+        return userRepository
+                .findById(id)
+                .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));
     }
 
     private Boolean usernameAlreadyExists(String username) {
