@@ -112,7 +112,7 @@ public class UserService {
     public UserDto updateUser(AuthMeUpdateRequest request, String username) throws CustomException {
         var user = getUserWithUsernameOrElseThrow(username);
         user.setDisplayName(request.getDisplayName());
-        user = userRepository.save(user);
+        userRepository.save(user);
         return entityToDto(user);
     }
 
