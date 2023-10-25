@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
+import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.User;
@@ -49,14 +50,23 @@ public class LibraryService {
         existingRecord.ifPresent(library -> libraryRepository.delete(library));
     }
 
-    public Page<MediaDto> getLibrary(Pageable pageable, String username) {
+    public Page<MediaDto> searchInLibrary(Pageable pageable,
+                                          LibrarySearchRequest librarySearchRequest,
+                                          String username) {
         var user = getUserWithUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
-                .withIgnoreNullValues();
+                .withIgnoreNullValues()
+                .withIgnoreCase()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
         var matchingLibrary = new Library();
         matchingLibrary.setUser(user);
+        if (!librarySearchRequest.query().isEmpty()) {
+            var matchingMedia = new Media();
+            matchingMedia.setTitle(librarySearchRequest.query());
+            matchingLibrary.setMedia(matchingMedia);
+        }
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
         return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));

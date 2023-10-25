@@ -1,6 +1,7 @@
 package com.teasy.CineCircleApi.controllers;
 
 
+import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.LibraryService;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +26,13 @@ public class LibraryController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> getLibrary(Pageable page) {
+    public ResponseEntity<?> searchInLibrary(Pageable page, LibrarySearchRequest librarySearchRequest) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()
                     .getAuthentication()
                     .getName();
-            return ResponseEntity.ok().body(libraryService.getLibrary(page, usernameFromToken));
+            return ResponseEntity.ok().body(libraryService.searchInLibrary(page, librarySearchRequest, usernameFromToken));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
