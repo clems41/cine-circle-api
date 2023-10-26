@@ -43,7 +43,10 @@ public class TheMovieDbService implements MediaProvider {
     private final static String jobDirector = "Director";
     private final static String imageUrlPrefix = "https://image.tmdb.org/t/p/w500";
 
-    private final static String videoUrlPrefix = "https://www.youtube.com/watch?v=";
+    private final static String youtubeVideoUrlPrefix = "https://www.youtube.com/watch?v=";
+
+    private final static String youtubeVideoSite = "YouTube";
+    private final static String trailerVideoType = "Trailer";
 
     @Value("${the-movie-db.api-key}")
     private String apiKey;
@@ -154,7 +157,8 @@ public class TheMovieDbService implements MediaProvider {
         media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
         media.setVoteAverage(tvSeries.getVoteAverage());
         media.setVoteCount(tvSeries.getVoteCount());
-        media.setRuntime(!tvSeries.getEpisodeRuntime().isEmpty() ? tvSeries.getEpisodeRuntime().getFirst() : null);
+        media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
+                tvSeries.getEpisodeRuntime().getFirst() : null);
         if (media.getCompleted() == null) {
             media.setCompleted(false);
         }
@@ -181,25 +185,33 @@ public class TheMovieDbService implements MediaProvider {
     private void completeMedia(Media media) {
         initTmdbApi();
         // get casting
-        List<PersonCast> cast = new ArrayList<>();
-        List<PersonCrew> crew = new ArrayList<>();
-        List<Person> persons = new ArrayList<>();
-        List<Genre> genres = new ArrayList<>();
-        List<Video> videos = new ArrayList<>();
+        List<PersonCast> cast;
+        List<PersonCrew> crew;
+        List<Person> persons;
+        List<Genre> genres;
+        List<Video> videos;
         if (Objects.equals(media.getMediaType(), MediaType.MOVIE.name())) {
             MovieDb movie = tmdbApi.getMovies()
-                    .getMovie(Integer.parseInt(media.getExternalId()), language, TmdbMovies.MovieMethod.credits);
+                    .getMovie(Integer.parseInt(media.getExternalId()),
+                            language,
+                            TmdbMovies.MovieMethod.credits,
+                            TmdbMovies.MovieMethod.videos);
             cast = movie.getCredits().getCast();
             crew = movie.getCredits().getCrew();
             genres = movie.getGenres();
             videos = movie.getVideos();
+            persons = new ArrayList<>();
         } else if (Objects.equals(media.getMediaType(), MediaType.TV_SHOW.name())) {
             TvSeries tvSeries = tmdbApi.getTvSeries()
-                    .getSeries(Integer.parseInt(media.getExternalId()), language, TmdbTV.TvMethod.credits);
+                    .getSeries(Integer.parseInt(media.getExternalId()),
+                            language,
+                            TmdbTV.TvMethod.credits,
+                            TmdbTV.TvMethod.videos);
             cast = tvSeries.getCredits().getCast();
             persons = tvSeries.getCreatedBy();
             genres = tvSeries.getGenres();
             videos = tvSeries.getVideos();
+            crew = new ArrayList<>();
         } else {
             return;
         }
@@ -227,7 +239,7 @@ public class TheMovieDbService implements MediaProvider {
 
         // adding trailer
         if (videos != null && !videos.isEmpty()) {
-            media.setTrailerUrl(getTrailerUrl(videos.getFirst().getKey()));
+            media.setTrailerUrl(getTrailerUrl(videos));
         }
 
         // mark media as completed to avoid getting details again later
@@ -235,8 +247,15 @@ public class TheMovieDbService implements MediaProvider {
         mediaRepository.save(media);
     }
 
-    private String getTrailerUrl(String videoKey) {
-        return videoUrlPrefix.concat(videoKey);
+    private String getTrailerUrl(List<Video> videos) {
+        String youtubeVideoKey = videos
+                .stream()
+                .filter(video -> Objects.equals(video.getSite(), youtubeVideoSite) &&
+                        Objects.equals(video.getType(), trailerVideoType))
+                .map(Video::getKey)
+                .toList()
+                .getFirst();
+        return youtubeVideoUrlPrefix.concat(youtubeVideoKey);
     }
 
     private String getOnlyActorsFromCast(List<PersonCast> cast) {
