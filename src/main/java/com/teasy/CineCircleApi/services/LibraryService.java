@@ -60,16 +60,24 @@ public class LibraryService {
                 .withIgnoreNullValues()
                 .withIgnoreCase()
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
+
+        // creating matching library based on request
         var matchingLibrary = new Library();
         matchingLibrary.setUser(user);
-        if (!librarySearchRequest.query().isEmpty()) {
-            var matchingMedia = new Media();
-            matchingMedia.setTitle(librarySearchRequest.query());
-            matchingLibrary.setMedia(matchingMedia);
-        }
+        matchingLibrary.setMedia(createMatchingMedia(librarySearchRequest));
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
         return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));
+    }
+
+    private Media createMatchingMedia(LibrarySearchRequest librarySearchRequest) {
+        var matchingMedia = new Media();
+        if (librarySearchRequest.query() != null && !librarySearchRequest.query().isEmpty()) {
+            matchingMedia.setTitle(librarySearchRequest.query());
+        } else if (librarySearchRequest.genre() != null && !librarySearchRequest.genre().isEmpty()) {
+            matchingMedia.setGenres(librarySearchRequest.genre());
+        }
+        return matchingMedia;
     }
 
     private Library newLibrary(String username, Long mediaId) {
