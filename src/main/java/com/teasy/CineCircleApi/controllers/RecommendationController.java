@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.controllers;
 
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.CircleService;
 import com.teasy.CineCircleApi.services.RecommendationService;
@@ -29,13 +30,18 @@ public class RecommendationController {
     }
 
     @GetMapping("/received")
-    public ResponseEntity<?> listReceivedRecommendations(Pageable pageable) {
+    public ResponseEntity<?> listReceivedRecommendations(
+            Pageable pageable,
+            RecommendationReceivedRequest recommendationReceivedRequest) {
         try {
             var usernameFromToken = SecurityContextHolder
                     .getContext()
                     .getAuthentication()
                     .getName();
-            return ResponseEntity.ok().body(recommendationService.listReceivedRecommendations(pageable, usernameFromToken));
+            return ResponseEntity.ok().body(recommendationService.listReceivedRecommendations(
+                    pageable,
+                    recommendationReceivedRequest,
+                    usernameFromToken));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

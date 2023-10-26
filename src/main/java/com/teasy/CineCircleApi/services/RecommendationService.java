@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
@@ -62,9 +63,18 @@ public class RecommendationService {
         return fromEntityToDto(recommendation);
     }
 
-    public Page<RecommendationDto> listReceivedRecommendations(Pageable pageable, String authenticatedUsername) {
+    public Page<RecommendationDto> listReceivedRecommendations(
+            Pageable pageable,
+            RecommendationReceivedRequest recommendationReceivedRequest,
+            String authenticatedUsername) {
         var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
-        var result = recommendationRepository.findAllByReceivers_Id(pageable, user.getId());
+        Page<Recommendation> result;
+        if (recommendationReceivedRequest.mediaId() != null) {
+            var media = getMediaWithIdOrElseThrow(recommendationReceivedRequest.mediaId());
+            result = recommendationRepository.findAllByReceivers_IdAndMedia_Id(pageable, user.getId(), media.getId());
+        } else {
+            result = recommendationRepository.findAllByReceivers_Id(pageable, user.getId());
+        }
         return result.map(this::fromEntityToDto);
     }
 

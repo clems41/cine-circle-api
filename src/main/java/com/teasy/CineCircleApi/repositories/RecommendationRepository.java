@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface RecommendationRepository extends JpaRepository<Recommendation, Long> {
     Page<Recommendation> findAllByReceivers_Id(Pageable pageable, Long userId);
+    Page<Recommendation> findAllByReceivers_IdAndMedia_Id(Pageable pageable, Long userId, Long mediaId);
 }
