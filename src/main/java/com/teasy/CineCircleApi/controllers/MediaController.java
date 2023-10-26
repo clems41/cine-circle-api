@@ -4,7 +4,7 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDb;
+import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDbService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +21,7 @@ public class MediaController {
     MediaProvider mediaProvider;
 
     @Autowired
-    private MediaController(TheMovieDb mediaProvider) {
+    private MediaController(TheMovieDbService mediaProvider) {
         this.mediaProvider = mediaProvider;
     }
 

@@ -20,11 +20,13 @@ public class MediaDto{
     private String originalTitle;
     private String posterUrl;
     private String backdropUrl;
+    private String trailerUrl;
     private String overview;
     private String genres;
     private String mediaType;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate releaseDate;
+    private Integer runtime;
     private String originalLanguage;
     private Float popularity;
     private Float voteAverage;

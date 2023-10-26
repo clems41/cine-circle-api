@@ -42,12 +42,16 @@ public class Media {
 
     private String backdropUrl;
 
+    private String trailerUrl;
+
     @Column(columnDefinition = "TEXT")
     private String genres;
 
     private String mediaType;
 
     private LocalDate releaseDate;
+
+    private Integer runtime;
 
     private String originalLanguage;
 

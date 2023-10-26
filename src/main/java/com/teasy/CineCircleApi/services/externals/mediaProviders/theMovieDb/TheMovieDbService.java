@@ -18,6 +18,7 @@ import info.movito.themoviedbapi.TmdbTV;
 import info.movito.themoviedbapi.model.Genre;
 import info.movito.themoviedbapi.model.MovieDb;
 import info.movito.themoviedbapi.model.Multi;
+import info.movito.themoviedbapi.model.Video;
 import info.movito.themoviedbapi.model.core.NamedIdElement;
 import info.movito.themoviedbapi.model.people.Person;
 import info.movito.themoviedbapi.model.people.PersonCast;
@@ -29,20 +30,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.*;
 
 @Service
 @Slf4j
-public class TheMovieDb implements MediaProvider {
+public class TheMovieDbService implements MediaProvider {
     private final static String stringArrayDelimiter = ",";
     private final static String language = "fr-FR";
     private final static String jobDirector = "Director";
     private final static String imageUrlPrefix = "https://image.tmdb.org/t/p/w500";
+
+    private final static String videoUrlPrefix = "https://www.youtube.com/watch?v=";
 
     @Value("${the-movie-db.api-key}")
     private String apiKey;
@@ -52,8 +53,8 @@ public class TheMovieDb implements MediaProvider {
     CustomHttpClient customHttpClient;
 
     @Autowired
-    public TheMovieDb(MediaRepository mediaRepository,
-                      CustomHttpClient customHttpClient) {
+    public TheMovieDbService(MediaRepository mediaRepository,
+                             CustomHttpClient customHttpClient) {
         this.mediaRepository = mediaRepository;
         this.customHttpClient = customHttpClient;
     }
@@ -125,6 +126,7 @@ public class TheMovieDb implements MediaProvider {
         media.setBackdropUrl(getCompleteImageUrl(movie.getBackdropPath()));
         media.setVoteAverage(movie.getVoteAverage());
         media.setVoteCount(movie.getVoteCount());
+        media.setRuntime(movie.getRuntime());
         if (media.getCompleted() == null) {
             media.setCompleted(false);
         }
@@ -152,6 +154,7 @@ public class TheMovieDb implements MediaProvider {
         media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
         media.setVoteAverage(tvSeries.getVoteAverage());
         media.setVoteCount(tvSeries.getVoteCount());
+        media.setRuntime(!tvSeries.getEpisodeRuntime().isEmpty() ? tvSeries.getEpisodeRuntime().getFirst() : null);
         if (media.getCompleted() == null) {
             media.setCompleted(false);
         }
@@ -182,19 +185,23 @@ public class TheMovieDb implements MediaProvider {
         List<PersonCrew> crew = new ArrayList<>();
         List<Person> persons = new ArrayList<>();
         List<Genre> genres = new ArrayList<>();
+        List<Video> videos = new ArrayList<>();
         if (Objects.equals(media.getMediaType(), MediaType.MOVIE.name())) {
             MovieDb movie = tmdbApi.getMovies()
                     .getMovie(Integer.parseInt(media.getExternalId()), language, TmdbMovies.MovieMethod.credits);
             cast = movie.getCredits().getCast();
             crew = movie.getCredits().getCrew();
             genres = movie.getGenres();
-        }
-        if (Objects.equals(media.getMediaType(), MediaType.TV_SHOW.name())) {
+            videos = movie.getVideos();
+        } else if (Objects.equals(media.getMediaType(), MediaType.TV_SHOW.name())) {
             TvSeries tvSeries = tmdbApi.getTvSeries()
                     .getSeries(Integer.parseInt(media.getExternalId()), language, TmdbTV.TvMethod.credits);
             cast = tvSeries.getCredits().getCast();
             persons = tvSeries.getCreatedBy();
             genres = tvSeries.getGenres();
+            videos = tvSeries.getVideos();
+        } else {
+            return;
         }
 
         // adding cast and crew to media
@@ -209,7 +216,6 @@ public class TheMovieDb implements MediaProvider {
         }
 
         // adding genre
-
         if (genres != null && !genres.isEmpty()) {
             media.setGenres(String.join(stringArrayDelimiter, genres
                     .stream()
@@ -219,9 +225,18 @@ public class TheMovieDb implements MediaProvider {
             ));
         }
 
+        // adding trailer
+        if (videos != null && !videos.isEmpty()) {
+            media.setTrailerUrl(getTrailerUrl(videos.getFirst().getKey()));
+        }
+
         // mark media as completed to avoid getting details again later
         media.setCompleted(true);
         mediaRepository.save(media);
+    }
+
+    private String getTrailerUrl(String videoKey) {
+        return videoUrlPrefix.concat(videoKey);
     }
 
     private String getOnlyActorsFromCast(List<PersonCast> cast) {
