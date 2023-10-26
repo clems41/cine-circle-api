@@ -35,9 +35,18 @@ public class MediaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMedia(final @PathVariable Long id) {
+    public ResponseEntity<?> getMedia(final @PathVariable("id") Long id) {
         try {
             return ResponseEntity.ok().body(mediaProvider.getMedia(id));
+        } catch (CustomException e) {
+            return e.getEntityResponse();
+        }
+    }
+
+    @GetMapping("/genres")
+    public ResponseEntity<?> listExistingGenres() {
+        try {
+            return ResponseEntity.ok().body(mediaProvider.listGenres());
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

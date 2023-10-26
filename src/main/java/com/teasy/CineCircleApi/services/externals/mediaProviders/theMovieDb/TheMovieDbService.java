@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.MediaGenreResponse;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.enums.MediaType;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
@@ -110,6 +111,13 @@ public class TheMovieDbService implements MediaProvider {
             completeMedia(media);
         }
         return fromMediaEntityToMediaDto(media);
+    }
+
+    @Override
+    public MediaGenreResponse listGenres() {
+        initTmdbApi();
+        var genres = tmdbApi.getGenre().getGenreList(language);
+        return new MediaGenreResponse(genres.stream().map(NamedIdElement::getName).toList());
     }
 
     private void initTmdbApi() {
