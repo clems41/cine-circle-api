@@ -93,6 +93,13 @@ public class RecommendationService {
         return result.map(this::fromEntityToDto);
     }
 
+    public RecommendationDto fromEntityToDto(Recommendation recommendation) {
+        var mapper = new ObjectMapper()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .registerModule(new JavaTimeModule());
+        return mapper.convertValue(recommendation, RecommendationDto.class);
+    }
+
     private Media getMediaWithIdOrElseThrow(Long mediaId) {
         // check if media exists
         return mediaRepository
@@ -110,12 +117,5 @@ public class RecommendationService {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
-    }
-
-    private RecommendationDto fromEntityToDto(Recommendation recommendation) {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        return mapper.convertValue(recommendation, RecommendationDto.class);
     }
 }

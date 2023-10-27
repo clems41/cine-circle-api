@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +29,11 @@ public class MediaController {
     @GetMapping("/")
     public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request) {
         try {
-            return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request));
+            var usernameFromToken = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+            return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request, usernameFromToken));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
@@ -37,7 +42,11 @@ public class MediaController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getMedia(final @PathVariable("id") Long id) {
         try {
-            return ResponseEntity.ok().body(mediaProvider.getMedia(id));
+            var usernameFromToken = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+            return ResponseEntity.ok().body(mediaProvider.getMedia(id, usernameFromToken));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

@@ -3,14 +3,23 @@ package com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.teasy.CineCircleApi.models.dtos.MediaCompleteDto;
 import com.teasy.CineCircleApi.models.dtos.MediaDto;
+import com.teasy.CineCircleApi.models.dtos.MediaRecommendationDto;
+import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.MediaGenreResponse;
 import com.teasy.CineCircleApi.models.entities.Media;
+import com.teasy.CineCircleApi.models.entities.Recommendation;
+import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaType;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
+import com.teasy.CineCircleApi.repositories.RecommendationRepository;
+import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.services.RecommendationService;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import info.movito.themoviedbapi.TmdbApi;
@@ -30,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -54,17 +64,22 @@ public class TheMovieDbService implements MediaProvider {
 
     private TmdbApi tmdbApi;
     MediaRepository mediaRepository;
+    RecommendationService recommendationService;
     CustomHttpClient customHttpClient;
 
     @Autowired
     public TheMovieDbService(MediaRepository mediaRepository,
-                             CustomHttpClient customHttpClient) {
+                             CustomHttpClient customHttpClient,
+                             RecommendationService recommendationService) {
         this.mediaRepository = mediaRepository;
         this.customHttpClient = customHttpClient;
+        this.recommendationService = recommendationService;
     }
 
     @Override
-    public List<MediaDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest) {
+    public List<MediaDto> searchMedia(Pageable pageable,
+                                      MediaSearchRequest mediaSearchRequest,
+                                      String authenticatedUsername) {
         initTmdbApi();
         var multiResponse = tmdbApi.getSearch()
                 .searchMulti(mediaSearchRequest.query(), language, pageable.getPageNumber())
@@ -81,13 +96,14 @@ public class TheMovieDbService implements MediaProvider {
             } else {
                 return;
             }
+
             // store result in database with internalId if not already exists
             var existingMedia = findMediaWithExternalId(media.getExternalId());
             if (existingMedia.isEmpty()) {
                 var newMedia = mediaRepository.save(media);
-                result.add(fromMediaEntityToMediaDto(newMedia));
+                result.add(fromMediaEntityToDto(newMedia, MediaDto.class, authenticatedUsername));
             } else {
-                result.add(fromMediaEntityToMediaDto(existingMedia.get()));
+                result.add(fromMediaEntityToDto(existingMedia.get(), MediaDto.class, authenticatedUsername));
             }
 
         });
@@ -95,7 +111,7 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public MediaDto getMedia(Long id) throws CustomException {
+    public MediaCompleteDto getMedia(Long id, String authenticatedUsername) throws CustomException {
         // build example matcher with id
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -110,7 +126,7 @@ public class TheMovieDbService implements MediaProvider {
         if (!media.getCompleted()) {
             completeMedia(media);
         }
-        return fromMediaEntityToMediaDto(media);
+        return fromMediaEntityToDto(media, MediaCompleteDto.class, authenticatedUsername);
     }
 
     @Override
@@ -124,6 +140,49 @@ public class TheMovieDbService implements MediaProvider {
         if (tmdbApi == null) {
             tmdbApi = new TmdbApi(apiKey);
         }
+    }
+
+    private <T> void addRecommendationRatingFields(T mediaDto, String authenticatedUsername) {
+        if (mediaDto.getClass() != MediaDto.class && mediaDto.getClass() != MediaCompleteDto.class) {
+            return;
+        }
+
+        // find recommendation average and count
+        Long mediaId;
+        if (mediaDto.getClass() == MediaDto.class) {
+            mediaId = ((MediaDto) mediaDto).getId();
+        } else {
+            mediaId = ((MediaCompleteDto) mediaDto).getId();
+        }
+        var recommendations = findRecommendationsForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
+        var recommendationRatingCount = recommendations.size();
+        var recommendationRatingAverage = recommendations
+                .stream()
+                .mapToDouble(MediaRecommendationDto::getRating)
+                .average();
+        if (mediaDto.getClass() == MediaDto.class) {
+            ((MediaDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
+            ((MediaDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
+                    recommendationRatingAverage.getAsDouble() : null);
+        } else {
+            ((MediaCompleteDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
+            ((MediaCompleteDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
+                    recommendationRatingAverage.getAsDouble() : null);
+            // add all recommendations comment for complete media dto
+            ((MediaCompleteDto) mediaDto).setRecommendations(recommendations);
+        }
+    }
+
+    private List<MediaRecommendationDto> findRecommendationsForMediaAndAuthenticatedUsername(Long mediaId, String username) {
+        var request = new RecommendationReceivedRequest(mediaId);
+        return recommendationService.listReceivedRecommendations(
+                        PageRequest.ofSize(1000),
+                        request,
+                        username
+                )
+                .stream()
+                .map(this::fromRecommendationDtoToMediaRecommendationDto)
+                .toList();
     }
 
     private Media fromMovieDbToMediaEntity(MovieDb movie) {
@@ -311,10 +370,19 @@ public class TheMovieDbService implements MediaProvider {
         return String.format("%s%s", imageUrlPrefix, posterUrl);
     }
 
-    private MediaDto fromMediaEntityToMediaDto(Media media) {
+    private <T> T fromMediaEntityToDto(Media media, Class<T> toValueType, String authenticatedUsername) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaDto.class);
+        var result = mapper.convertValue(media, toValueType);
+        addRecommendationRatingFields(result, authenticatedUsername);
+        return result;
+    }
+
+    private MediaRecommendationDto fromRecommendationDtoToMediaRecommendationDto(RecommendationDto recommendationDto) {
+        var mapper = new ObjectMapper()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .registerModule(new JavaTimeModule());
+        return mapper.convertValue(recommendationDto, MediaRecommendationDto.class);
     }
 }
