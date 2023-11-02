@@ -15,7 +15,7 @@ import java.util.Arrays;
 
 @Service
 @Slf4j
-public class NotificationService {
+public class NotificationService implements NotificationServiceInterface {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
 

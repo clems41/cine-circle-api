@@ -24,7 +24,7 @@ public class MediaController {
     MediaProvider mediaProvider;
 
     @Autowired
-    private MediaController(TheMovieDbService mediaProvider) {
+    private MediaController(MediaProvider mediaProvider) {
         this.mediaProvider = mediaProvider;
     }
 

@@ -27,7 +27,7 @@ import java.util.Set;
 
 @Service
 public class RecommendationService {
-    private final NotificationService notificationService;
+    private final NotificationServiceInterface notificationService;
     private final RecommendationRepository recommendationRepository;
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
@@ -36,7 +36,7 @@ public class RecommendationService {
     public RecommendationService(RecommendationRepository recommendationRepository,
                                  UserRepository userRepository,
                                  MediaRepository mediaRepository,
-                                 NotificationService notificationService) {
+                                 NotificationServiceInterface notificationService) {
         this.recommendationRepository = recommendationRepository;
         this.userRepository = userRepository;
         this.mediaRepository = mediaRepository;
@@ -44,7 +44,7 @@ public class RecommendationService {
     }
 
     public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
-                                                  String authenticatedUsername) {
+                                                  String authenticatedUsername) throws CustomException {
         var user = findUserByUsernameOrElseThrow(authenticatedUsername);
 
         // adding receivers
