@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -25,26 +27,18 @@ public class WatchlistController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> getWatchlist(Pageable page) {
+    public ResponseEntity<?> getWatchlist(Pageable page, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(watchlistService.getWatchlist(page, usernameFromToken));
+            return ResponseEntity.ok().body(watchlistService.getWatchlist(page, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @PutMapping("/{mediaId}")
-    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") Long mediaId) {
+    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            watchlistService.addToWatchlist(usernameFromToken, mediaId);
+            watchlistService.addToWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();
@@ -52,13 +46,9 @@ public class WatchlistController {
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") Long mediaId) {
+    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            watchlistService.removeFromWatchlist(usernameFromToken, mediaId);
+            watchlistService.removeFromWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();

@@ -71,11 +71,11 @@ public class UserService {
     }
 
     public UserFullInfoDto getUserFullInfo(String username) throws CustomException {
-        return entityToFullInfoDto(getUserWithUsernameOrElseThrow(username));
+        return entityToFullInfoDto(findUserByUsernameOrElseThrow(username));
     }
 
     public UserDto resetPassword(String username, AuthResetPasswordRequest authResetPasswordRequest) throws CustomException {
-        var user = getUserWithUsernameOrElseThrow(username);
+        var user = findUserByUsernameOrElseThrow(username);
         // check if oldPassword i correct
         if (!passwordEncoder.matches(authResetPasswordRequest.oldPassword(), user.getHashPassword())) {
             throw CustomExceptionHandler.userWithUsernameBadCredentials(username);
@@ -88,7 +88,7 @@ public class UserService {
     }
 
     public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws CustomException {
-        var user = getUserWithEmailOrElseThrow(userResetPasswordRequest.email());
+        var user = findUserByEmailOrElseThrow(userResetPasswordRequest.email());
         // check if token ius correct
         if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
             throw CustomExceptionHandler.userWithEmailBadCredentials(userResetPasswordRequest.email());
@@ -102,15 +102,15 @@ public class UserService {
     }
 
     public UserFullInfoDto getUserFullInfoByUsernameOrEmail(String username, String email) throws CustomException {
-        return entityToFullInfoDto(getUserWithUsernameOrEmailOrElseThrow(username, email));
+        return entityToFullInfoDto(findUserByUsernameOrEmailOrElseThrow(username, email));
     }
 
     public UserDto getUser(Long id) throws CustomException {
-        return entityToDto(getUserWithIdOrElseThrow(id));
+        return entityToDto(findUserByIdOrElseThrow(id));
     }
 
     public UserDto updateUser(AuthMeUpdateRequest request, String username) throws CustomException {
-        var user = getUserWithUsernameOrElseThrow(username);
+        var user = findUserByUsernameOrElseThrow(username);
         user.setDisplayName(request.getDisplayName());
         userRepository.save(user);
         return entityToDto(user);
@@ -167,25 +167,25 @@ public class UserService {
         }
     }
 
-    private User getUserWithUsernameOrElseThrow(String username) throws CustomException {
+    private User findUserByUsernameOrElseThrow(String username) throws CustomException {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private User getUserWithEmailOrElseThrow(String email) throws CustomException {
+    private User findUserByEmailOrElseThrow(String email) throws CustomException {
         return userRepository
                 .findByEmail(email)
                 .orElseThrow(() -> CustomExceptionHandler.userWithEmailNotFound(email));
     }
 
-    private User getUserWithUsernameOrEmailOrElseThrow(String username, String email) throws CustomException {
+    private User findUserByUsernameOrEmailOrElseThrow(String username, String email) throws CustomException {
         return userRepository
                 .findByUsernameOrEmail(username, email)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameOrEmailNotFound(username, email));
     }
 
-    private User getUserWithIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(Long id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));

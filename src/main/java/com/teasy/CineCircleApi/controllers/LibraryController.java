@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -26,26 +28,18 @@ public class LibraryController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> searchInLibrary(Pageable page, LibrarySearchRequest librarySearchRequest) {
+    public ResponseEntity<?> searchInLibrary(Pageable page, LibrarySearchRequest librarySearchRequest, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(libraryService.searchInLibrary(page, librarySearchRequest, usernameFromToken));
+            return ResponseEntity.ok().body(libraryService.searchInLibrary(page, librarySearchRequest, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @PutMapping("/{mediaId}")
-    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") Long mediaId) {
+    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            libraryService.addToLibrary(usernameFromToken, mediaId);
+            libraryService.addToLibrary(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();
@@ -53,13 +47,9 @@ public class LibraryController {
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") Long mediaId) {
+    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            libraryService.removeFromLibrary(usernameFromToken, mediaId);
+            libraryService.removeFromLibrary(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();

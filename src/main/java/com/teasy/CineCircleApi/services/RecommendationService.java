@@ -27,30 +27,33 @@ import java.util.Set;
 
 @Service
 public class RecommendationService {
-    private RecommendationRepository recommendationRepository;
-    private UserRepository userRepository;
-    private MediaRepository mediaRepository;
+    private final NotificationService notificationService;
+    private final RecommendationRepository recommendationRepository;
+    private final UserRepository userRepository;
+    private final MediaRepository mediaRepository;
 
     @Autowired
     public RecommendationService(RecommendationRepository recommendationRepository,
                                  UserRepository userRepository,
-                                 MediaRepository mediaRepository) {
+                                 MediaRepository mediaRepository,
+                                 NotificationService notificationService) {
         this.recommendationRepository = recommendationRepository;
         this.userRepository = userRepository;
         this.mediaRepository = mediaRepository;
+        this.notificationService = notificationService;
     }
 
     public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
                                                   String authenticatedUsername) {
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
 
         // adding receivers
         Set<User> receivers = new HashSet<>();
         recommendationCreateRequest.userIds()
-                .forEach(userId -> receivers.add(getUserWithIdOrElseThrow(userId)));
+                .forEach(userId -> receivers.add(findUserByIdOrElseThrow(userId)));
 
         // find media
-        var media = getMediaWithIdOrElseThrow(recommendationCreateRequest.mediaId());
+        var media = findMediaByIdOrElseThrow(recommendationCreateRequest.mediaId());
 
         // create recommendation
         var recommendation = new Recommendation(
@@ -60,17 +63,22 @@ public class RecommendationService {
                 recommendationCreateRequest.comment(),
                 recommendationCreateRequest.rating());
         recommendationRepository.save(recommendation);
-        return fromEntityToDto(recommendation);
+
+        // send recommendation to concerned users
+        var recommendationDto = fromEntityToDto(recommendation);
+        notificationService.sendRecommendation(recommendationDto);
+
+        return recommendationDto;
     }
 
     public Page<RecommendationDto> listReceivedRecommendations(
             Pageable pageable,
             RecommendationReceivedRequest recommendationReceivedRequest,
             String authenticatedUsername) {
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         Page<Recommendation> result;
         if (recommendationReceivedRequest.mediaId() != null) {
-            var media = getMediaWithIdOrElseThrow(recommendationReceivedRequest.mediaId());
+            var media = findMediaByIdOrElseThrow(recommendationReceivedRequest.mediaId());
             result = recommendationRepository.findAllByReceivers_IdAndMedia_Id(pageable, user.getId(), media.getId());
         } else {
             result = recommendationRepository.findAllByReceivers_Id(pageable, user.getId());
@@ -80,7 +88,7 @@ public class RecommendationService {
 
     public Page<RecommendationDto> listSentRecommendations(Pageable pageable, String authenticatedUsername) {
         // creating matching example
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
@@ -100,20 +108,20 @@ public class RecommendationService {
         return mapper.convertValue(recommendation, RecommendationDto.class);
     }
 
-    private Media getMediaWithIdOrElseThrow(Long mediaId) {
+    private Media findMediaByIdOrElseThrow(Long mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
                 .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
     }
 
-    private User getUserWithIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(Long id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));
     }
 
-    private User getUserWithUsernameOrElseThrow(String username) throws CustomException {
+    private User findUserByUsernameOrElseThrow(String username) throws CustomException {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));

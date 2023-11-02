@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -27,26 +29,18 @@ public class MediaController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request) {
+    public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request, usernameFromToken));
+            return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMedia(final @PathVariable("id") Long id) {
+    public ResponseEntity<?> getMedia(final @PathVariable("id") Long id, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(mediaProvider.getMedia(id, usernameFromToken));
+            return ResponseEntity.ok().body(mediaProvider.getMedia(id, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

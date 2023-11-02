@@ -29,7 +29,7 @@ public class CircleService {
     }
 
     public List<CircleDto> listCircles(String authenticatedUsername) {
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var circles = circleRepository.findAllByUsers_Id(user.getId());
         return circles
                 .stream()
@@ -38,7 +38,7 @@ public class CircleService {
     }
 
     public CircleDto createCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, String authenticatedUsername) {
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var newCircle = new Circle(
                 circleCreateUpdateRequest.isPublic(),
                 circleCreateUpdateRequest.name(),
@@ -71,7 +71,7 @@ public class CircleService {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to add
-        var userToAdd = getUserWithIdOrElseThrow(userIdToAdd);
+        var userToAdd = findUserByIdOrElseThrow(userIdToAdd);
 
         // add user
         circle.addUser(userToAdd);
@@ -83,7 +83,7 @@ public class CircleService {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to remove
-        var userToRemove = getUserWithIdOrElseThrow(userIdToRemove);
+        var userToRemove = findUserByIdOrElseThrow(userIdToRemove);
 
         // add user
         circle.removeUser(userToRemove);
@@ -92,8 +92,8 @@ public class CircleService {
     }
 
     private Circle getCircleAndCheckPermissions(Long circleId, String authenticatedUsername) {
-        var user = getUserWithUsernameOrElseThrow(authenticatedUsername);
-        var circle = getCircleWithIdOrElseThrow(circleId);
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var circle = findCircleByIdOrElseThrow(circleId);
 
         // user should the one created the circle to update or delete it
         if (!Objects.equals(circle.getCreatedBy().getId(), user.getId())) {
@@ -103,19 +103,19 @@ public class CircleService {
         return circle;
     }
 
-    private User getUserWithIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(Long id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));
     }
 
-    private User getUserWithUsernameOrElseThrow(String username) throws CustomException {
+    private User findUserByUsernameOrElseThrow(String username) throws CustomException {
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Circle getCircleWithIdOrElseThrow(Long circleId) {
+    private Circle findCircleByIdOrElseThrow(Long circleId) {
         // check if circle exist
         return circleRepository
                 .findById(circleId)

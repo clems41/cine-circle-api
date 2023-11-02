@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -26,26 +28,19 @@ public class CircleController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<?> listCircles() {
+    public ResponseEntity<?> listCircles(Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(circleService.listCircles(usernameFromToken));
+            return ResponseEntity.ok().body(circleService.listCircles(principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @PostMapping("/")
-    public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest) {
+    public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest,
+                                          Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(circleService.createCircle(circleCreateUpdateRequest, usernameFromToken));
+            return ResponseEntity.ok().body(circleService.createCircle(circleCreateUpdateRequest, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
@@ -53,26 +48,19 @@ public class CircleController {
 
     @PutMapping("/{circle_id}")
     public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest,
-                                          @PathVariable("circle_id") Long circleId) {
+                                          @PathVariable("circle_id") Long circleId,
+                                          Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(circleService.updateCircle(circleCreateUpdateRequest, circleId, usernameFromToken));
+            return ResponseEntity.ok().body(circleService.updateCircle(circleCreateUpdateRequest, circleId, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @DeleteMapping("/{circle_id}")
-    public ResponseEntity<?> createCircle(@PathVariable("circle_id") Long circleId) {
+    public ResponseEntity<?> createCircle(@PathVariable("circle_id") Long circleId, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            circleService.deleteCircle(circleId, usernameFromToken);
+            circleService.deleteCircle(circleId, principal.getName());
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();
@@ -81,13 +69,10 @@ public class CircleController {
 
     @PutMapping("/{circle_id}/users/{user_id}")
     public ResponseEntity<?> addUserToCircle(@PathVariable("circle_id") Long circleId,
-                                             @PathVariable("user_id") Long userId) {
+                                             @PathVariable("user_id") Long userId,
+                                             Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(circleService.addUserToCircle(userId, circleId, usernameFromToken));
+            return ResponseEntity.ok().body(circleService.addUserToCircle(userId, circleId, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
@@ -95,13 +80,10 @@ public class CircleController {
 
     @DeleteMapping("/{circle_id}/users/{user_id}")
     public ResponseEntity<?> removeUserFromCircle(@PathVariable("circle_id") Long circleId,
-                                                  @PathVariable("user_id") Long userId) {
+                                                  @PathVariable("user_id") Long userId,
+                                                  Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(circleService.removeUserFromCircle(userId, circleId, usernameFromToken));
+            return ResponseEntity.ok().body(circleService.removeUserFromCircle(userId, circleId, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

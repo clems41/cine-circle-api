@@ -12,7 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -42,6 +44,11 @@ public class User {
 
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getUsername(), getEmail());
+    }
 
     public User(String username, String email, String hashPassword, String displayName) {
         this.username = username;

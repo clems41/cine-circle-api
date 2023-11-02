@@ -57,7 +57,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/api/v1/auth/sign-up"),
-                                new AntPathRequestMatcher("/api/v1/users/reset-password")
+                                new AntPathRequestMatcher("/api/v1/users/reset-password"),
+                                new AntPathRequestMatcher("/api/v1/notifications/websocket/**")
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -54,26 +56,18 @@ public class AuthController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<?> updateUser(@RequestBody AuthMeUpdateRequest request) {
+    public ResponseEntity<?> updateUser(@RequestBody AuthMeUpdateRequest request, Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(userService.updateUser(request, usernameFromToken));
+            return ResponseEntity.ok().body(userService.updateUser(request, principal.getName()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me() {
+    public ResponseEntity<?> me(Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(userService.getUserFullInfo(usernameFromToken));
+            return ResponseEntity.ok().body(userService.getUserFullInfo(principal.getName()));
         } catch (CustomException e) {
             // here we want to return 401 if user is not found
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -85,13 +79,10 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest) {
+    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest, 
+                                           Principal principal) {
         try {
-            var usernameFromToken = SecurityContextHolder
-                    .getContext()
-                    .getAuthentication()
-                    .getName();
-            return ResponseEntity.ok().body(userService.resetPassword(usernameFromToken, authResetPasswordRequest));
+            return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));
         } catch (CustomException e) {
             // here we want to return 401 if user is not found
             if (e.getStatusCode() == HttpStatus.NOT_FOUND) {

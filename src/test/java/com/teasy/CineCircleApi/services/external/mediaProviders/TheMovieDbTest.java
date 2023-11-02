@@ -9,6 +9,7 @@ import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.services.NotificationService;
 import com.teasy.CineCircleApi.services.RecommendationService;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDbService;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
@@ -32,6 +33,8 @@ public class TheMovieDbTest {
     @MockBean
     RsaKeyProperties rsaKeyProperties;
     @MockBean
+    NotificationService notificationService;
+    @MockBean
     CustomHttpClient httpClient;
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +47,7 @@ public class TheMovieDbTest {
 
     @BeforeEach
     public void initializeServices() {
-        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository);
+        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, notificationService);
         theMovieDbService = new TheMovieDbService(mediaRepository, httpClient, recommendationService);
     }
 

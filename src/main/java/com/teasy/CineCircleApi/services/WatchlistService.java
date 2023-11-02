@@ -50,7 +50,7 @@ public class WatchlistService {
     }
 
     public Page<MediaDto> getWatchlist(Pageable pageable, String username) {
-        var user = getUserWithUsernameOrElseThrow(username);
+        var user = findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -63,19 +63,19 @@ public class WatchlistService {
     }
 
     private Watchlist newWatchlist(String username, Long mediaId) {
-        var user = getUserWithUsernameOrElseThrow(username);
-        var media = getMediaWithIdOrElseThrow(mediaId);
+        var user = findUserByUsernameOrElseThrow(username);
+        var media = findMediaByIdOrElseThrow(mediaId);
         return new Watchlist(user, media);
     }
 
-    private User getUserWithUsernameOrElseThrow(String username) {
+    private User findUserByUsernameOrElseThrow(String username) {
         // check if user exist
         return userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Media getMediaWithIdOrElseThrow(Long mediaId) {
+    private Media findMediaByIdOrElseThrow(Long mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
