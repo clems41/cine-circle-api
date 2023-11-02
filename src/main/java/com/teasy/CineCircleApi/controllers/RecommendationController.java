@@ -5,6 +5,9 @@ import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.RecommendationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ import java.security.Principal;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/recommendations")
 @CrossOrigin
+@Tag(name = "Recommendation", description = "Send and list recommendations")
+@SecurityRequirement(name = "JWT")
 public class RecommendationController {
 
     RecommendationService recommendationService;
@@ -29,6 +34,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/received")
+    @Operation(summary = "Search among all received recommendations")
     public ResponseEntity<?> listReceivedRecommendations(
             Pageable pageable,
             RecommendationReceivedRequest recommendationReceivedRequest,
@@ -44,6 +50,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/sent")
+    @Operation(summary = "Search among all sent recommendations")
     public ResponseEntity<?> listSentRecommendations(Pageable pageable, Principal principal) {
         try {
             return ResponseEntity.ok().body(recommendationService.listSentRecommendations(pageable, principal.getName()));
@@ -53,6 +60,7 @@ public class RecommendationController {
     }
 
     @PostMapping("/")
+    @Operation(summary = "Send new recommendation")
     public ResponseEntity<?> createRecommendation(
             @RequestBody RecommendationCreateRequest recommendationCreateRequest,
             Principal principal) {

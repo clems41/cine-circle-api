@@ -4,6 +4,9 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.LibraryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ import java.security.Principal;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/library")
 @CrossOrigin
+@Tag(name = "Library", description = "Add, remove and list medias from authenticated user library")
+@SecurityRequirement(name = "JWT")
 public class LibraryController {
     LibraryService libraryService;
 
@@ -28,6 +33,7 @@ public class LibraryController {
     }
 
     @GetMapping("/")
+    @Operation(summary = "Search medias among authenticated user library")
     public ResponseEntity<?> searchInLibrary(Pageable page, LibrarySearchRequest librarySearchRequest, Principal principal) {
         try {
             return ResponseEntity.ok().body(libraryService.searchInLibrary(page, librarySearchRequest, principal.getName()));
@@ -37,6 +43,7 @@ public class LibraryController {
     }
 
     @PutMapping("/{mediaId}")
+    @Operation(summary = "Add media to authenticated user library")
     public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
             libraryService.addToLibrary(principal.getName(), mediaId);
@@ -47,6 +54,7 @@ public class LibraryController {
     }
 
     @DeleteMapping("/{mediaId}")
+    @Operation(summary = "Remove media from authenticated user library")
     public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
         try {
             libraryService.removeFromLibrary(principal.getName(), mediaId);

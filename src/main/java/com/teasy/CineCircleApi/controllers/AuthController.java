@@ -7,6 +7,9 @@ import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.TokenService;
 import com.teasy.CineCircleApi.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import java.security.Principal;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 @CrossOrigin
+@Tag(name = "Authentication", description = "All operations related to authenticated user")
 public class AuthController {
     UserService userService;
     TokenService tokenService;
@@ -34,7 +38,12 @@ public class AuthController {
         this.tokenService = tokenService;
     }
 
-    @PostMapping("/sign-in")
+    @GetMapping("/sign-in")
+    @Operation(
+            summary = "Get JWT token from user credentials",
+            description = "Generate JWT token based on user credentials defined as Basic Auth in request header"
+    )
+    @SecurityRequirement(name = "basic")
     public ResponseEntity<?> createAuthenticationToken(Authentication authentication) {
         try {
             var jwtToken = tokenService.generateToken(authentication);
@@ -47,6 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/sign-up")
+    @Operation(summary = "Create new user account")
     public ResponseEntity<?> createUser(@RequestBody AuthSignUpRequest request) {
         try {
             return ResponseEntity.ok().body(userService.createUser(request));
@@ -56,6 +66,8 @@ public class AuthController {
     }
 
     @PutMapping("/me")
+    @Operation(summary = "Update authenticated user informations")
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> updateUser(@RequestBody AuthMeUpdateRequest request, Principal principal) {
         try {
             return ResponseEntity.ok().body(userService.updateUser(request, principal.getName()));
@@ -65,6 +77,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Get authenticated user informations")
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> me(Principal principal) {
         try {
             return ResponseEntity.ok().body(userService.getUserFullInfo(principal.getName()));
@@ -79,7 +93,9 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest, 
+    @Operation(summary = "Reset password for authenticated user (old password needed)")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest,
                                            Principal principal) {
         try {
             return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));

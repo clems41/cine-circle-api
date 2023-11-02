@@ -4,13 +4,14 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDbService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -20,6 +21,8 @@ import java.security.Principal;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/medias")
 @CrossOrigin
+@Tag(name = "Media", description = "Search and get details about medias (movies or tv shows)")
+@SecurityRequirement(name = "JWT")
 public class MediaController {
     MediaProvider mediaProvider;
 
@@ -29,6 +32,7 @@ public class MediaController {
     }
 
     @GetMapping("/")
+    @Operation(summary = "Search media (movie or tv show)")
     public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request, Principal principal) {
         try {
             return ResponseEntity.ok().body(mediaProvider.searchMedia(page, request, principal.getName()));
@@ -38,6 +42,7 @@ public class MediaController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get more details about specific media")
     public ResponseEntity<?> getMedia(final @PathVariable("id") Long id, Principal principal) {
         try {
             return ResponseEntity.ok().body(mediaProvider.getMedia(id, principal.getName()));
@@ -47,6 +52,7 @@ public class MediaController {
     }
 
     @GetMapping("/genres")
+    @Operation(summary = "List all existing genres")
     public ResponseEntity<?> listExistingGenres() {
         try {
             return ResponseEntity.ok().body(mediaProvider.listGenres());

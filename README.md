@@ -1,9 +1,60 @@
-# cine-circle-api
-**(!) ATTENTION :** pour fonctionner, ce projet nécessite l'installation de Docker et Docker Compose. [Documentation](https://docs.docker.com/engine/install/).
+# Cine Circle API
 
-## Pré-requis
+## Fonctionnement
 
-### Génération de clés
+Ce projet fonctionne avec une base de données Postgres pour sauvegarder l'ensemble des données utilisateurs ainsi que les données relatives aux différents médias (films et séries).
+
+L'API [TheMovieDatabase](https://developer.themoviedb.org/reference/intro/getting-started) est utilisée pour récupérer et rechercher des informations sur les médias.
+
+## Démarrer le projet en local avec Docker
+
+### Pré-requis 
+
+**Docker**
+
+Pour fonctionner, ce projet nécessite l'installation de Docker et Docker Compose. [Documentation](https://docs.docker.com/engine/install/).
+
+**Variables d'environnement**
+
+Pour que l'API puisse fonctionner avec Postgres mais également d'autres services externes, il est important de configurer des variables d'environnement.
+
+Pour ce faire, créer un fichier ``.env`` et copier le contenu suivant dedans :
+```dotenv
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_NAME=cine-circle-api
+THE_MOVIE_DATABASE_API_KEY="XXX"
+SMTP_SERVER="smtp.gmail.com"
+SMTP_USERNAME="teasycinecircle@gmail.com"
+SMTP_PASSWORD="XXX"
+```
+
+Remplacez les `XXX` par les valeurs correspondantes :
+- `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started, qui peut s'obtenir gratuitement. 
+Il suffit de se créer un compte sur le site.
+- `SMTP_PASSWORD` : mot de passe du compte Gmail Teasy pour l'utiliser comme server SMTP.
+
+## Lancement
+
+Démarrez l'API avec la base de données PostgreSQL :
+```bash
+docker compose up -d --build
+```
+
+Cela peut prendre quelques minutes lors de la première compilation de l'image Docker.
+
+Une fois démarrée, les logs de l'API seront disponibles via la commande :
+```bash
+docker compose logs api -f
+```
+
+Rendez-vous à la section [Authentification & Swagger](#authentification--swagger) pour découvrir les webservices disponibles.
+
+## Démarrer le projet en local avec Java
+
+### Pré-requis
+
+**Génération de clés**
 
 ```bash
 # create rsa key pair
@@ -16,99 +67,97 @@ openssl rsa -in keypair.pem -pubout -out public.pem
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
 ```
 
-### Mettre à jour la liste des genres TheMovieDatabase
+Copier les clés `keypair.pem` et `private.pem` dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
+La clé `keypair.pem` peut ensuite être supprimée.
 
-```bash
-# movies
-curl --request GET \
-     --url 'https://api.themoviedb.org/3/genre/movie/list?language=fr' \
-     --header 'Authorization: Bearer ${TOKEN}' \
-     --header 'accept: application/json'
+**PostgreSQL**
 
-# tv shows
- curl --request GET \
- --url 'https://api.themoviedb.org/3/genre/tv/list?language=en' \
- --header 'Authorization: Bearer ${TOKEN}' \
- --header 'accept: application/json'
+Pour fonctionner, l'API a besoin d'une base de données PostgresSQL.
+Plusieurs possibilités :
+1. Utiliser Docker Compose : créer un fichier `docker-compose.yaml` et copier le contenu suivant dedans.
+```yaml
+version: '3.5'
+
+services:
+  postgres:
+    container_name: local_database
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cine-circle-api
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+       - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+    
+volumes:
+    postgres:
+```
+Il suffit ensuite de faire `docker compose up -d` pour déployer la base de données PostgreSQL.
+
+2. Installer Postgres sur la machine et configurer la base de données avec un outil de gestion de base comme `pgAdmin` ou `DBeaver`.
+
+**Variables d'environnement**
+
+Pour que l'API puisse fonctionner avec Postgres mais également d'autres services externes, il est important de configurer des variables d'environnement.
+
+Pour ce faire, créer un fichier ``local.yaml`` et copier le contenu suivant dedans :
+```yaml
+DB_PASSWORD: "XXX"
+DB_USER: "postgres"
+DB_HOST: "localhost"
+DB_PORT: "5432"
+DB_NAME: "cine-circle-api"
+THE_MOVIE_DATABASE_API_KEY: "XXX"
+SMTP_SERVER: "smtp.gmail.com"
+SMTP_USERNAME: "teasycinecircle@gmail.com"
+SMTP_PASSWORD: "XXX"
+SMTP_PORT_TLS: "587"
 ```
 
-Copier les clés dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
+Remplacez les `XXX` par les valeurs correspondantes :
+- `DB_PASSWORD` : mot de passe utiliser pour votre base [PostgreSQL](#postgresql)
+- `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started, qui peut sobtenir gratuitement, il suffit simplement de créer un compte.
+- `SMTP_PASSWORD` : mot de passe du compte Gmail Teasy pour l'utiliser comme server SMTP.
 
-## Fonctionnement
+### Lancement
 
-Ce projet fonctionne avec une base de données Postgres pour sauvegarder l'ensemble des données utilisateurs ainsi que les données relatives aux différents médias (films et séries).
+Utilisez la configuration CineCircleApiapplication déjà créée dans Intellij qui utilise le fichier de variables d'environnement.
 
-L'API [TheMovieDatabase](https://developer.themoviedb.org/reference/intro/getting-started) est utilisée pour récupérer et recercher des informations sur les médias.
+Rendez-vous à la section [Authentification & Swagger](#authentification--swagger) pour découvrir les webservices disponibles.
 
-## Démarrer l'API en local
+## Authentification & Swagger
 
-Pour démarrer l'API et la base de données Postgres :
-```
-docker compose up -d
-```
+L'API est désormais disponible via l'[URL](http://localhost:8080).
+Les webservices disponibles sont visibles via le [Swagger](http://localhost:8080/swagger-ui/index.html).
 
-L'API est désormais disponible via l'URL "http://localhost:8080".
+L'API est protégé par un système de token JWT. Un endpoint ``api/v1/auth/sign-in`` permet de récupérer un token JWT à partir du username et mot de passe (Basic Authentication) d'un utilisateur enregistré en base.
+Ce token permet ensuite d'accéder à l'ensemble des endpoints sécurisés.
 
-Les webservices disponibles sont visibles via le [Swagger](https://petstore.swagger.io/?url=http://localhost:8080/swagger.json). 
+Pour s'authentifier sur le swagger, il suffit de cliquer sur le bouton ``Authorize`` et de renseigner le username et 
+mot de passe de l'utilisateur que l'on souhaite utiliser dans la partie `basic` puis cliquer sur `Authorize`.
 
-## Webservices
+On peut fermer la fenêtre et aller sur le webservice ``api/v1/auth/sign-in`` > `Try it out` > `Execute`.
+Dans la réponse obtenue, il y a un JWT token que l'on peut maintenant utiliser pour les autres webservices.
+Il faut de nouveau cliquer sur ``Authorize`` et copier la valeur de ce token dans le champ `value` de la partie `JWT` puis `Authorize`.
+On peut désormais fermer la fenêtre et utiliser n'importe quel autres webservices qui nécessitent une authentification.
 
-Les webservices sont protégés par un système d'authentification utilisant des tokens JWT. Seuls 2 webservices sont accessibles sans authentification :
-- `/v1/users/sign-in` : permet de générer un token JWT à partir d'un identifiant et un mot de passe fournis en Header (Basic Auth).
-- `/v1/users/sign-up` : permet de se créer un compte pour ensuite pouvoir se connecter.
+Répéter la procédure si vous voulez changer d'utilisateur authentifié.
 
-Tous les autres webservices nécessite l'utilisation d'un token JWT qui doit être ajouté en Header de la requête avec le nom `Authorization` et en contenu `Bearer <jwt_token>` où `<jwt_token>` est le token généré via `/v1/users/sign-in`.
+## Système de notifications
 
-Les exemples donnés ci-dessous utilise cURL, qui est un outil permettant de faire des requêtes HTTP. 
-On peut l'installer sur sa machine pour lancer les requêtes ou alors utiliser directement une version WEB [Reqbin cURL](https://reqbin.com/curl).
-Pour utiliser ce site WEB avec des requêtes en local, il faut installer le plugin Chrome [ReqBin HTTP Client
-](https://chrome.google.com/webstore/detail/reqbin-http-client/gmmkjpcadciiokjpikmkkmapphbmdjok/related).
+Pour que les utilisateurs puissent recevoir des informations en temps réel, un système de notification a été mis en place.
+Il permet notamment d'alerter lors de la réception d'une nouvelle recommendation.
 
-### Authentification
+Ce système de notification fonctionne via SockJS qui utilise la technologie de websocket.
 
-**Création de compte**
+Le webservice ``/api/v1/notifications/topic`` permet à un utilisateur authentifié de récupérer le nom du topic à utiliser pour sa connection SockJS.
+Ce topic est unique par utilisateur, ce qui permet que seul un utilisateur authentifié peut connaître le nom du topic où recevoir ses propres notifications.
 
-```bash
-curl --location --request POST "http://localhost:8080/v1/users/sign-up" \
---header 'Content-Type: application/json' \
---data-raw '{
-        "email": "monemail@gmail.com",
-        "firstName": "John",
-        "lastName": "Doe",
-        "password": "password",
-        "username": "johndoe"
-}'
-```
+Pour chaque nouvelle recommendation reçue par un utilisateur, un message sera envoyé sur le topic correspondant afin qu'il puisse récupérer la notification.
+Ce message contiendra toutes les informations d'une recommendations (media concerné, expéditeur, destinataires, commentaire et note).
 
-**Connexion/Génération de token**
-
-La connexion utilise un système de [Basic Authentification](https://developer.mozilla.org/fr/docs/Web/HTTP/Headers/Authorization#directives).
-Elle utilise un header `Authorization` dont le contenu est `Basic <credentials>` où `<credentials>` est le username et le mot de passe encodé en base64.
-Exemple avec username `johndoe` et password `password`, la phrase à encoder est `johndoe:password`, ce qui donne `am9obmRvZTpwYXNzd29yZA==`.
-
-Il est possible de générer ce Header directement via le site WEB [Blitter](https://www.blitter.se/utils/basic-authentication-header-generator/).
-
-```bash
-curl --location --request POST "http://localhost:8080/v1/users/sign-in" \
---header 'Authorization: Basic am9obmRvZTpwYXNzd29yZA=='
-```
-
-Vous obtenez ainsi un JWT token dans la réponse, par exemple `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4`.
-Vous pouvez désormais requêter tous les autres webservices en utilisant ce token, voir les exemples après.
-Il faudra ajouter un Header `Authorization` avec comme contenu `Bearer <jwt_token>`.
-
-### Medias
-
-**Rechercher un média**
-
-```bash
-curl --location --request GET "http://localhost:8080/v1/medias?keyword=inception" \
---header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4'
-```
-
-**Récupérer les informations d'un média**
-
-```bash
-curl --location --request GET "http://localhost:8080/v1/medias/1" \
---header 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJhbnkiLCJleHAiOjE2OTc1NzU3MTUsImlzcyI6ImNpbmUtY2lyY2xlLWFwaSIsInN1YiI6IntcIklkXCI6MSxcIlJvbGVcIjpcIlwifSJ9.Kh3EhPRg1WDYLRqI4PWtFMWcYIJ7CSE2vgnDJaZWBcdh7LRY7BnKwv3U2Wf2dWoRaDnFZpnWilkg6tZ0mudCkoSuP29mWSq4CBr0kDxWk1FIr6Pnbm5Oap9Ylg89NZpuNGdZpt-wyaOt64SrGKm9LEzbVRFJC_TpMo9W4BmV6z4'
-```
+Voici un exemple de [Frontend](https://github.com/SLFullStackers/SpringAngularWebSocket/blob/master/websocket-frontend/src/app/message.service.ts) qui utilise cette mécanique avec Angular.

@@ -12,9 +12,13 @@ services:
       - DB_USER=${DATABASE_USER}
       - DB_PASSWORD=${DATABASE_PASSWORD}
       - DB_NAME=${DATABASE_NAME}
-      - THE_MOVIE_DATABASE_TOKEN=${THE_MOVIE_DATABASE_TOKEN}
+      - THE_MOVIE_DATABASE_API_KEY=${THE_MOVIE_DATABASE_API_KEY}
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_PORT_TLS=587
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health/ok"]
+      test: ["CMD", "curl", "-f", "http://localhost/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 3
