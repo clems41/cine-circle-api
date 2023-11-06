@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class CircleService {
@@ -49,7 +50,7 @@ public class CircleService {
         return fromCircleEntityToCircleDto(newCircle);
     }
 
-    public CircleDto updateCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, Long circleId, String authenticatedUsername) throws CustomException {
+    public CircleDto updateCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, UUID circleId, String authenticatedUsername) throws CustomException {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // update circle
@@ -60,14 +61,14 @@ public class CircleService {
         return fromCircleEntityToCircleDto(circle);
     }
 
-    public void deleteCircle(Long circleId, String authenticatedUsername) throws CustomException {
+    public void deleteCircle(UUID circleId, String authenticatedUsername) throws CustomException {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // delete circle
         circleRepository.delete(circle);
     }
 
-    public CircleDto addUserToCircle(Long userIdToAdd, Long circleId, String authenticatedUsername) throws CustomException {
+    public CircleDto addUserToCircle(UUID userIdToAdd, UUID circleId, String authenticatedUsername) throws CustomException {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to add
@@ -79,7 +80,7 @@ public class CircleService {
         return fromCircleEntityToCircleDto(circle);
     }
 
-    public CircleDto removeUserFromCircle(Long userIdToRemove, Long circleId, String authenticatedUsername) throws CustomException {
+    public CircleDto removeUserFromCircle(UUID userIdToRemove, UUID circleId, String authenticatedUsername) throws CustomException {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to remove
@@ -91,7 +92,7 @@ public class CircleService {
         return fromCircleEntityToCircleDto(circle);
     }
 
-    private Circle getCircleAndCheckPermissions(Long circleId, String authenticatedUsername) {
+    private Circle getCircleAndCheckPermissions(UUID circleId, String authenticatedUsername) {
         var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var circle = findCircleByIdOrElseThrow(circleId);
 
@@ -103,7 +104,7 @@ public class CircleService {
         return circle;
     }
 
-    private User findUserByIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(UUID id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));
@@ -115,7 +116,7 @@ public class CircleService {
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Circle findCircleByIdOrElseThrow(Long circleId) {
+    private Circle findCircleByIdOrElseThrow(UUID circleId) {
         // check if circle exist
         return circleRepository
                 .findById(circleId)

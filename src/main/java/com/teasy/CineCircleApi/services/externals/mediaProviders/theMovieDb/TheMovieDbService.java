@@ -111,7 +111,7 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public MediaCompleteDto getMedia(Long id, String authenticatedUsername) throws CustomException {
+    public MediaCompleteDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
         // build example matcher with id
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -148,11 +148,11 @@ public class TheMovieDbService implements MediaProvider {
         }
 
         // find recommendation average and count
-        Long mediaId;
+        UUID mediaId;
         if (mediaDto.getClass() == MediaDto.class) {
-            mediaId = ((MediaDto) mediaDto).getId();
+            mediaId = UUID.fromString(((MediaDto) mediaDto).getId());
         } else {
-            mediaId = ((MediaCompleteDto) mediaDto).getId();
+            mediaId = UUID.fromString(((MediaCompleteDto) mediaDto).getId());
         }
         var recommendations = findRecommendationsForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
         var recommendationRatingCount = recommendations.size();
@@ -173,7 +173,7 @@ public class TheMovieDbService implements MediaProvider {
         }
     }
 
-    private List<MediaRecommendationDto> findRecommendationsForMediaAndAuthenticatedUsername(Long mediaId, String username) {
+    private List<MediaRecommendationDto> findRecommendationsForMediaAndAuthenticatedUsername(UUID mediaId, String username) {
         var request = new RecommendationReceivedRequest(mediaId);
         return recommendationService.listReceivedRecommendations(
                         PageRequest.ofSize(1000),

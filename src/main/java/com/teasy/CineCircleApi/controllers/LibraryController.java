@@ -16,6 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -44,7 +45,7 @@ public class LibraryController {
 
     @PutMapping("/{mediaId}")
     @Operation(summary = "Add media to authenticated user library")
-    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
+    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") UUID mediaId, Principal principal) {
         try {
             libraryService.addToLibrary(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
@@ -55,7 +56,7 @@ public class LibraryController {
 
     @DeleteMapping("/{mediaId}")
     @Operation(summary = "Remove media from authenticated user library")
-    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") Long mediaId, Principal principal) {
+    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") UUID mediaId, Principal principal) {
         try {
             libraryService.removeFromLibrary(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");

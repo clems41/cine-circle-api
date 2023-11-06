@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class MediaCompleteDto {
-    private Long id;
+    private String id;
     private String title;
     private String originalTitle;
     private String posterUrl;

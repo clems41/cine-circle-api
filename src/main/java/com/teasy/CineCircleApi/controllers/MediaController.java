@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -43,7 +44,7 @@ public class MediaController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get more details about specific media")
-    public ResponseEntity<?> getMedia(final @PathVariable("id") Long id, Principal principal) {
+    public ResponseEntity<?> getMedia(final @PathVariable("id") UUID id, Principal principal) {
         try {
             return ResponseEntity.ok().body(mediaProvider.getMedia(id, principal.getName()));
         } catch (CustomException e) {

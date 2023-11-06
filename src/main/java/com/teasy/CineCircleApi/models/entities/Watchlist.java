@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.UUID;
 
 @Getter
 @Entity
@@ -15,8 +16,8 @@ import java.util.Date;
 @NoArgsConstructor
 public class Watchlist {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    UUID id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")

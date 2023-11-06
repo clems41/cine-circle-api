@@ -50,7 +50,7 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    public UserDto createUser(AuthSignUpRequest request) throws CustomException {
+    public UserFullInfoDto createUser(AuthSignUpRequest request) throws CustomException {
         if (usernameAlreadyExists(request.username())) {
             throw CustomExceptionHandler.userWithUsernameAlreadyExists(request.username());
         }
@@ -67,7 +67,7 @@ public class UserService {
         );
         userRepository.save(user);
 
-        return entityToDto(user);
+        return entityToFullInfoDto(user);
     }
 
     public UserFullInfoDto getUserFullInfo(String username) throws CustomException {
@@ -105,7 +105,7 @@ public class UserService {
         return entityToFullInfoDto(findUserByUsernameOrEmailOrElseThrow(username, email));
     }
 
-    public UserDto getUser(Long id) throws CustomException {
+    public UserDto getUser(UUID id) throws CustomException {
         return entityToDto(findUserByIdOrElseThrow(id));
     }
 
@@ -185,7 +185,7 @@ public class UserService {
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameOrEmailNotFound(username, email));
     }
 
-    private User findUserByIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(UUID id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));

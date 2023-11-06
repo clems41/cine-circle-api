@@ -19,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class WatchlistService {
 
@@ -33,11 +35,11 @@ public class WatchlistService {
         this.userRepository = userRepository;
     }
 
-    public void addToWatchlist(String username, Long mediaId) throws CustomException {
+    public void addToWatchlist(String username, UUID mediaId) throws CustomException {
         watchlistRepository.save(newWatchlist(username, mediaId));
     }
 
-    public void removeFromWatchlist(String username, Long mediaId) {
+    public void removeFromWatchlist(String username, UUID mediaId) {
         // get existing watchlist record
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -62,7 +64,7 @@ public class WatchlistService {
         return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
     }
 
-    private Watchlist newWatchlist(String username, Long mediaId) {
+    private Watchlist newWatchlist(String username, UUID mediaId) {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);
         return new Watchlist(user, media);
@@ -75,7 +77,7 @@ public class WatchlistService {
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Media findMediaByIdOrElseThrow(Long mediaId) {
+    private Media findMediaByIdOrElseThrow(UUID mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)

@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @Slf4j
 @RequiredArgsConstructor
@@ -65,7 +67,7 @@ public class UserController {
     @GetMapping("/{id}")
     @Operation(summary = "Get details about specific user")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> getUser(final @PathVariable Long id) {
+    public ResponseEntity<?> getUser(final @PathVariable UUID id) {
         try {
             return ResponseEntity.ok().body(userService.getUser(id));
         } catch (CustomException e) {

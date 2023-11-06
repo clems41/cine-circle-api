@@ -9,7 +9,7 @@ import java.util.Set;
 @Getter
 @Setter
 public class MediaRecommendationDto {
-    private Long id;
+    private String id;
     private UserDto sentBy;
     private String comment;
     private Integer rating;

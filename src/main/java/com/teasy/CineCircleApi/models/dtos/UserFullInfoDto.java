@@ -3,11 +3,14 @@ package com.teasy.CineCircleApi.models.dtos;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 public class UserFullInfoDto {
-    private Long id;
+    private String id;
     private String username;
     private String email;
     private String displayName;
+    private String topicName;
 }

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class RecommendationService {
@@ -108,14 +109,14 @@ public class RecommendationService {
         return mapper.convertValue(recommendation, RecommendationDto.class);
     }
 
-    private Media findMediaByIdOrElseThrow(Long mediaId) {
+    private Media findMediaByIdOrElseThrow(UUID mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
                 .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
     }
 
-    private User findUserByIdOrElseThrow(Long id) throws CustomException {
+    private User findUserByIdOrElseThrow(UUID id) throws CustomException {
         return userRepository
                 .findById(id)
                 .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));

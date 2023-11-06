@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 public class MediaDto{
-    private Long id;
+    private String id;
     private String title;
     private String originalTitle;
     private String posterUrl;

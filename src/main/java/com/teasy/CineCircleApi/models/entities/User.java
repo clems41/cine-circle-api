@@ -24,8 +24,8 @@ import java.util.UUID;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "username", nullable = false, unique = true)
     private String username;
@@ -45,9 +45,12 @@ public class User {
     @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(getId(), getUsername(), getEmail());
+    @Column(unique = true, updatable = false)
+    private UUID topicName;
+
+    @PrePersist
+    protected void onCreateAbstractBaseEntity() {
+        this.topicName = UUID.randomUUID();
     }
 
     public User(String username, String email, String hashPassword, String displayName) {

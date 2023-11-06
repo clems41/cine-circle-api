@@ -3,6 +3,8 @@ package com.teasy.CineCircleApi.models.exceptions;
 import com.teasy.CineCircleApi.models.enums.ErrorCode;
 import org.springframework.http.HttpStatus;
 
+import java.util.UUID;
+
 public abstract class CustomExceptionHandler {
     public static CustomException userWithUsernameNotFound(String username) {
         return new CustomException(
@@ -12,7 +14,7 @@ public abstract class CustomExceptionHandler {
         );
     }
 
-    public static CustomException userWithIdNotFound(Long id) {
+    public static CustomException userWithIdNotFound(UUID id) {
         return new CustomException(
                 HttpStatus.NOT_FOUND,
                 ErrorCode.USER_NOT_FOUND,
@@ -77,26 +79,26 @@ public abstract class CustomExceptionHandler {
 
 
 
-    public static CustomException mediaWithIdNotFound(Long id) {
+    public static CustomException mediaWithIdNotFound(UUID id) {
         return new CustomException(
                 HttpStatus.NOT_FOUND,
                 ErrorCode.MEDIA_NOT_FOUND,
-                String.format("media with id %d cannot be found", id)
+                String.format("media with id %s cannot be found", id)
         );
     }
 
 
 
 
-    public static CustomException circleWithIdNotFound(Long id) {
+    public static CustomException circleWithIdNotFound(UUID id) {
         return new CustomException(
                 HttpStatus.NOT_FOUND,
                 ErrorCode.CIRCLE_NOT_FOUND,
-                String.format("circle with id %d cannot be found", id)
+                String.format("circle with id %s cannot be found", id)
         );
     }
 
-    public static CustomException circleWithIdUserWithUsernameBadPermissions(Long circleId, String username) {
+    public static CustomException circleWithIdUserWithUsernameBadPermissions(UUID circleId, String username) {
         return new CustomException(
                 HttpStatus.FORBIDDEN,
                 ErrorCode.CIRCLE_USER_BAD_PERMISSIONS,

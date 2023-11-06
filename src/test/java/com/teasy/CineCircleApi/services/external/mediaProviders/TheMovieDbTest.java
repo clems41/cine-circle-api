@@ -110,7 +110,7 @@ public class TheMovieDbTest {
         actualMedia.getRecommendations().forEach(mediaRecommendationDto -> {
             var expectedRecommendation = matchingRecommendations
                     .stream()
-                    .filter(recommendation -> Objects.equals(recommendation.getId(), mediaRecommendationDto.getId()))
+                    .filter(recommendation -> Objects.equals(recommendation.getId().toString(), mediaRecommendationDto.getId()))
                     .findAny();
             assertThat(expectedRecommendation.isPresent()).isTrue();
             assertThat(mediaRecommendationDto.getComment()).isEqualTo(expectedRecommendation.get().getComment());

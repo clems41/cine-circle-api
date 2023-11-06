@@ -12,6 +12,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -37,7 +38,7 @@ public class NotificationService implements NotificationServiceInterface {
 
     public void sendRecommendation(RecommendationDto recommendation) {
         recommendation.getReceivers().forEach(receiver -> {
-            var user = userRepository.findById(receiver.getId());
+            var user = userRepository.findById(UUID.fromString(receiver.getId()));
             if (user.isEmpty()) {
                 log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
                 return;
@@ -47,6 +48,6 @@ public class NotificationService implements NotificationServiceInterface {
     }
 
     private String getTopicFromUser(User user) {
-        return String.format("%s/%s", topicPrefix, user.hashCode());
+        return String.format("%s/%s", topicPrefix, user.getTopicName());
     }
 }

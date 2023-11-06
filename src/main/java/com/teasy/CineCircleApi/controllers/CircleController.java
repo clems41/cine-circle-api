@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -56,7 +57,7 @@ public class CircleController {
     @PutMapping("/{circle_id}")
     @Operation(summary = "Update existing circle")
     public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest,
-                                          @PathVariable("circle_id") Long circleId,
+                                          @PathVariable("circle_id") UUID circleId,
                                           Principal principal) {
         try {
             return ResponseEntity.ok().body(circleService.updateCircle(circleCreateUpdateRequest, circleId, principal.getName()));
@@ -67,7 +68,7 @@ public class CircleController {
 
     @DeleteMapping("/{circle_id}")
     @Operation(summary = "Delete existing circle")
-    public ResponseEntity<?> createCircle(@PathVariable("circle_id") Long circleId, Principal principal) {
+    public ResponseEntity<?> createCircle(@PathVariable("circle_id") UUID circleId, Principal principal) {
         try {
             circleService.deleteCircle(circleId, principal.getName());
             return ResponseEntity.ok().body("");
@@ -78,8 +79,8 @@ public class CircleController {
 
     @PutMapping("/{circle_id}/users/{user_id}")
     @Operation(summary = "Add user to existing circle")
-    public ResponseEntity<?> addUserToCircle(@PathVariable("circle_id") Long circleId,
-                                             @PathVariable("user_id") Long userId,
+    public ResponseEntity<?> addUserToCircle(@PathVariable("circle_id") UUID circleId,
+                                             @PathVariable("user_id") UUID userId,
                                              Principal principal) {
         try {
             return ResponseEntity.ok().body(circleService.addUserToCircle(userId, circleId, principal.getName()));
@@ -90,8 +91,8 @@ public class CircleController {
 
     @DeleteMapping("/{circle_id}/users/{user_id}")
     @Operation(summary = "Remove user from existing circle")
-    public ResponseEntity<?> removeUserFromCircle(@PathVariable("circle_id") Long circleId,
-                                                  @PathVariable("user_id") Long userId,
+    public ResponseEntity<?> removeUserFromCircle(@PathVariable("circle_id") UUID circleId,
+                                                  @PathVariable("user_id") UUID userId,
                                                   Principal principal) {
         try {
             return ResponseEntity.ok().body(circleService.removeUserFromCircle(userId, circleId, principal.getName()));

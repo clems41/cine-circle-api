@@ -20,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class LibraryService {
 
@@ -34,11 +36,11 @@ public class LibraryService {
         this.userRepository = userRepository;
     }
 
-    public void addToLibrary(String username, Long mediaId) throws CustomException {
+    public void addToLibrary(String username, UUID mediaId) throws CustomException {
         libraryRepository.save(newLibrary(username, mediaId));
     }
 
-    public void removeFromLibrary(String username, Long mediaId) {
+    public void removeFromLibrary(String username, UUID mediaId) {
         // get existing library record
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -80,7 +82,7 @@ public class LibraryService {
         return matchingMedia;
     }
 
-    private Library newLibrary(String username, Long mediaId) {
+    private Library newLibrary(String username, UUID mediaId) {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);
         return new Library(user, media);
@@ -93,7 +95,7 @@ public class LibraryService {
                 .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
     }
 
-    private Media findMediaByIdOrElseThrow(Long mediaId) {
+    private Media findMediaByIdOrElseThrow(UUID mediaId) {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)

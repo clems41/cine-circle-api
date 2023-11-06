@@ -11,7 +11,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 public class CircleDto {
-    private Long id;
+    private String id;
     private Boolean isPublic;
     private String name;
     private String description;

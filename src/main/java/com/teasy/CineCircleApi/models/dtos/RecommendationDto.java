@@ -12,7 +12,7 @@ import java.util.Set;
 @Getter
 @Setter
 public class RecommendationDto {
-    private Long id;
+    private String id;
     private UserDto sentBy;
     private MediaDto media;
     private Set<UserDto> receivers;

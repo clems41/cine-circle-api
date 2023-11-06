@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Entity
@@ -16,8 +17,8 @@ import java.util.Set;
 @NoArgsConstructor
 public class Circle {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic;

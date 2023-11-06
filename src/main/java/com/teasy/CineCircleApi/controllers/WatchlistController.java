@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -43,7 +44,7 @@ public class WatchlistController {
 
     @PutMapping("/{mediaId}")
     @Operation(summary = "Add media to authenticated user watchlist")
-    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") Long mediaId, Principal principal) {
+    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") UUID mediaId, Principal principal) {
         try {
             watchlistService.addToWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
@@ -54,7 +55,7 @@ public class WatchlistController {
 
     @DeleteMapping("/{mediaId}")
     @Operation(summary = "Remove media from authenticated user watchlist")
-    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") Long mediaId, Principal principal) {
+    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") UUID mediaId, Principal principal) {
         try {
             watchlistService.removeFromWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
