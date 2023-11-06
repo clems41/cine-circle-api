@@ -3,7 +3,7 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
-import com.teasy.CineCircleApi.models.dtos.responses.SignInResponse;
+import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.TokenService;
 import com.teasy.CineCircleApi.services.UserService;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -49,7 +48,7 @@ public class AuthController {
             var jwtToken = tokenService.generateToken(authentication);
             var username = tokenService.getUsernameFromToken(jwtToken.tokenString());
             var user = userService.getUserFullInfoByUsernameOrEmail(username, username);
-            return ResponseEntity.ok().body(new SignInResponse(jwtToken, user));
+            return ResponseEntity.ok().body(new AuthSignInResponse(jwtToken, user));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }

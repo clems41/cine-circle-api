@@ -130,10 +130,10 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public MediaGenreResponse listGenres() {
+    public List<String> listGenres() {
         initTmdbApi();
         var genres = tmdbApi.getGenre().getGenreList(language);
-        return new MediaGenreResponse(genres.stream().map(NamedIdElement::getName).toList());
+        return genres.stream().map(NamedIdElement::getName).toList();
     }
 
     private void initTmdbApi() {

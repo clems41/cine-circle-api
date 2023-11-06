@@ -17,5 +17,5 @@ public interface MediaProvider {
     MediaCompleteDto getMedia(UUID internalId,
                               String authenticatedUsername);
 
-    MediaGenreResponse listGenres();
+    List<String> listGenres();
 }

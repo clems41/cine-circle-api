@@ -1,4 +1,4 @@
-package com.teasy.CineCircleApi.services.mocks;
+package com.teasy.CineCircleApi.mocks;
 
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.responses.NotificationTopicResponse;

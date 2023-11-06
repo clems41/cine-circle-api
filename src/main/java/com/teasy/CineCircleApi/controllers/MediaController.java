@@ -2,6 +2,7 @@ package com.teasy.CineCircleApi.controllers;
 
 
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.MediaGenreResponse;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,7 +57,7 @@ public class MediaController {
     @Operation(summary = "List all existing genres")
     public ResponseEntity<?> listExistingGenres() {
         try {
-            return ResponseEntity.ok().body(mediaProvider.listGenres());
+            return ResponseEntity.ok().body(new MediaGenreResponse(mediaProvider.listGenres()));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
