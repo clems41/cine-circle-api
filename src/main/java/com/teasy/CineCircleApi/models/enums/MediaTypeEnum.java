@@ -1,5 +1,5 @@
 package com.teasy.CineCircleApi.models.enums;
 
-public enum MediaType {
+public enum MediaTypeEnum {
     MOVIE, TV_SHOW
 }

@@ -4,7 +4,7 @@ import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -51,7 +51,7 @@ public class RecommendationServiceTest {
 
         // create recommendation without existing user
         for (int i = 0; i < RandomUtils.nextInt(10, 30); i++) {
-            var dummyMedia = dummyDataCreator.generateMedia(true, MediaType.MOVIE);
+            var dummyMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
             var dummySentBy = dummyDataCreator.generateUser(true);
             List<User> dummyReceivers = new ArrayList<>();
             for (int j = 0; j < RandomUtils.nextInt(3, 6); j++) {
@@ -70,7 +70,7 @@ public class RecommendationServiceTest {
 
         // create recommendation with existing user
         for (int i = 0; i < RandomUtils.nextInt(3, 10); i++) {
-            var dummyMedia = dummyDataCreator.generateMedia(true, MediaType.MOVIE);
+            var dummyMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
             var dummySentBy = dummyDataCreator.generateUser(true);
             List<User> dummyReceivers = new ArrayList<>();
             for (int j = 0; j < RandomUtils.nextInt(3, 6); j++) {

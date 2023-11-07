@@ -6,7 +6,7 @@ import com.teasy.CineCircleApi.models.dtos.MediaDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
-import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-//@DataJpaTest
 @ActiveProfiles("test")
 @SpringBootTest(classes = CineCircleApiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class WatchlistTest {
@@ -45,9 +44,9 @@ public class WatchlistTest {
     public void AddAndRemoveMultipleMedias() {
         /* Init */
         var dummyDataCreator = new DummyDataCreator(null, mediaRepository, null);
-        var media1 = dummyDataCreator.generateMedia(true, MediaType.MOVIE); // create media1 in database
-        var media2 = dummyDataCreator.generateMedia(true, MediaType.TV_SHOW); // create media2 in database
-        var media3 = dummyDataCreator.generateMedia(true, MediaType.MOVIE); // create media3 in database
+        var media1 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media1 in database
+        var media2 = dummyDataCreator.generateMedia(true, MediaTypeEnum.TV_SHOW); // create media2 in database
+        var media3 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media3 in database
         var nonExistingMediaId = UUID.randomUUID();
 
         /* Create user */

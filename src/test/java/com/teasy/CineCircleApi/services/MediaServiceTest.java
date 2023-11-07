@@ -1,16 +1,14 @@
-package com.teasy.CineCircleApi.services.external.mediaProviders;
+package com.teasy.CineCircleApi.services;
 
 
 import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
-import com.teasy.CineCircleApi.services.NotificationService;
-import com.teasy.CineCircleApi.services.RecommendationService;
-import com.teasy.CineCircleApi.services.RecommendationServiceTest;
+import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb.TheMovieDbService;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
@@ -28,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @ActiveProfiles("test")
-public class TheMovieDbTest {
+public class MediaServiceTest {
     @MockBean
     RsaKeyProperties rsaKeyProperties;
     @MockBean
@@ -42,12 +40,14 @@ public class TheMovieDbTest {
     @Autowired
     private RecommendationRepository recommendationRepository;
     private RecommendationService recommendationService;
-    private TheMovieDbService theMovieDbService;
+    private MediaProvider mediaProvider;
+    private MediaService mediaService;
 
     @BeforeEach
     public void initializeServices() {
         recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, notificationService);
-        theMovieDbService = new TheMovieDbService(mediaRepository, httpClient, recommendationService);
+        mediaProvider = new TheMovieDbService();
+        mediaService = new MediaService(mediaProvider, mediaRepository,recommendationRepository, userRepository);
     }
 
     @Test
@@ -55,8 +55,8 @@ public class TheMovieDbTest {
         // creation du user et du media en DB
         var dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository);
         var user = dummyDataCreator.generateUser(true);
-        var media = dummyDataCreator.generateMedia(true, MediaType.MOVIE);
-        var wrongMedia = dummyDataCreator.generateMedia(true, MediaType.MOVIE);
+        var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
+        var wrongMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
         Set<User> receivers = new HashSet<>();
         for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
             receivers.add(dummyDataCreator.generateUser(true));
@@ -102,7 +102,7 @@ public class TheMovieDbTest {
         Double expectedRecommendationAverage = (double)totalRating / expectedRecommendationCount;
 
         // récupération du média et vérification des champs recommendations remplis
-        var actualMedia = theMovieDbService.getMedia(media.getId(), user.getUsername());
+        var actualMedia = mediaService.getMedia(media.getId(), user.getUsername());
         assertThat(actualMedia.getRecommendationRatingAverage()).isEqualTo(expectedRecommendationAverage);
         assertThat(actualMedia.getRecommendationRatingCount()).isEqualTo(expectedRecommendationCount);
         assertThat(actualMedia.getRecommendations().size()).isEqualTo(matchingRecommendations.size());

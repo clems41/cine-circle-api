@@ -1,8 +1,5 @@
 package com.teasy.CineCircleApi.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.teasy.CineCircleApi.models.enums.MediaProvider;
-import com.teasy.CineCircleApi.models.enums.MediaType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,9 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 @Entity

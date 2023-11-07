@@ -1,6 +1,6 @@
 package com.teasy.CineCircleApi.models.enums;
 
-public enum ErrorCode {
+public enum ErrorCodeEnum {
     USER_NOT_FOUND,
     USER_ALREADY_EXISTS,
     USER_BAD_CREDENTIALS,

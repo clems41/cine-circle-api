@@ -1,5 +1,5 @@
 package com.teasy.CineCircleApi.models.enums;
 
-public enum MediaProvider {
+public enum MediaProviderEnum {
     THE_MOVIE_DATABASE
 }

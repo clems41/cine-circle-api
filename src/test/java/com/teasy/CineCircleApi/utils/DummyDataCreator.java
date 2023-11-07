@@ -3,8 +3,8 @@ package com.teasy.CineCircleApi.utils;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.MediaProvider;
-import com.teasy.CineCircleApi.models.enums.MediaType;
+import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -39,10 +39,10 @@ public class DummyDataCreator {
         return user;
     }
 
-    public Media generateMedia(Boolean storeInDatabase, MediaType mediaType) {
+    public Media generateMedia(Boolean storeInDatabase, MediaTypeEnum mediaTypeEnum) {
         var media = new Media();
         media.setExternalId(String.valueOf(RandomUtils.nextInt(1_000, 100_000)));
-        media.setMediaProvider(MediaProvider.THE_MOVIE_DATABASE.name());
+        media.setMediaProvider(MediaProviderEnum.THE_MOVIE_DATABASE.name());
         media.setTitle(RandomStringUtils.random(20, true, false));
         media.setOriginalTitle(RandomStringUtils.random(20, true, false));
         media.setPosterUrl(RandomStringUtils.random(20, true, true));
@@ -51,10 +51,10 @@ public class DummyDataCreator {
         media.setGenres(String.join(",",
                 RandomStringUtils.random(6, true, false),
                 RandomStringUtils.random(6, true, false)));
-        if (mediaType != null) {
-            media.setMediaType(mediaType.name());
+        if (mediaTypeEnum != null) {
+            media.setMediaType(mediaTypeEnum.name());
         } else {
-            media.setMediaType(MediaType.MOVIE.name());
+            media.setMediaType(MediaTypeEnum.MOVIE.name());
         }
         media.setReleaseDate(LocalDate.now());
         media.setRuntime(RandomUtils.nextInt(40, 180));
