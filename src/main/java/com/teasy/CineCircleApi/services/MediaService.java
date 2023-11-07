@@ -6,7 +6,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.RecommendationMediaDto;
-import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
@@ -125,9 +124,9 @@ public class MediaService {
         } else {
             mediaId = UUID.fromString(((MediaFullDto) mediaDto).getId());
         }
-        var recommendations = findRecommendationsReceivedForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
-        var recommendationRatingCount = recommendations.size();
-        var recommendationRatingAverage = recommendations
+        var recommendationsReceived = findRecommendationsReceivedForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
+        var recommendationRatingCount = recommendationsReceived.size();
+        var recommendationRatingAverage = recommendationsReceived
                 .stream()
                 .mapToDouble(Recommendation::getRating)
                 .average();
@@ -139,9 +138,14 @@ public class MediaService {
             ((MediaFullDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
             ((MediaFullDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
                     recommendationRatingAverage.getAsDouble() : null);
-            // add all recommendations comment for complete media dto
-            ((MediaFullDto) mediaDto).setRecommendations(
-                    recommendations.stream().map(this::fromRecommendationToMediaRecommendationDto).toList()
+            // add all recommendations received for complete media dto
+            ((MediaFullDto) mediaDto).setRecommendationsReceived(
+                    recommendationsReceived.stream().map(this::fromRecommendationToMediaRecommendationDto).toList()
+            );
+            // add all recommendations sent for complete media dto
+            var recommendationsSent = findRecommendationsSentForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
+            ((MediaFullDto) mediaDto).setRecommendationsSent(
+                    recommendationsSent.stream().map(this::fromRecommendationToMediaRecommendationDto).toList()
             );
         }
     }
@@ -192,6 +196,21 @@ public class MediaService {
                 )
                 .stream()
                 .toList();
+    }
+
+    private List<Recommendation> findRecommendationsSentForMediaAndAuthenticatedUsername(UUID mediaId, String username) {
+        var user = findUserByUsernameOrElseThrow(username);
+        var matcher = ExampleMatcher
+                .matchingAll()
+                .withIgnoreNullValues();
+        User matchingSender = new User();
+        matchingSender.setId(user.getId());
+        Media matchingMedia = new Media();
+        matchingMedia.setId(mediaId);
+        var matchingRecommendation = new Recommendation(matchingSender, matchingMedia, null, null, null);
+        matchingRecommendation.setSentAt(null);
+
+        return recommendationRepository.findAll(Example.of(matchingRecommendation, matcher));
     }
 
     private Optional<Media> findMediaWithExternalId(String externalId) {

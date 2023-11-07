@@ -33,7 +33,8 @@ public class MediaFullDto {
     private String director;
     private Integer recommendationRatingCount;
     private Double recommendationRatingAverage;
-    private List<RecommendationMediaDto> recommendations;
+    private List<RecommendationMediaDto> recommendationsReceived;
+    private List<RecommendationMediaDto> recommendationsSent;
     private String personalComment;
     private Integer personalRating;
 }

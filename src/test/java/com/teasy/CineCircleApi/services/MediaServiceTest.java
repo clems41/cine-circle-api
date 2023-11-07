@@ -55,7 +55,7 @@ public class MediaServiceTest {
     }
 
     @Test
-    public void getMedia_CheckRecommendationFields() {
+    public void getMedia_CheckRecommendationFields_RecommendationsReceived() {
         // creation du user et du media en DB
         var user = dummyDataCreator.generateUser(true);
         var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
@@ -108,9 +108,58 @@ public class MediaServiceTest {
         var actualMedia = mediaService.getMedia(media.getId(), user.getUsername());
         assertThat(actualMedia.getRecommendationRatingAverage()).isEqualTo(expectedRecommendationAverage);
         assertThat(actualMedia.getRecommendationRatingCount()).isEqualTo(expectedRecommendationCount);
-        assertThat(actualMedia.getRecommendations().size()).isEqualTo(matchingRecommendations.size());
-        // vérification que les recommendations correspondent à celle pour le média correspondant et le destinataire
-        actualMedia.getRecommendations().forEach(recommendationMediaDto -> {
+        assertThat(actualMedia.getRecommendationsReceived().size()).isEqualTo(matchingRecommendations.size());
+        // vérification que les recommendations reçues correspondent à celles pour le média correspondant et le destinataire
+        actualMedia.getRecommendationsReceived().forEach(recommendationMediaDto -> {
+            var expectedRecommendation = matchingRecommendations
+                    .stream()
+                    .filter(recommendation -> Objects.equals(recommendation.getId().toString(), recommendationMediaDto.getId()))
+                    .findAny();
+            assertThat(expectedRecommendation.isPresent()).isTrue();
+            assertThat(recommendationMediaDto.getComment()).isEqualTo(expectedRecommendation.get().getComment());
+            assertThat(recommendationMediaDto.getRating()).isEqualTo(expectedRecommendation.get().getRating());
+        });
+    }
+
+    @Test
+    public void getMedia_CheckRecommendationFields_RecommendationsSent() {
+        // creation du user et du media en DB
+        var sender = dummyDataCreator.generateUser(true);
+        var wrongSender = dummyDataCreator.generateUser(true);
+        var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
+        var wrongMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
+
+        // creation de recommendations sur un autre media que celui créé en base où le user n'est pas l'envoyeur
+        List<Recommendation> notMatchingRecommendations = new ArrayList<>();
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
+            notMatchingRecommendations.add(dummyDataCreator.generateRecommendation(
+                    true, wrongSender, null, wrongMedia));
+        }
+
+        // creation de recommendations sur un autre media que celui créé en base avec le user est l'envoyeur
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
+            notMatchingRecommendations.add(dummyDataCreator.generateRecommendation(
+                    true, sender, null, wrongMedia));
+        }
+
+        // creation de recommendations sur le media mais où le user n'est pas l'envoyeur
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) {
+            notMatchingRecommendations.add(dummyDataCreator.generateRecommendation(
+                    true, wrongSender, null, media));
+        }
+
+        // creation de recommendations sur le media avec le user est l'envoyeur --> uniquement ces recommendations devront compter dans les champs du média
+        List<Recommendation> matchingRecommendations = new ArrayList<>();
+        for (int i = 0; i < RandomUtils.nextInt(5, 8); i++) {
+            matchingRecommendations.add(dummyDataCreator.generateRecommendation(
+                    true, sender, null, media));
+        }
+
+        // récupération du média et vérification des champs recommendations remplis
+        var actualMedia = mediaService.getMedia(media.getId(), sender.getUsername());
+        assertThat(actualMedia.getRecommendationsSent().size()).isEqualTo(matchingRecommendations.size());
+        // vérification que les recommendations reçues correspondent à celles pour le média correspondant et le destinataire
+        actualMedia.getRecommendationsReceived().forEach(recommendationMediaDto -> {
             var expectedRecommendation = matchingRecommendations
                     .stream()
                     .filter(recommendation -> Objects.equals(recommendation.getId().toString(), recommendationMediaDto.getId()))
