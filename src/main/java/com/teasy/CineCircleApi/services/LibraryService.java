@@ -3,7 +3,8 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.teasy.CineCircleApi.models.dtos.MediaDto;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
+import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,25 +38,30 @@ public class LibraryService {
         this.userRepository = userRepository;
     }
 
-    public void addToLibrary(String username, UUID mediaId) throws CustomException {
-        libraryRepository.save(newLibrary(username, mediaId));
+    public void addToLibrary(UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest, String username) throws CustomException {
+        // update existing library adding if exists
+        var existingRecord = findExistingRecord(username, mediaId);
+        if (existingRecord.isPresent()) {
+            var existingLibrary = existingRecord.get();
+            existingLibrary.setComment(libraryAddMediaRequest.comment());
+            existingLibrary.setRating(libraryAddMediaRequest.rating());
+            libraryRepository.save(existingLibrary);
+        } else { // create new one if not
+            libraryRepository.save(newLibrary(username, mediaId, libraryAddMediaRequest));
+        }
+
     }
 
     public void removeFromLibrary(String username, UUID mediaId) {
         // get existing library record
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
-                .withIgnoreNullValues();
-        var matchingLibrary = newLibrary(username, mediaId);
-        matchingLibrary.setAddedAt(null);
-        var existingRecord = libraryRepository.findOne(Example.of(matchingLibrary, matcher));
+        var existingRecord = findExistingRecord(username, mediaId);
 
         existingRecord.ifPresent(library -> libraryRepository.delete(library));
     }
 
-    public Page<MediaDto> searchInLibrary(Pageable pageable,
-                                          LibrarySearchRequest librarySearchRequest,
-                                          String username) {
+    public Page<MediaShortDto> searchInLibrary(Pageable pageable,
+                                               LibrarySearchRequest librarySearchRequest,
+                                               String username) {
         var user = findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
@@ -69,7 +76,22 @@ public class LibraryService {
         matchingLibrary.setMedia(createMatchingMedia(librarySearchRequest));
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
-        return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));
+        return records.map(library -> {
+            var mediaDto = fromMediaEntityToMediaDto(library.getMedia());
+            // add personal comment and rating
+            mediaDto.setPersonalComment(library.getComment());
+            mediaDto.setPersonalRating(library.getRating());
+            return mediaDto;
+        });
+    }
+
+    private Optional<Library> findExistingRecord(String username, UUID mediaId) {
+        ExampleMatcher matcher = ExampleMatcher
+                .matchingAll()
+                .withIgnoreNullValues();
+        var matchingLibrary = newLibrary(username, mediaId, new LibraryAddMediaRequest(null, null));
+        matchingLibrary.setAddedAt(null);
+        return libraryRepository.findOne(Example.of(matchingLibrary, matcher));
     }
 
     private Media createMatchingMedia(LibrarySearchRequest librarySearchRequest) {
@@ -82,10 +104,10 @@ public class LibraryService {
         return matchingMedia;
     }
 
-    private Library newLibrary(String username, UUID mediaId) {
+    private Library newLibrary(String username, UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest) {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);
-        return new Library(user, media);
+        return new Library(user, media, libraryAddMediaRequest.comment(), libraryAddMediaRequest.rating());
     }
 
     private User findUserByUsernameOrElseThrow(String username) {
@@ -102,10 +124,10 @@ public class LibraryService {
                 .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
     }
 
-    private MediaDto fromMediaEntityToMediaDto(Media media) {
+    private MediaShortDto fromMediaEntityToMediaDto(Media media) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaDto.class);
+        return mapper.convertValue(media, MediaShortDto.class);
     }
 }

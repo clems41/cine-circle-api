@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MediaCompleteDto {
+public class MediaFullDto {
     private String id;
     private String title;
     private String originalTitle;
@@ -33,5 +33,7 @@ public class MediaCompleteDto {
     private String director;
     private Integer recommendationRatingCount;
     private Double recommendationRatingAverage;
-    private List<MediaRecommendationDto> recommendations;
+    private List<RecommendationMediaDto> recommendations;
+    private String personalComment;
+    private Integer personalRating;
 }

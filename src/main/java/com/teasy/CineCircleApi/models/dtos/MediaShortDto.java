@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class MediaDto{
+public class MediaShortDto {
     private String id;
     private String title;
     private String originalTitle;
@@ -24,4 +24,6 @@ public class MediaDto{
     private String originalLanguage;
     private Integer recommendationRatingCount;
     private Double recommendationRatingAverage;
+    private String personalComment;
+    private Integer personalRating;
 }

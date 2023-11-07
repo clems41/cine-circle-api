@@ -1,13 +1,11 @@
 package com.teasy.CineCircleApi.models.externals;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.teasy.CineCircleApi.models.dtos.MediaRecommendationDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter

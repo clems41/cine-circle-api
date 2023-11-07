@@ -1,15 +1,18 @@
 package com.teasy.CineCircleApi.controllers;
 
 
+import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.LibraryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,11 +46,14 @@ public class LibraryController {
         }
     }
 
-    @PutMapping("/{mediaId}")
+    @PostMapping("/{mediaId}")
     @Operation(summary = "Add media to authenticated user library")
-    public ResponseEntity<?> addToLibrary(@PathVariable("mediaId") UUID mediaId, Principal principal) {
+    public ResponseEntity<?> addToLibrary(
+            @PathVariable("mediaId") UUID mediaId,
+            @Valid @RequestBody LibraryAddMediaRequest libraryAddMediaRequest,
+            Principal principal) {
         try {
-            libraryService.addToLibrary(principal.getName(), mediaId);
+            libraryService.addToLibrary(mediaId, libraryAddMediaRequest, principal.getName());
             return ResponseEntity.ok().body("");
         } catch (CustomException e) {
             return e.getEntityResponse();

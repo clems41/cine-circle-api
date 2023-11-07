@@ -3,10 +3,12 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.teasy.CineCircleApi.models.dtos.MediaCompleteDto;
-import com.teasy.CineCircleApi.models.dtos.MediaDto;
-import com.teasy.CineCircleApi.models.dtos.MediaRecommendationDto;
+import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
+import com.teasy.CineCircleApi.models.dtos.RecommendationMediaDto;
+import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
@@ -14,6 +16,7 @@ import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
+import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -39,21 +42,24 @@ public class MediaService {
     private final MediaRepository mediaRepository;
     private final RecommendationRepository recommendationRepository;
     private final UserRepository userRepository;
+    private final LibraryRepository libraryRepository;
 
     @Autowired
     public MediaService(MediaProvider theMovieDbService,
                         MediaRepository mediaRepository,
                         RecommendationRepository recommendationRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        LibraryRepository libraryRepository) {
         this.mediaProvider = theMovieDbService;
         this.mediaRepository = mediaRepository;
         this.recommendationRepository = recommendationRepository;
         this.userRepository = userRepository;
+        this.libraryRepository = libraryRepository;
     }
 
-    public List<MediaDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest, String authenticatedUsername) {
+    public List<MediaShortDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest, String authenticatedUsername) {
         var medias = mediaProvider.searchMedia(pageable, mediaSearchRequest);
-        List<MediaDto> result = new ArrayList<>();
+        List<MediaShortDto> result = new ArrayList<>();
         medias.forEach(externalMedia -> {
             // store result in database with internalId if not already exists
             var existingMedia = findMediaWithExternalId(externalMedia.getExternalId());
@@ -61,9 +67,9 @@ public class MediaService {
                 var newMedia = fromExternalMediaShortToMediaEntity(externalMedia);
                 newMedia.setCompleted(false);
                 mediaRepository.save(newMedia);
-                result.add(fromMediaEntityToDto(newMedia, MediaDto.class, authenticatedUsername));
+                result.add(fromMediaEntityToDto(newMedia, MediaShortDto.class, authenticatedUsername));
             } else {
-                result.add(fromMediaEntityToDto(existingMedia.get(), MediaDto.class, authenticatedUsername));
+                result.add(fromMediaEntityToDto(existingMedia.get(), MediaShortDto.class, authenticatedUsername));
             }
         });
         return result;
@@ -73,7 +79,7 @@ public class MediaService {
         return mediaProvider.listGenres();
     }
 
-    public MediaCompleteDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
+    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
         // build example matcher with id
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -91,7 +97,7 @@ public class MediaService {
             completeMedia(media);
             mediaRepository.save(media);
         }
-        return fromMediaEntityToDto(media, MediaCompleteDto.class, authenticatedUsername);
+        return fromMediaEntityToDto(media, MediaFullDto.class, authenticatedUsername);
     }
 
     private void completeMedia(Media media) {
@@ -108,16 +114,16 @@ public class MediaService {
     }
 
     private <T> void addRecommendationRatingFields(T mediaDto, String authenticatedUsername) {
-        if (mediaDto.getClass() != MediaDto.class && mediaDto.getClass() != MediaCompleteDto.class) {
+        if (mediaDto.getClass() != MediaShortDto.class && mediaDto.getClass() != MediaFullDto.class) {
             return;
         }
 
         // find recommendation average and count
         UUID mediaId;
-        if (mediaDto.getClass() == MediaDto.class) {
-            mediaId = UUID.fromString(((MediaDto) mediaDto).getId());
+        if (mediaDto.getClass() == MediaShortDto.class) {
+            mediaId = UUID.fromString(((MediaShortDto) mediaDto).getId());
         } else {
-            mediaId = UUID.fromString(((MediaCompleteDto) mediaDto).getId());
+            mediaId = UUID.fromString(((MediaFullDto) mediaDto).getId());
         }
         var recommendations = findRecommendationsReceivedForMediaAndAuthenticatedUsername(mediaId, authenticatedUsername);
         var recommendationRatingCount = recommendations.size();
@@ -125,18 +131,55 @@ public class MediaService {
                 .stream()
                 .mapToDouble(Recommendation::getRating)
                 .average();
-        if (mediaDto.getClass() == MediaDto.class) {
-            ((MediaDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
-            ((MediaDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
+        if (mediaDto.getClass() == MediaShortDto.class) {
+            ((MediaShortDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
+            ((MediaShortDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
                     recommendationRatingAverage.getAsDouble() : null);
         } else {
-            ((MediaCompleteDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
-            ((MediaCompleteDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
+            ((MediaFullDto) mediaDto).setRecommendationRatingCount(recommendationRatingCount);
+            ((MediaFullDto) mediaDto).setRecommendationRatingAverage(recommendationRatingAverage.isPresent() ?
                     recommendationRatingAverage.getAsDouble() : null);
             // add all recommendations comment for complete media dto
-            ((MediaCompleteDto) mediaDto).setRecommendations(
+            ((MediaFullDto) mediaDto).setRecommendations(
                     recommendations.stream().map(this::fromRecommendationToMediaRecommendationDto).toList()
             );
+        }
+    }
+
+    private <T> void addPersonalFields(T mediaDto, String authenticatedUsername) {
+        if (mediaDto.getClass() != MediaShortDto.class && mediaDto.getClass() != MediaFullDto.class) {
+            return;
+        }
+
+        // extract media Id from dto
+        UUID mediaId;
+        if (mediaDto.getClass() == MediaShortDto.class) {
+            mediaId = UUID.fromString(((MediaShortDto) mediaDto).getId());
+        } else {
+            mediaId = UUID.fromString(((MediaFullDto) mediaDto).getId());
+        }
+
+        // find user and media
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var media = mediaRepository
+                .findById(mediaId)
+                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
+
+        // find library record if exist
+        ExampleMatcher matcher = ExampleMatcher
+                .matchingAll()
+                .withIgnoreNullValues();
+        var matchingLibrary = new Library(user, media, null, null);
+        matchingLibrary.setAddedAt(null);
+        var libraryRecord = libraryRepository.findOne(Example.of(matchingLibrary, matcher));
+        if (libraryRecord.isPresent()) {
+            if (mediaDto.getClass() == MediaShortDto.class) {
+                ((MediaShortDto) mediaDto).setPersonalRating(libraryRecord.get().getRating());
+                ((MediaShortDto) mediaDto).setPersonalComment(libraryRecord.get().getComment());
+            } else {
+                ((MediaFullDto) mediaDto).setPersonalRating(libraryRecord.get().getRating());
+                ((MediaFullDto) mediaDto).setPersonalComment(libraryRecord.get().getComment());
+            }
         }
     }
 
@@ -176,14 +219,15 @@ public class MediaService {
                 .registerModule(new JavaTimeModule());
         var result = mapper.convertValue(media, toValueType);
         addRecommendationRatingFields(result, authenticatedUsername);
+        addPersonalFields(result, authenticatedUsername);
         return result;
     }
 
-    private MediaRecommendationDto fromRecommendationToMediaRecommendationDto(Recommendation recommendationDto) {
+    private RecommendationMediaDto fromRecommendationToMediaRecommendationDto(Recommendation recommendationDto) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(recommendationDto, MediaRecommendationDto.class);
+        return mapper.convertValue(recommendationDto, RecommendationMediaDto.class);
     }
 
     private Media fromExternalMediaShortToMediaEntity(ExternalMediaShort externalMediaShort) {

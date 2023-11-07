@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.relational.core.sql.In;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -30,9 +31,15 @@ public class Library {
     @Column(name = "added_at", nullable = false)
     LocalDateTime addedAt;
 
-    public Library(User user, Media media) {
+    String comment;
+
+    Integer rating;
+
+    public Library(User user, Media media, String comment, Integer rating) {
         this.user = user;
         this.media = media;
+        this.comment = comment;
+        this.rating = rating;
         this.addedAt = LocalDateTime.now();
     }
 }

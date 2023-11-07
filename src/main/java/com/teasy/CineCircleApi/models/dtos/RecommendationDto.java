@@ -1,8 +1,5 @@
 package com.teasy.CineCircleApi.models.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.teasy.CineCircleApi.models.entities.Media;
-import com.teasy.CineCircleApi.models.entities.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +11,7 @@ import java.util.Set;
 public class RecommendationDto {
     private String id;
     private UserDto sentBy;
-    private MediaDto media;
+    private MediaShortDto media;
     private Set<UserDto> receivers;
     private String comment;
     private Integer rating;

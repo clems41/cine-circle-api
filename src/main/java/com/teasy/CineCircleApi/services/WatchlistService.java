@@ -3,7 +3,7 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.teasy.CineCircleApi.models.dtos.MediaDto;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.entities.Watchlist;
@@ -51,7 +51,7 @@ public class WatchlistService {
         existingRecord.ifPresent(watchlist -> watchlistRepository.delete(watchlist));
     }
 
-    public Page<MediaDto> getWatchlist(Pageable pageable, String username) {
+    public Page<MediaShortDto> getWatchlist(Pageable pageable, String username) {
         var user = findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
@@ -84,10 +84,10 @@ public class WatchlistService {
                 .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
     }
 
-    private MediaDto fromMediaEntityToMediaDto(Media media) {
+    private MediaShortDto fromMediaEntityToMediaDto(Media media) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaDto.class);
+        return mapper.convertValue(media, MediaShortDto.class);
     }
 }

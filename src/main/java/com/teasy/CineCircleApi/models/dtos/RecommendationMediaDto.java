@@ -4,11 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Getter
 @Setter
-public class MediaRecommendationDto {
+public class RecommendationMediaDto {
     private String id;
     private UserDto sentBy;
     private String comment;

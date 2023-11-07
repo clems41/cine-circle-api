@@ -1,14 +1,13 @@
 package com.teasy.CineCircleApi.services;
 
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.mocks.MediaProviderMock;
-import com.teasy.CineCircleApi.models.dtos.MediaRecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -16,7 +15,6 @@ import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +23,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,13 +42,15 @@ public class MediaServiceTest {
     private MediaRepository mediaRepository;
     @Autowired
     private RecommendationRepository recommendationRepository;
+    @Autowired
+    private LibraryRepository libraryRepository;
     private MediaService mediaService;
     private DummyDataCreator dummyDataCreator;
 
     @BeforeEach
     public void initializeServices() {
         MediaProvider mediaProvider = new MediaProviderMock(new ArrayList<>());
-        mediaService = new MediaService(mediaProvider, mediaRepository, recommendationRepository, userRepository);
+        mediaService = new MediaService(mediaProvider, mediaRepository, recommendationRepository, userRepository, libraryRepository);
         dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository);
     }
 
@@ -111,14 +110,14 @@ public class MediaServiceTest {
         assertThat(actualMedia.getRecommendationRatingCount()).isEqualTo(expectedRecommendationCount);
         assertThat(actualMedia.getRecommendations().size()).isEqualTo(matchingRecommendations.size());
         // vérification que les recommendations correspondent à celle pour le média correspondant et le destinataire
-        actualMedia.getRecommendations().forEach(mediaRecommendationDto -> {
+        actualMedia.getRecommendations().forEach(recommendationMediaDto -> {
             var expectedRecommendation = matchingRecommendations
                     .stream()
-                    .filter(recommendation -> Objects.equals(recommendation.getId().toString(), mediaRecommendationDto.getId()))
+                    .filter(recommendation -> Objects.equals(recommendation.getId().toString(), recommendationMediaDto.getId()))
                     .findAny();
             assertThat(expectedRecommendation.isPresent()).isTrue();
-            assertThat(mediaRecommendationDto.getComment()).isEqualTo(expectedRecommendation.get().getComment());
-            assertThat(mediaRecommendationDto.getRating()).isEqualTo(expectedRecommendation.get().getRating());
+            assertThat(recommendationMediaDto.getComment()).isEqualTo(expectedRecommendation.get().getComment());
+            assertThat(recommendationMediaDto.getRating()).isEqualTo(expectedRecommendation.get().getRating());
         });
     }
 
