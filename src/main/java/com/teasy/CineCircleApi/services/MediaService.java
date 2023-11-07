@@ -56,9 +56,10 @@ public class MediaService {
         List<MediaDto> result = new ArrayList<>();
         medias.forEach(externalMedia -> {
             // store result in database with internalId if not already exists
-            var existingMedia = findMediaWithExternalId(externalMedia.getId());
+            var existingMedia = findMediaWithExternalId(externalMedia.getExternalId());
             if (existingMedia.isEmpty()) {
                 var newMedia = fromExternalMediaShortToMediaEntity(externalMedia);
+                newMedia.setCompleted(false);
                 mediaRepository.save(newMedia);
                 result.add(fromMediaEntityToDto(newMedia, MediaDto.class, authenticatedUsername));
             } else {
@@ -99,10 +100,10 @@ public class MediaService {
         media.setActors(completedMedia.getActors());
         media.setTrailerUrl(completedMedia.getTrailerUrl());
         media.setGenres(completedMedia.getGenres());
-        media.setVoteCount(completedMedia.getVoteCount());
         media.setVoteAverage(completedMedia.getVoteAverage());
+        media.setVoteCount(completedMedia.getVoteCount());
+        media.setPopularity(completedMedia.getPopularity());
         media.setOriginCountry(completedMedia.getOriginCountry());
-        media.setOriginalLanguage(completedMedia.getOriginalLanguage());
         media.setCompleted(true);
     }
 
@@ -189,6 +190,8 @@ public class MediaService {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(externalMediaShort, Media.class);
+        var result = mapper.convertValue(externalMediaShort, Media.class);
+        result.setMediaProvider(mediaProvider.getMediaProvider().name());
+        return result;
     }
 }

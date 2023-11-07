@@ -56,6 +56,7 @@ public class DummyDataCreator {
         } else {
             media.setMediaType(MediaTypeEnum.MOVIE.name());
         }
+        media.setOverview(RandomStringUtils.random(100, true, false));
         media.setReleaseDate(LocalDate.now());
         media.setRuntime(RandomUtils.nextInt(40, 180));
         media.setOriginalLanguage(RandomStringUtils.random(6, true, false));

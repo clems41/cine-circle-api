@@ -165,7 +165,7 @@ public class TheMovieDbService implements MediaProvider {
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
         ExternalMediaShort media = mapper.convertValue(movie, ExternalMediaShort.class);
-        media.setId(String.valueOf(movie.getId()));
+        media.setExternalId(String.valueOf(movie.getId()));
         media.setPosterUrl(getCompleteImageUrl(movie.getPosterPath()));
         media.setBackdropUrl(getCompleteImageUrl(movie.getBackdropPath()));
         media.setRuntime(movie.getRuntime());
@@ -184,7 +184,7 @@ public class TheMovieDbService implements MediaProvider {
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
         ExternalMediaShort media = mapper.convertValue(tvSeries, ExternalMediaShort.class);
-        media.setId(String.valueOf(tvSeries.getId()));
+        media.setExternalId(String.valueOf(tvSeries.getId()));
         media.setPosterUrl(getCompleteImageUrl(tvSeries.getPosterPath()));
         media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
         media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?

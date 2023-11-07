@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class ExternalMedia {
-    private String id;
+    private String externalId;
     private String title;
     private String originalTitle;
     private String posterUrl;

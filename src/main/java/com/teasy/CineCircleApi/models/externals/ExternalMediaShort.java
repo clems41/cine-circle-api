@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class ExternalMediaShort {
-    private String id;
+    private String externalId;
     private String title;
     private String originalTitle;
     private String posterUrl;
