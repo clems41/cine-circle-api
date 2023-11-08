@@ -9,6 +9,7 @@ import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,11 @@ public class MediaController {
 
     @GetMapping("/")
     @Operation(summary = "Search media (movie or tv show)")
-    public ResponseEntity<?> searchMedias(Pageable page, MediaSearchRequest request, Principal principal) {
+    public ResponseEntity<?> searchMedias(
+            Pageable page,
+            @Valid MediaSearchRequest request,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(mediaService.searchMedia(page, request, principal.getName()));
         } catch (CustomException e) {
@@ -46,7 +51,10 @@ public class MediaController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get more details about specific media")
-    public ResponseEntity<?> getMedia(final @PathVariable("id") UUID id, Principal principal) {
+    public ResponseEntity<?> getMedia(
+            @PathVariable("id") UUID id,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(mediaService.getMedia(id, principal.getName()));
         } catch (CustomException e) {

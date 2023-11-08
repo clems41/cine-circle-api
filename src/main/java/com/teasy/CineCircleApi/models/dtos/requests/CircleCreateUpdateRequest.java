@@ -1,10 +1,13 @@
 package com.teasy.CineCircleApi.models.dtos.requests;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.NonNull;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 public record CircleCreateUpdateRequest(
-        @NonNull String name,
-        String description,
-        @NonNull Boolean isPublic
+        @NotEmpty String name,
+        @DefaultValue("") String description,
+        @NotEmpty Boolean isPublic
 ) {
 }

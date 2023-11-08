@@ -1,7 +1,7 @@
 package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.CineCircleApiApplication;
-import com.teasy.CineCircleApi.models.CustomPageImpl;
+import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.MediaRepository;

@@ -6,7 +6,7 @@ import java.util.Map;
 
 public record SendEmailRequest(
         String subject,
-        @Email String receiver,
+        @Email(regexp = ".+@.+\\..+") String receiver,
         String templateName,
         Map<String, String> templateValues
 ) {

@@ -1,12 +1,17 @@
 package com.teasy.CineCircleApi.models.dtos.requests;
 
-import lombok.NonNull;
+import com.teasy.CineCircleApi.utils.validators.ValidUuid;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
 import java.util.UUID;
 
 public record RecommendationCreateRequest(
-    @NonNull UUID mediaId,
-    @NonNull List<UUID> userIds,
-    @NonNull String comment,
-    @NonNull Integer rating
+    @ValidUuid UUID mediaId,
+    @Size(min = 1) List<UUID> userIds,
+    @Nullable String comment,
+    @Nullable @Min(1) @Max(5) Integer rating
 ){}

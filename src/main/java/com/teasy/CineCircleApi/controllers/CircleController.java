@@ -7,6 +7,7 @@ import com.teasy.CineCircleApi.services.CircleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +46,10 @@ public class CircleController {
 
     @PostMapping("/")
     @Operation(summary = "Create new circle")
-    public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest,
-                                          Principal principal) {
+    public ResponseEntity<?> createCircle(
+            @RequestBody @Valid CircleCreateUpdateRequest circleCreateUpdateRequest,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(circleService.createCircle(circleCreateUpdateRequest, principal.getName()));
         } catch (CustomException e) {
@@ -56,9 +59,11 @@ public class CircleController {
 
     @PutMapping("/{circle_id}")
     @Operation(summary = "Update existing circle")
-    public ResponseEntity<?> createCircle(@RequestBody CircleCreateUpdateRequest circleCreateUpdateRequest,
-                                          @PathVariable("circle_id") UUID circleId,
-                                          Principal principal) {
+    public ResponseEntity<?> createCircle(
+            @RequestBody @Valid CircleCreateUpdateRequest circleCreateUpdateRequest,
+            @PathVariable("circle_id") UUID circleId,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(circleService.updateCircle(circleCreateUpdateRequest, circleId, principal.getName()));
         } catch (CustomException e) {
@@ -68,7 +73,10 @@ public class CircleController {
 
     @DeleteMapping("/{circle_id}")
     @Operation(summary = "Delete existing circle")
-    public ResponseEntity<?> createCircle(@PathVariable("circle_id") UUID circleId, Principal principal) {
+    public ResponseEntity<?> createCircle(
+            @PathVariable("circle_id") UUID circleId,
+            Principal principal
+    ) {
         try {
             circleService.deleteCircle(circleId, principal.getName());
             return ResponseEntity.ok().body("");
@@ -79,9 +87,11 @@ public class CircleController {
 
     @PutMapping("/{circle_id}/users/{user_id}")
     @Operation(summary = "Add user to existing circle")
-    public ResponseEntity<?> addUserToCircle(@PathVariable("circle_id") UUID circleId,
-                                             @PathVariable("user_id") UUID userId,
-                                             Principal principal) {
+    public ResponseEntity<?> addUserToCircle(
+            @PathVariable("circle_id") UUID circleId,
+            @PathVariable("user_id") UUID userId,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(circleService.addUserToCircle(userId, circleId, principal.getName()));
         } catch (CustomException e) {
@@ -91,9 +101,11 @@ public class CircleController {
 
     @DeleteMapping("/{circle_id}/users/{user_id}")
     @Operation(summary = "Remove user from existing circle")
-    public ResponseEntity<?> removeUserFromCircle(@PathVariable("circle_id") UUID circleId,
-                                                  @PathVariable("user_id") UUID userId,
-                                                  Principal principal) {
+    public ResponseEntity<?> removeUserFromCircle(
+            @PathVariable("circle_id") UUID circleId,
+            @PathVariable("user_id") UUID userId,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(circleService.removeUserFromCircle(userId, circleId, principal.getName()));
         } catch (CustomException e) {

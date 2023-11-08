@@ -34,7 +34,10 @@ public class WatchlistController {
 
     @GetMapping("/")
     @Operation(summary = "List medias from authenticated user watchlist")
-    public ResponseEntity<?> getWatchlist(Pageable page, Principal principal) {
+    public ResponseEntity<?> getWatchlist(
+            Pageable page,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(watchlistService.getWatchlist(page, principal.getName()));
         } catch (CustomException e) {
@@ -44,7 +47,10 @@ public class WatchlistController {
 
     @PutMapping("/{mediaId}")
     @Operation(summary = "Add media to authenticated user watchlist")
-    public ResponseEntity<?> addToWatchlist(@PathVariable("mediaId") UUID mediaId, Principal principal) {
+    public ResponseEntity<?> addToWatchlist(
+            @PathVariable("mediaId") UUID mediaId,
+            Principal principal
+    ) {
         try {
             watchlistService.addToWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
@@ -55,7 +61,10 @@ public class WatchlistController {
 
     @DeleteMapping("/{mediaId}")
     @Operation(summary = "Remove media from authenticated user watchlist")
-    public ResponseEntity<?> removeFromWatchlist(@PathVariable("mediaId") UUID mediaId, Principal principal) {
+    public ResponseEntity<?> removeFromWatchlist(
+            @PathVariable("mediaId") UUID mediaId,
+            Principal principal
+    ) {
         try {
             watchlistService.removeFromWatchlist(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");

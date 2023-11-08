@@ -1,4 +1,4 @@
-package com.teasy.CineCircleApi.models;
+package com.teasy.CineCircleApi.utils;
 import java.util.ArrayList;
 import java.util.List;
 

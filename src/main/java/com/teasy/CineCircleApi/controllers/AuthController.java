@@ -10,6 +10,7 @@ import com.teasy.CineCircleApi.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +57,9 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     @Operation(summary = "Create new user account")
-    public ResponseEntity<?> createUser(@RequestBody AuthSignUpRequest request) {
+    public ResponseEntity<?> createUser(
+            @RequestBody @Valid AuthSignUpRequest request
+    ) {
         try {
             return ResponseEntity.ok().body(userService.createUser(request));
         } catch (CustomException e) {
@@ -67,7 +70,10 @@ public class AuthController {
     @PutMapping("/me")
     @Operation(summary = "Update authenticated user informations")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> updateUser(@RequestBody AuthMeUpdateRequest request, Principal principal) {
+    public ResponseEntity<?> updateUser(
+            @RequestBody @Valid AuthMeUpdateRequest request,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(userService.updateUser(request, principal.getName()));
         } catch (CustomException e) {
@@ -94,8 +100,10 @@ public class AuthController {
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password for authenticated user (old password needed)")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> resetPassword(@RequestBody AuthResetPasswordRequest authResetPasswordRequest,
-                                           Principal principal) {
+    public ResponseEntity<?> resetPassword(
+            @RequestBody @Valid AuthResetPasswordRequest authResetPasswordRequest,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));
         } catch (CustomException e) {

@@ -8,6 +8,7 @@ import com.teasy.CineCircleApi.services.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,8 +38,9 @@ public class RecommendationController {
     @Operation(summary = "Search among all received recommendations")
     public ResponseEntity<?> listReceivedRecommendations(
             Pageable pageable,
-            RecommendationReceivedRequest recommendationReceivedRequest,
-            Principal principal) {
+            @Valid RecommendationReceivedRequest recommendationReceivedRequest,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(recommendationService.listReceivedRecommendations(
                     pageable,
@@ -51,7 +53,10 @@ public class RecommendationController {
 
     @GetMapping("/sent")
     @Operation(summary = "Search among all sent recommendations")
-    public ResponseEntity<?> listSentRecommendations(Pageable pageable, Principal principal) {
+    public ResponseEntity<?> listSentRecommendations(
+            Pageable pageable,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(recommendationService.listSentRecommendations(pageable, principal.getName()));
         } catch (CustomException e) {
@@ -62,8 +67,9 @@ public class RecommendationController {
     @PostMapping("/")
     @Operation(summary = "Send new recommendation")
     public ResponseEntity<?> createRecommendation(
-            @RequestBody RecommendationCreateRequest recommendationCreateRequest,
-            Principal principal) {
+            @RequestBody @Valid RecommendationCreateRequest recommendationCreateRequest,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(recommendationService.createRecommendation(
                     recommendationCreateRequest,

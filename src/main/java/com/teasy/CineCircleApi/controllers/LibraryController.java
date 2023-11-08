@@ -38,7 +38,11 @@ public class LibraryController {
 
     @GetMapping("/")
     @Operation(summary = "Search medias among authenticated user library")
-    public ResponseEntity<?> searchInLibrary(Pageable page, LibrarySearchRequest librarySearchRequest, Principal principal) {
+    public ResponseEntity<?> searchInLibrary(
+            Pageable page,
+            @Valid LibrarySearchRequest librarySearchRequest,
+            Principal principal
+    ) {
         try {
             return ResponseEntity.ok().body(libraryService.searchInLibrary(page, librarySearchRequest, principal.getName()));
         } catch (CustomException e) {
@@ -51,7 +55,8 @@ public class LibraryController {
     public ResponseEntity<?> addToLibrary(
             @PathVariable("mediaId") UUID mediaId,
             @Valid @RequestBody LibraryAddMediaRequest libraryAddMediaRequest,
-            Principal principal) {
+            Principal principal
+    ) {
         try {
             libraryService.addToLibrary(mediaId, libraryAddMediaRequest, principal.getName());
             return ResponseEntity.ok().body("");
@@ -62,7 +67,10 @@ public class LibraryController {
 
     @DeleteMapping("/{mediaId}")
     @Operation(summary = "Remove media from authenticated user library")
-    public ResponseEntity<?> removeFromLibrary(@PathVariable("mediaId") UUID mediaId, Principal principal) {
+    public ResponseEntity<?> removeFromLibrary(
+            @PathVariable("mediaId") UUID mediaId,
+            Principal principal
+    ) {
         try {
             libraryService.removeFromLibrary(principal.getName(), mediaId);
             return ResponseEntity.ok().body("");
