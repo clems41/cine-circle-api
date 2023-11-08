@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
+import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.entities.Media;
@@ -31,16 +32,19 @@ public class RecommendationService {
     private final RecommendationRepository recommendationRepository;
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
+    private final LibraryService libraryService;
 
     @Autowired
     public RecommendationService(RecommendationRepository recommendationRepository,
                                  UserRepository userRepository,
                                  MediaRepository mediaRepository,
+                                 LibraryService libraryService,
                                  NotificationServiceInterface notificationService) {
         this.recommendationRepository = recommendationRepository;
         this.userRepository = userRepository;
         this.mediaRepository = mediaRepository;
         this.notificationService = notificationService;
+        this.libraryService = libraryService;
     }
 
     public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
@@ -63,6 +67,9 @@ public class RecommendationService {
                 recommendationCreateRequest.comment(),
                 recommendationCreateRequest.rating());
         recommendationRepository.save(recommendation);
+
+        // add media to library for sender
+        libraryService.addToLibrary(media.getId(), null, authenticatedUsername);
 
         // send recommendation to concerned users
         var recommendationDto = fromEntityToDto(recommendation);
@@ -101,7 +108,7 @@ public class RecommendationService {
         return result.map(this::fromEntityToDto);
     }
 
-    public RecommendationDto fromEntityToDto(Recommendation recommendation) {
+    private RecommendationDto fromEntityToDto(Recommendation recommendation) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());

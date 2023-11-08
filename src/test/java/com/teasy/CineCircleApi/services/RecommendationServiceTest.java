@@ -5,6 +5,7 @@ import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -35,17 +36,23 @@ public class RecommendationServiceTest {
     private MediaRepository mediaRepository;
     @Autowired
     private RecommendationRepository recommendationRepository;
+    @Autowired
+    private LibraryRepository libraryRepository;
+
+    private LibraryService libraryService;
     private RecommendationService recommendationService;
+    private DummyDataCreator dummyDataCreator;
 
     @BeforeEach
-    public void initializeServices() {
+    public void setUp() {
         notificationService = new NotificationServiceMock();
-        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, notificationService);
+        libraryService = new LibraryService(libraryRepository, mediaRepository, userRepository);
+        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, libraryService, notificationService);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
     }
 
     @Test
     public void checkThatRecommendationHasBeenSentWhenCreated() {
-        var dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository);
         var receiver = dummyDataCreator.generateUser(true);
         List<RecommendationDto> matchingRecommendations = new ArrayList<>();
 

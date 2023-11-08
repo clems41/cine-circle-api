@@ -4,12 +4,15 @@ import com.teasy.CineCircleApi.CineCircleApiApplication;
 import com.teasy.CineCircleApi.models.CustomPageImpl;
 import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
-import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
-import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
+import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
-import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
+import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
+import com.teasy.CineCircleApi.repositories.RecommendationRepository;
+import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.utils.Authenticator;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import com.teasy.CineCircleApi.utils.HttpUtils;
@@ -23,9 +26,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -41,19 +48,27 @@ public class LibraryTest {
 
     @Autowired
     private MediaRepository mediaRepository;
-    private final static String libraryUrl = "/library/";
-    private final static String mediaUrl = "/medias/";
+
+    @Autowired
+    private LibraryRepository libraryRepository;
+
+    @Autowired
+    private RecommendationRepository recommendationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
     private Authenticator authenticator;
+    private DummyDataCreator dummyDataCreator;
 
     @BeforeEach
     public void setUp() {
         authenticator = new Authenticator(restTemplate, port);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
     }
 
     @Test
     public void AddAndRemoveMultipleMedias() {
         /* Init */
-        var dummyDataCreator = new DummyDataCreator(null, mediaRepository, null);
         var media1 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media1 in database
         var media2 = dummyDataCreator.generateMedia(true, MediaTypeEnum.TV_SHOW); // create media2 in database
         var media3 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media3 in database
@@ -68,7 +83,7 @@ public class LibraryTest {
         /* Add media1 to library */
         ResponseEntity<String> addMedia1Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media1.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media1.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(new LibraryAddMediaRequest(null, null), headers),
                         String.class
@@ -78,7 +93,7 @@ public class LibraryTest {
         /* Add non-existing media to library */
         ResponseEntity<String> addNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(nonExistingMediaId.toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(new LibraryAddMediaRequest(null, null), headers),
                         String.class
@@ -91,7 +106,7 @@ public class LibraryTest {
                 RandomUtils.nextInt(1, 5));
         ResponseEntity<String> addMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media2.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(requestMedia2, headers),
                         String.class
@@ -101,7 +116,7 @@ public class LibraryTest {
         /* List medias from library */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listLibraryResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
@@ -125,7 +140,7 @@ public class LibraryTest {
         /* Remove non-existing media from library */
         ResponseEntity<String> removeNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(nonExistingMediaId.toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -135,7 +150,7 @@ public class LibraryTest {
         /* Remove media2 from library */
         ResponseEntity<String> removeMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -145,7 +160,7 @@ public class LibraryTest {
         /* Remove media2 a 2nd time from library */
         ResponseEntity<String> removeMedia2SecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -155,7 +170,7 @@ public class LibraryTest {
         /* List medias from library */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listLibraryResponse2 = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
@@ -175,7 +190,7 @@ public class LibraryTest {
                 RandomUtils.nextInt(1, 5));
         ResponseEntity<String> addMedia3Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media3.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media3.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(requestMedia3, headers),
                         String.class
@@ -185,7 +200,7 @@ public class LibraryTest {
         /* List medias from library */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listLibraryResponse3 = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
@@ -212,7 +227,7 @@ public class LibraryTest {
                 RandomUtils.nextInt(1, 5));
         ResponseEntity<String> addMedia3SecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media3.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media3.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(requestMedia3SecondTime, headers),
                         String.class
@@ -222,7 +237,7 @@ public class LibraryTest {
         /* List medias from library */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listLibrarySecondTimeResponse3 = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
@@ -246,7 +261,6 @@ public class LibraryTest {
     @Test
     public void AddMedia_ShouldContainsCommentAndRatingWhenGettingMedia() {
         /* Init */
-        var dummyDataCreator = new DummyDataCreator(null, mediaRepository, null);
         var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
 
         /* Create user */
@@ -261,7 +275,7 @@ public class LibraryTest {
                 RandomUtils.nextInt(1, 5));
         ResponseEntity<String> addMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(addMediaRequest, headers),
                         String.class
@@ -271,7 +285,7 @@ public class LibraryTest {
         /* Get media and check rating and comment */
         ResponseEntity<MediaFullDto> getMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(mediaUrl).concat(media.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.mediaUrl).concat(media.getId().toString()),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         MediaFullDto.class
@@ -287,7 +301,7 @@ public class LibraryTest {
                 RandomUtils.nextInt(1, 5));
         ResponseEntity<String> addMediaSecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(libraryUrl).concat(media.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media.getId().toString()),
                         HttpMethod.POST,
                         new HttpEntity<>(addMediaSecondTimeRequest, headers),
                         String.class
@@ -297,7 +311,7 @@ public class LibraryTest {
         /* Get media and check new rating and new comment */
         ResponseEntity<MediaFullDto> getMediaSecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(mediaUrl).concat(media.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.mediaUrl).concat(media.getId().toString()),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         MediaFullDto.class
@@ -306,5 +320,126 @@ public class LibraryTest {
         Assertions.assertThat(getMediaSecondTimeResponse.getBody()).isNotNull();
         Assertions.assertThat(getMediaSecondTimeResponse.getBody().getPersonalComment()).isEqualTo(addMediaSecondTimeRequest.comment());
         Assertions.assertThat(getMediaSecondTimeResponse.getBody().getPersonalRating()).isEqualTo(addMediaSecondTimeRequest.rating());
+    }
+    
+    @Test
+    public void SendRecommendation_MediaShouldBeAddedToLibrary() {
+        /* Create user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Create Authorization header with JWT token */
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+        
+        /* Data */
+        var user = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+        var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
+        int nbExistingMediaInUserLibrary = RandomUtils.nextInt(3, 7);
+        for (int i = 0; i < nbExistingMediaInUserLibrary; i++) { // add some media to user library
+            dummyDataCreator.addMediaToLibrary(user, dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE));
+        }
+        List<User> receivers = new ArrayList<>();
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // add some media to user library
+            receivers.add(dummyDataCreator.generateUser(true));
+        }
+        
+        /* Send recommendation */
+        var sendRecommendationRequest = new RecommendationCreateRequest(
+                media.getId(),
+                receivers.stream().map(User::getId).toList(),
+                RandomStringUtils.random(20, true, false),
+                RandomUtils.nextInt(1, 5)
+        );
+        ResponseEntity<RecommendationDto> sendRecommendationResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.recommendationUrl),
+                        HttpMethod.POST,
+                        new HttpEntity<>(sendRecommendationRequest, headers),
+                        RecommendationDto.class
+                );
+        Assertions.assertThat(sendRecommendationResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        /* List medias from library and check that media is included */
+        ResponseEntity<CustomPageImpl<MediaShortDto>> listLibraryResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
+                        HttpMethod.GET,
+                        new HttpEntity<>(null, headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(listLibraryResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(listLibraryResponse.getBody()).isNotNull();
+        List<MediaShortDto> library = listLibraryResponse.getBody().stream().toList();
+        Assertions.assertThat(library).hasSize(nbExistingMediaInUserLibrary + 1);
+        var mediaFromList = library.stream()
+                .filter(mediaDto -> Objects.equals(mediaDto.getId(), media.getId().toString()))
+                .findAny();
+        Assertions.assertThat(mediaFromList.isPresent()).isTrue();
+        // check media fields are not filled with recommendation fields
+        Assertions.assertThat(mediaFromList.get().getPersonalComment()).isNull();
+        Assertions.assertThat(mediaFromList.get().getPersonalRating()).isNull();
+        Assertions.assertThat(mediaFromList.get().getRecommendationRatingAverage()).isNull();
+        Assertions.assertThat(mediaFromList.get().getRecommendationRatingCount()).isNull();
+    }
+
+    @Test
+    public void SendRecommendationForMediaAlreadyInLibrary_MediaShouldKeepPersonalFields() {
+        /* Create user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Create Authorization header with JWT token */
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+
+        /* Data */
+        var user = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+        var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
+        int nbExistingMediaInUserLibrary = RandomUtils.nextInt(3, 7);
+        for (int i = 0; i < nbExistingMediaInUserLibrary; i++) { // add some media to user library
+            dummyDataCreator.addMediaToLibrary(user, dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE));
+        }
+        var libraryRecord = dummyDataCreator.addMediaToLibrary(user, media);
+        List<User> receivers = new ArrayList<>();
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // add some media to user library
+            receivers.add(dummyDataCreator.generateUser(true));
+        }
+
+        /* Send recommendation */
+        var sendRecommendationRequest = new RecommendationCreateRequest(
+                media.getId(),
+                receivers.stream().map(User::getId).toList(),
+                RandomStringUtils.random(20, true, false),
+                RandomUtils.nextInt(1, 5)
+        );
+        ResponseEntity<RecommendationDto> sendRecommendationResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.recommendationUrl),
+                        HttpMethod.POST,
+                        new HttpEntity<>(sendRecommendationRequest, headers),
+                        RecommendationDto.class
+                );
+        Assertions.assertThat(sendRecommendationResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        /* List medias from library and check that media is included */
+        ResponseEntity<CustomPageImpl<MediaShortDto>> listLibraryResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl),
+                        HttpMethod.GET,
+                        new HttpEntity<>(null, headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(listLibraryResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(listLibraryResponse.getBody()).isNotNull();
+        List<MediaShortDto> library = listLibraryResponse.getBody().stream().toList();
+        Assertions.assertThat(library).hasSize(nbExistingMediaInUserLibrary + 1);
+        var mediaFromList = library.stream()
+                .filter(mediaDto -> Objects.equals(mediaDto.getId(), media.getId().toString()))
+                .findAny();
+        Assertions.assertThat(mediaFromList.isPresent()).isTrue();
+        // check media personal fields are still filled with library record
+        Assertions.assertThat(mediaFromList.get().getPersonalComment()).isEqualTo(libraryRecord.getComment());
+        Assertions.assertThat(mediaFromList.get().getPersonalRating()).isEqualTo(libraryRecord.getRating());
+        Assertions.assertThat(mediaFromList.get().getRecommendationRatingAverage()).isNull();
+        Assertions.assertThat(mediaFromList.get().getRecommendationRatingCount()).isNull();
     }
 }

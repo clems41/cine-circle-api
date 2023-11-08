@@ -42,11 +42,16 @@ public class LibraryService {
         // update existing library adding if exists
         var existingRecord = findExistingRecord(username, mediaId);
         if (existingRecord.isPresent()) {
-            var existingLibrary = existingRecord.get();
-            existingLibrary.setComment(libraryAddMediaRequest.comment());
-            existingLibrary.setRating(libraryAddMediaRequest.rating());
-            libraryRepository.save(existingLibrary);
+            if (libraryAddMediaRequest != null) {
+                var existingLibrary = existingRecord.get();
+                existingLibrary.setComment(libraryAddMediaRequest.comment());
+                existingLibrary.setRating(libraryAddMediaRequest.rating());
+                libraryRepository.save(existingLibrary);
+            }
         } else { // create new one if not
+            if (libraryAddMediaRequest == null) {
+                libraryAddMediaRequest = new LibraryAddMediaRequest(null, null);
+            }
             libraryRepository.save(newLibrary(username, mediaId, libraryAddMediaRequest));
         }
 

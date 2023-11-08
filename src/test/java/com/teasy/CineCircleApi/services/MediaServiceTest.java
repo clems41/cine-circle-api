@@ -51,7 +51,7 @@ public class MediaServiceTest {
     public void initializeServices() {
         MediaProvider mediaProvider = new MediaProviderMock(new ArrayList<>());
         mediaService = new MediaService(mediaProvider, mediaRepository, recommendationRepository, userRepository, libraryRepository);
-        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
     }
 
     @Test

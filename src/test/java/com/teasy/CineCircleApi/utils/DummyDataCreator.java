@@ -1,10 +1,12 @@
 package com.teasy.CineCircleApi.utils;
 
+import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -24,6 +26,7 @@ public class DummyDataCreator {
     private UserRepository userRepository;
     private MediaRepository mediaRepository;
     private RecommendationRepository recommendationRepository;
+    private LibraryRepository libraryRepository;
 
     public User generateUser(Boolean storeInDatabase) {
         var displayName = RandomStringUtils.random(20, true, false);
@@ -106,6 +109,15 @@ public class DummyDataCreator {
             return recommendationRepository.save(recommendation);
         }
         return recommendation;
+    }
+
+    public Library addMediaToLibrary(User user, Media media) {
+        var libraryRecord = new Library(
+                user,
+                media,
+                RandomStringUtils.random(20, true, false),
+                RandomUtils.nextInt(1, 5));
+        return libraryRepository.save(libraryRecord);
     }
 
 }

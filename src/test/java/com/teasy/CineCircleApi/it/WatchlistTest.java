@@ -34,18 +34,18 @@ public class WatchlistTest {
 
     @Autowired
     private MediaRepository mediaRepository;
-    private final static String watchlistUrl = "/watchlist/";
     private Authenticator authenticator;
+    private DummyDataCreator dummyDataCreator;
 
     @BeforeEach
     public void setUp() {
         authenticator = new Authenticator(restTemplate, port);
+        dummyDataCreator = new DummyDataCreator(null, mediaRepository, null, null);
     }
 
     @Test
     public void AddAndRemoveMultipleMedias() {
         /* Init */
-        var dummyDataCreator = new DummyDataCreator(null, mediaRepository, null);
         var media1 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media1 in database
         var media2 = dummyDataCreator.generateMedia(true, MediaTypeEnum.TV_SHOW); // create media2 in database
         var media3 = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media3 in database
@@ -60,7 +60,7 @@ public class WatchlistTest {
         /* Add media1 to watchlist */
         ResponseEntity<String> addMedia1Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(media1.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media1.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -70,7 +70,7 @@ public class WatchlistTest {
         /* Add non-existing media to watchlist */
         ResponseEntity<String> addNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(nonExistingMediaId.toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -80,7 +80,7 @@ public class WatchlistTest {
         /* Add media2 to watchlist */
         ResponseEntity<String> addMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -90,10 +90,11 @@ public class WatchlistTest {
         /* List medias from watchlist */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listWatchlistResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
-                        new ParameterizedTypeReference<CustomPageImpl<MediaShortDto>>() {}
+                        new ParameterizedTypeReference<>() {
+                        }
                 );
         Assertions.assertThat(listWatchlistResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(listWatchlistResponse.getBody()).isNotNull();
@@ -109,7 +110,7 @@ public class WatchlistTest {
         /* Remove non-existing media from watchlist */
         ResponseEntity<String> removeNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(nonExistingMediaId.toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -119,7 +120,7 @@ public class WatchlistTest {
         /* Remove media2 from watchlist */
         ResponseEntity<String> removeMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -129,7 +130,7 @@ public class WatchlistTest {
         /* Remove media2 a 2nd time from watchlist */
         ResponseEntity<String> removeMedia2SecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -139,7 +140,7 @@ public class WatchlistTest {
         /* List medias from watchlist */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listWatchlistResponse2 = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
@@ -156,7 +157,7 @@ public class WatchlistTest {
         /* Add media3 to watchlist */
         ResponseEntity<String> addMedia3Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl).concat(media3.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media3.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -166,7 +167,7 @@ public class WatchlistTest {
         /* List medias from watchlist */
         ResponseEntity<CustomPageImpl<MediaShortDto>> listWatchlistResponse3 = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(watchlistUrl),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>() {
