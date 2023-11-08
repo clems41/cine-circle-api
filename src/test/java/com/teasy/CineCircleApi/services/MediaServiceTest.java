@@ -7,10 +7,7 @@ import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.repositories.LibraryRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
-import com.teasy.CineCircleApi.repositories.RecommendationRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
@@ -44,6 +41,8 @@ public class MediaServiceTest {
     private RecommendationRepository recommendationRepository;
     @Autowired
     private LibraryRepository libraryRepository;
+    @Autowired
+    private CircleRepository circleRepository;
     private MediaService mediaService;
     private DummyDataCreator dummyDataCreator;
 
@@ -51,7 +50,7 @@ public class MediaServiceTest {
     public void initializeServices() {
         MediaProvider mediaProvider = new MediaProviderMock(new ArrayList<>());
         mediaService = new MediaService(mediaProvider, mediaRepository, recommendationRepository, userRepository, libraryRepository);
-        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository, circleRepository);
     }
 
     @Test

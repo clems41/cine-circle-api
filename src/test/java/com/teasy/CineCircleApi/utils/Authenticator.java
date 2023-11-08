@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.utils;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
+import com.teasy.CineCircleApi.models.entities.User;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -16,6 +17,8 @@ public class Authenticator {
     private final static String authSignInUrl = "/auth/sign-in";
     private final TestRestTemplate restTemplate;
     private final int port;
+
+    private User authenticatedUSer;
 
     public Authenticator(
             TestRestTemplate restTemplate,

@@ -59,7 +59,7 @@ public class CircleController {
 
     @PutMapping("/{circle_id}")
     @Operation(summary = "Update existing circle")
-    public ResponseEntity<?> createCircle(
+    public ResponseEntity<?> updateCircle(
             @RequestBody @Valid CircleCreateUpdateRequest circleCreateUpdateRequest,
             @PathVariable("circle_id") UUID circleId,
             Principal principal
@@ -71,9 +71,22 @@ public class CircleController {
         }
     }
 
+    @GetMapping("/{circle_id}")
+    @Operation(summary = "Get existing circle")
+    public ResponseEntity<?> getCircle(
+            @PathVariable("circle_id") UUID circleId,
+            Principal principal
+    ) {
+        try {
+            return ResponseEntity.ok().body(circleService.getCircle(circleId, principal.getName()));
+        } catch (CustomException e) {
+            return e.getEntityResponse();
+        }
+    }
+
     @DeleteMapping("/{circle_id}")
     @Operation(summary = "Delete existing circle")
-    public ResponseEntity<?> createCircle(
+    public ResponseEntity<?> deleteCircle(
             @PathVariable("circle_id") UUID circleId,
             Principal principal
     ) {

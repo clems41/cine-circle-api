@@ -1,15 +1,9 @@
 package com.teasy.CineCircleApi.utils;
 
-import com.teasy.CineCircleApi.models.entities.Library;
-import com.teasy.CineCircleApi.models.entities.Media;
-import com.teasy.CineCircleApi.models.entities.Recommendation;
-import com.teasy.CineCircleApi.models.entities.User;
+import com.teasy.CineCircleApi.models.entities.*;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.repositories.LibraryRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
-import com.teasy.CineCircleApi.repositories.RecommendationRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -27,6 +21,7 @@ public class DummyDataCreator {
     private MediaRepository mediaRepository;
     private RecommendationRepository recommendationRepository;
     private LibraryRepository libraryRepository;
+    private CircleRepository circleRepository;
 
     public User generateUser(Boolean storeInDatabase) {
         var displayName = RandomStringUtils.random(20, true, false);
@@ -118,6 +113,22 @@ public class DummyDataCreator {
                 RandomStringUtils.random(20, true, false),
                 RandomUtils.nextInt(1, 5));
         return libraryRepository.save(libraryRecord);
+    }
+
+    public Circle generateCircle(Boolean storeInDatabase, User creator) {
+        var description = RandomStringUtils.random(30, true, true);
+        var name = RandomStringUtils.random(15, true, false);
+        if (creator == null) {
+            creator = generateUser(storeInDatabase);
+        }
+        var circle = new Circle(false, name, description, creator);
+        for (int i = 0; i < RandomUtils.nextInt(2, 8); i++) {
+            circle.addUser(generateUser(storeInDatabase));
+        }
+        if(storeInDatabase) {
+            circleRepository.save(circle);
+        }
+        return circle;
     }
 
 }

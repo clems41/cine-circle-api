@@ -36,7 +36,7 @@ public class Circle {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> users;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(cascade = {CascadeType.REFRESH})
     @JoinColumn(name = "created_by", referencedColumnName = "id", nullable=false)
     private User createdBy;
 

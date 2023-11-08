@@ -40,7 +40,7 @@ public class WatchlistTest {
     @BeforeEach
     public void setUp() {
         authenticator = new Authenticator(restTemplate, port);
-        dummyDataCreator = new DummyDataCreator(null, mediaRepository, null, null);
+        dummyDataCreator = new DummyDataCreator(null, mediaRepository, null, null, null);
     }
 
     @Test

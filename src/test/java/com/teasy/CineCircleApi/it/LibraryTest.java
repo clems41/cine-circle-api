@@ -1,6 +1,7 @@
 package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.CineCircleApiApplication;
+import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
@@ -9,10 +10,6 @@ import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.repositories.LibraryRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
-import com.teasy.CineCircleApi.repositories.RecommendationRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.utils.Authenticator;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import com.teasy.CineCircleApi.utils.HttpUtils;
@@ -56,6 +53,9 @@ public class LibraryTest {
     private RecommendationRepository recommendationRepository;
 
     @Autowired
+    private CircleRepository circleRepository;
+
+    @Autowired
     private UserRepository userRepository;
     private Authenticator authenticator;
     private DummyDataCreator dummyDataCreator;
@@ -63,7 +63,7 @@ public class LibraryTest {
     @BeforeEach
     public void setUp() {
         authenticator = new Authenticator(restTemplate, port);
-        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository, circleRepository);
     }
 
     @Test

@@ -5,10 +5,7 @@ import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.repositories.LibraryRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
-import com.teasy.CineCircleApi.repositories.RecommendationRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
+import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.mocks.NotificationServiceMock;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -38,6 +35,8 @@ public class RecommendationServiceTest {
     private RecommendationRepository recommendationRepository;
     @Autowired
     private LibraryRepository libraryRepository;
+    @Autowired
+    private CircleRepository circleRepository;
 
     private LibraryService libraryService;
     private RecommendationService recommendationService;
@@ -48,7 +47,7 @@ public class RecommendationServiceTest {
         notificationService = new NotificationServiceMock();
         libraryService = new LibraryService(libraryRepository, mediaRepository, userRepository);
         recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, libraryService, notificationService);
-        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository);
+        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository, circleRepository);
     }
 
     @Test

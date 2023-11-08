@@ -8,6 +8,6 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record CircleCreateUpdateRequest(
         @NotEmpty String name,
         @DefaultValue("") String description,
-        @NotEmpty Boolean isPublic
+        Boolean isPublic
 ) {
 }

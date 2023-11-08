@@ -4,7 +4,9 @@ import lombok.Getter;
 
 @Getter
 public abstract class HttpUtils {
+    public final static String userUrl = "/users/";
     public final static String libraryUrl = "/library/";
+    public final static String circleUrl = "/circles/";
     public final static String mediaUrl = "/medias/";
     public final static String recommendationUrl = "/recommendations/";
     public final static String watchlistUrl = "/watchlist/";

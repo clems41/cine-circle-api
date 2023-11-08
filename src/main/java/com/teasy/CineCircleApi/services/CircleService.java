@@ -92,6 +92,17 @@ public class CircleService {
         return fromCircleEntityToCircleDto(circle);
     }
 
+    public CircleDto getCircle(UUID circleId, String authenticatedUsername) {
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var circle = findCircleByIdOrElseThrow(circleId);
+
+        // if user is not in circle he cannot get circle info
+        if (circle.getUsers().stream().noneMatch(circleUser -> circleUser.getId() == user.getId())) {
+            throw CustomExceptionHandler.circleWithIdNotFound(circleId);
+        }
+        return fromCircleEntityToCircleDto(circle);
+    }
+
     private Circle getCircleAndCheckPermissions(UUID circleId, String authenticatedUsername) {
         var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var circle = findCircleByIdOrElseThrow(circleId);

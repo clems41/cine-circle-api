@@ -109,7 +109,7 @@ public abstract class CustomExceptionHandler {
         return new CustomException(
                 HttpStatus.FORBIDDEN,
                 ErrorCodeEnum.CIRCLE_USER_BAD_PERMISSIONS,
-                String.format("circle with id %d cannot be updated/deleted by user with username %s",
+                String.format("circle with id %s cannot be updated/deleted by user with username %s",
                         circleId, username)
         );
     }
