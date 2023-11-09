@@ -17,4 +17,6 @@ public interface MediaProvider {
     List<String> listGenres();
 
     MediaProviderEnum getMediaProvider();
+
+    List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType);
 }

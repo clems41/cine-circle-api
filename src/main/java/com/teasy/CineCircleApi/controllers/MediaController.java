@@ -62,6 +62,18 @@ public class MediaController {
         }
     }
 
+    @GetMapping("/{id}/watch-providers")
+    @Operation(summary = "Get watch providers for specific media")
+    public ResponseEntity<?> getWatchProviders(
+            @PathVariable("id") UUID id
+    ) {
+        try {
+            return ResponseEntity.ok().body(mediaService.getWatchProviders(id));
+        } catch (CustomException e) {
+            return e.getEntityResponse();
+        }
+    }
+
     @GetMapping("/genres")
     @Operation(summary = "List all existing genres")
     public ResponseEntity<?> listExistingGenres() {

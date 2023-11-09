@@ -78,18 +78,14 @@ public class MediaService {
         return mediaProvider.listGenres();
     }
 
-    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
-        // build example matcher with id
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
-                .withIgnoreNullValues();
-        var exampleMedia = new Media();
-        exampleMedia.setId(id);
+    public List<String> getWatchProviders(UUID id) {
+        var media = findMediaWithIdOrElseThrow(id);
+        return mediaProvider.getWatchProvidersForMedia(media.getExternalId(), MediaTypeEnum.valueOf(media.getMediaType()));
+    }
 
+    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
         // get media from database
-        var media = mediaRepository
-                .findOne(Example.of(exampleMedia, matcher))
-                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(id));
+        var media = findMediaWithIdOrElseThrow(id);
 
         // complete it with more info if needed
         if (!media.getCompleted()) {
@@ -224,6 +220,12 @@ public class MediaService {
 
         return mediaRepository
                 .findOne(Example.of(exampleMedia, matcher));
+    }
+
+    private Media findMediaWithIdOrElseThrow(UUID id) {
+        return mediaRepository
+                .findById(id).
+                orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(id));
     }
 
     private User findUserByUsernameOrElseThrow(String username) throws CustomException {

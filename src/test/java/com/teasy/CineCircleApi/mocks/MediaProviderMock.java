@@ -69,6 +69,11 @@ public class MediaProviderMock implements MediaProvider {
         return MediaProviderEnum.MOCK;
     }
 
+    @Override
+    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) {
+        return null;
+    }
+
     private ExternalMedia generateMedia() {
         var media = new ExternalMedia();
         media.setExternalId(String.valueOf(RandomUtils.nextInt(1_000, 100_000)));

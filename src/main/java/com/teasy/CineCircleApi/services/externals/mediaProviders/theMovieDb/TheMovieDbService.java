@@ -10,7 +10,11 @@ import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.models.externals.ExternalMedia;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
+import com.teasy.CineCircleApi.models.externals.theMovieDb.WatchProviderInfo;
+import com.teasy.CineCircleApi.models.externals.theMovieDb.WatchProvidersResponse;
+import com.teasy.CineCircleApi.models.utils.CustomHttpClientSendRequest;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
+import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import info.movito.themoviedbapi.TmdbApi;
 import info.movito.themoviedbapi.TmdbMovies;
 import info.movito.themoviedbapi.TmdbTV;
@@ -26,17 +30,21 @@ import info.movito.themoviedbapi.model.tv.TvSeries;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @Slf4j
 public class TheMovieDbService implements MediaProvider {
     private final static String stringArrayDelimiter = ",";
+
+    private final static String theMovieDbApiBaseUrl = "https://api.themoviedb.org/3";
+    private final static String tvSuffix = "/tv";
+    private final static String movieSuffix = "/movie";
+    private final static String watchProvidersSuffix = "/watch/providers";
     private final static String language = "fr-FR";
     private final static String jobDirector = "Director";
     private final static String imageUrlPrefix = "https://image.tmdb.org/t/p/w500";
@@ -152,6 +160,35 @@ public class TheMovieDbService implements MediaProvider {
     @Override
     public MediaProviderEnum getMediaProvider() {
         return MediaProviderEnum.THE_MOVIE_DATABASE;
+    }
+
+    @Override
+    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) {
+        // define url depending on media type and id
+        String url = theMovieDbApiBaseUrl;
+        if (mediaType.equals(MediaTypeEnum.MOVIE)) {
+            url = url.concat(movieSuffix);
+        } else {
+            url = url.concat(tvSuffix);
+        }
+        url = url.concat("/").concat(externalId).concat(watchProvidersSuffix);
+
+        // create request with authorization header
+        var customHttpClient = new CustomHttpClient();
+        Map<String, String> queryParameters = new HashMap<>();
+        queryParameters.put("api_key", apiKey);
+        var request = new CustomHttpClientSendRequest(
+                HttpMethod.GET,
+                url,
+                queryParameters,
+                null);
+        WatchProvidersResponse response = customHttpClient.sendRequest(request, WatchProvidersResponse.class);
+        try {
+            return response.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
+        } catch (Exception e) {
+            log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     private void initTmdbApi() {
