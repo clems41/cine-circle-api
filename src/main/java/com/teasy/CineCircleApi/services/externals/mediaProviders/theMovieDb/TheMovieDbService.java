@@ -74,10 +74,10 @@ public class TheMovieDbService implements MediaProvider {
             ExternalMediaShort media;
             if (multi.getMediaType() == Multi.MediaType.MOVIE) {
                 MovieDb movie = (MovieDb) multi;
-                media = fromMovieDbToExternalMediaShort(movie);
+                media = fromMovieDbMediaToExternalMediaShort(movie, MovieDb.class);
             } else if (multi.getMediaType() == Multi.MediaType.TV_SERIES) {
                 TvSeries tvSeries = (TvSeries) multi;
-                media = fromMTvSeriesToExternalMediaShort(tvSeries);
+                media = fromMovieDbMediaToExternalMediaShort(tvSeries, TvSeries.class);
             } else {
                 return;
             }
@@ -197,40 +197,40 @@ public class TheMovieDbService implements MediaProvider {
         }
     }
 
-    private ExternalMediaShort fromMovieDbToExternalMediaShort(MovieDb movie) {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        ExternalMediaShort media = mapper.convertValue(movie, ExternalMediaShort.class);
-        media.setExternalId(String.valueOf(movie.getId()));
-        media.setPosterUrl(getCompleteImageUrl(movie.getPosterPath()));
-        media.setBackdropUrl(getCompleteImageUrl(movie.getBackdropPath()));
-        media.setRuntime(movie.getRuntime());
-        media.setMediaType(MediaTypeEnum.MOVIE.name());
-        media.setOriginalTitle(movie.getOriginalTitle());
-        media.setTitle(movie.getTitle());
-        if (movie.getReleaseDate() != null && !movie.getReleaseDate().isEmpty()) {
-            media.setReleaseDate(LocalDate.parse(movie.getReleaseDate()));
+    private <T> ExternalMediaShort fromMovieDbMediaToExternalMediaShort(T movieDbMedia, Class<T> movieDbMediaType) {
+        if (movieDbMediaType != MovieDb.class && movieDbMediaType != TvSeries.class) {
+            return null;
         }
-        media.setOriginalLanguage(movie.getOriginalLanguage());
-        return media;
-    }
-
-    private ExternalMediaShort fromMTvSeriesToExternalMediaShort(TvSeries tvSeries) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        ExternalMediaShort media = mapper.convertValue(tvSeries, ExternalMediaShort.class);
-        media.setExternalId(String.valueOf(tvSeries.getId()));
-        media.setPosterUrl(getCompleteImageUrl(tvSeries.getPosterPath()));
-        media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
-        media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
-                tvSeries.getEpisodeRuntime().getFirst() : null);
-        media.setMediaType(MediaTypeEnum.TV_SHOW.name());
-        media.setOriginalTitle(tvSeries.getOriginalName());
-        media.setTitle(tvSeries.getName());
-        if (tvSeries.getFirstAirDate() != null && !tvSeries.getFirstAirDate().isEmpty()) {
-            media.setReleaseDate(LocalDate.parse(tvSeries.getFirstAirDate()));
+        ExternalMediaShort media = mapper.convertValue(movieDbMedia, ExternalMediaShort.class);
+        if (movieDbMediaType == MovieDb.class) {
+            MovieDb movie = (MovieDb) movieDbMedia;
+            media.setExternalId(String.valueOf(movie.getId()));
+            media.setPosterUrl(getCompleteImageUrl(movie.getPosterPath()));
+            media.setBackdropUrl(getCompleteImageUrl(movie.getBackdropPath()));
+            media.setRuntime(movie.getRuntime());
+            media.setMediaType(MediaTypeEnum.MOVIE.name());
+            media.setOriginalTitle(movie.getOriginalTitle());
+            media.setTitle(movie.getTitle());
+            if (movie.getReleaseDate() != null && !movie.getReleaseDate().isEmpty()) {
+                media.setReleaseDate(LocalDate.parse(movie.getReleaseDate()));
+            }
+            media.setOriginalLanguage(movie.getOriginalLanguage());
+        } else {
+            TvSeries tvSeries = (TvSeries) movieDbMedia;
+            media.setExternalId(String.valueOf(tvSeries.getId()));
+            media.setPosterUrl(getCompleteImageUrl(tvSeries.getPosterPath()));
+            media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
+            media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
+                    tvSeries.getEpisodeRuntime().getFirst() : null);
+            media.setMediaType(MediaTypeEnum.TV_SHOW.name());
+            media.setOriginalTitle(tvSeries.getOriginalName());
+            media.setTitle(tvSeries.getName());
+            if (tvSeries.getFirstAirDate() != null && !tvSeries.getFirstAirDate().isEmpty()) {
+                media.setReleaseDate(LocalDate.parse(tvSeries.getFirstAirDate()));
+            }
         }
         return media;
     }
