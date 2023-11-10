@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.CircleDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.CircleSearchPublicRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
@@ -12,6 +13,10 @@ import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
 import com.teasy.CineCircleApi.repositories.CircleRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,6 +41,19 @@ public class CircleService {
                 .stream()
                 .map(this::fromCircleEntityToCircleDto)
                 .toList();
+    }
+
+    public Page<CircleDto> searchPublicCircles(CircleSearchPublicRequest circleSearchPublicRequest, Pageable pageable) {
+        ExampleMatcher matcher = ExampleMatcher
+                .matchingAll()
+                .withIgnoreNullValues()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
+        var matchingCircle = new Circle();
+        matchingCircle.setName(circleSearchPublicRequest.query());
+        matchingCircle.setIsPublic(true);
+
+        var circles = circleRepository.findAll(Example.of(matchingCircle, matcher), pageable);
+        return circles.map(this::fromCircleEntityToCircleDto);
     }
 
     public CircleDto createCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, String authenticatedUsername) {

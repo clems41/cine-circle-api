@@ -2,12 +2,18 @@ package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.CineCircleApiApplication;
 import com.teasy.CineCircleApi.models.dtos.CircleDto;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
+import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
+import com.teasy.CineCircleApi.models.entities.Circle;
+import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.utils.Authenticator;
+import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import com.teasy.CineCircleApi.utils.HttpUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,13 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Objects;
+import java.util.*;
 
 @ActiveProfiles("test")
 @SpringBootTest(classes = CineCircleApiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -273,8 +282,8 @@ public class CircleTest {
         var signUpRequest = authenticator.authenticateNewUser();
         var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
         var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
-        var wrongCircle = dummyDataCreator.generateCircle(true, null);
-        var circleOfAuthenticatedUser = dummyDataCreator.generateCircle(true, authenticatedUser);
+        var wrongCircle = dummyDataCreator.generateCircle(true, null, null, null);
+        var circleOfAuthenticatedUser = dummyDataCreator.generateCircle(true, authenticatedUser, null, null);
         var userToDoSomething = dummyDataCreator.generateUser(true);
 
         /* Try to add user in wrong circle --> should get 403 */
@@ -332,5 +341,97 @@ public class CircleTest {
                         String.class
                 );
         Assertions.assertThat(removeUserFromCorrectCircleResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    public void searchPublicCircles() {
+        /*  Data */
+        var signUpRequest = authenticator.authenticateNewUser();
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+        List<Circle> matchingCircles = new ArrayList<>();
+        var keyword = RandomStringUtils.random(5, true, true);
+
+        /* Create some non-matching keyword private circles */
+        for (int i = 0; i < RandomUtils.nextInt(5, 10); i++) {
+            dummyDataCreator.generateCircle(true, null, false, null);
+        }
+
+        /* Create some non-matching keyword public circles */
+        for (int i = 0; i < RandomUtils.nextInt(5, 10); i++) {
+            dummyDataCreator.generateCircle(true, null, true, null);
+        }
+
+        /* Create some matching keyword private circles */
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the beginning
+            var matchingName = keyword.concat(RandomStringUtils.random(15, true, true));
+            dummyDataCreator.generateCircle(true, null, false, matchingName);
+        }
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the end
+            var matchingName = RandomStringUtils.random(15, true, true).concat(keyword);
+            dummyDataCreator.generateCircle(true, null, false, matchingName);
+        }
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword in the middle
+            var matchingName = RandomStringUtils.random(7, true, true)
+                    .concat(keyword)
+                    .concat(RandomStringUtils.random(7, true, true));
+            dummyDataCreator.generateCircle(true, null, false, matchingName);
+        }
+
+        /* Create some matching keyword public circles */
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the beginning
+            var matchingName = keyword.concat(RandomStringUtils.random(15, true, true));
+            matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
+        }
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the end
+            var matchingName = RandomStringUtils.random(15, true, true).concat(keyword);
+            matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
+        }
+        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword in the middle
+            var matchingName = RandomStringUtils.random(7, true, true)
+                    .concat(keyword)
+                    .concat(RandomStringUtils.random(7, true, true));
+            matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
+        }
+
+        /* Search public with keyword */
+        String urlTemplate = UriComponentsBuilder.fromHttpUrl(HttpUtils.getTestingUrl(port)
+                        .concat(HttpUtils.circleUrl)
+                        .concat("public"))
+                .queryParam("page", 0)
+                .queryParam("size", 15)
+                .queryParam("query", keyword)
+                .encode()
+                .toUriString();
+        ResponseEntity<CustomPageImpl<CircleDto>> searchPublicCircleResponse = this.restTemplate
+                .exchange(
+                        urlTemplate,
+                        HttpMethod.GET,
+                        new HttpEntity<>(null, headers),
+                        new ParameterizedTypeReference<>(){}
+                );
+        Assertions.assertThat(searchPublicCircleResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        /* Check that response contains only public matching keyword circles */
+        Assertions.assertThat(searchPublicCircleResponse.getBody()).isNotNull();
+        var actualCircles = searchPublicCircleResponse.getBody().stream().toList();
+        Assertions.assertThat(matchingCircles.size()).isEqualTo(actualCircles.size());
+        actualCircles.forEach(actualCircle -> {
+            var matchingCircle = matchingCircles
+                    .stream()
+                    .filter(circle -> Objects.equals(circle.getId().toString(), actualCircle.getId()))
+                    .findAny();
+            Assertions.assertThat(matchingCircle.isPresent()).isTrue();
+            var expectedCircle = matchingCircle.get();
+            Assertions.assertThat(actualCircle.getIsPublic()).isEqualTo(expectedCircle.getIsPublic());
+            Assertions.assertThat(actualCircle.getName()).isEqualTo(expectedCircle.getName());
+            Assertions.assertThat(actualCircle.getDescription()).isEqualTo(expectedCircle.getDescription());
+            Assertions.assertThat(actualCircle.getCreatedBy().getId()).isEqualTo(expectedCircle.getCreatedBy().getId().toString());
+            // extract users id and sort it to compare them
+            var actualCircleUserIds = new ArrayList<>(actualCircle.getUsers().stream().map(UserDto::getId).toList());
+            Collections.sort(actualCircleUserIds);
+            var expectedCircleUserIds = new ArrayList<>(expectedCircle.getUsers().stream().map(User::getId).map(UUID::toString).toList());
+            Collections.sort(expectedCircleUserIds);
+            Assertions.assertThat(actualCircleUserIds).isEqualTo(expectedCircleUserIds);
+        });
     }
 }

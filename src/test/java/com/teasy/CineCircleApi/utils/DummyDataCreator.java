@@ -115,13 +115,18 @@ public class DummyDataCreator {
         return libraryRepository.save(libraryRecord);
     }
 
-    public Circle generateCircle(Boolean storeInDatabase, User creator) {
+    public Circle generateCircle(Boolean storeInDatabase, User creator, Boolean isPublic, String name) {
         var description = RandomStringUtils.random(30, true, true);
-        var name = RandomStringUtils.random(15, true, false);
+        if (name == null) {
+            name = RandomStringUtils.random(15, true, false);
+        }
         if (creator == null) {
             creator = generateUser(storeInDatabase);
         }
-        var circle = new Circle(false, name, description, creator);
+        if (isPublic == null) {
+            isPublic = false;
+        }
+        var circle = new Circle(isPublic, name, description, creator);
         for (int i = 0; i < RandomUtils.nextInt(2, 8); i++) {
             circle.addUser(generateUser(storeInDatabase));
         }

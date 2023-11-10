@@ -2,15 +2,18 @@ package com.teasy.CineCircleApi.controllers;
 
 
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.CircleSearchPublicRequest;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.services.CircleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +42,19 @@ public class CircleController {
     public ResponseEntity<?> listCircles(Principal principal) {
         try {
             return ResponseEntity.ok().body(circleService.listCircles(principal.getName()));
+        } catch (CustomException e) {
+            return e.getEntityResponse();
+        }
+    }
+
+    @GetMapping("/public")
+    @Operation(summary = "Search among public circles")
+    public ResponseEntity<?> searchPublicCircles(
+            Pageable pageable,
+            @Valid CircleSearchPublicRequest circleSearchPublicRequest
+    ) {
+        try {
+            return ResponseEntity.ok().body(circleService.searchPublicCircles(circleSearchPublicRequest, pageable));
         } catch (CustomException e) {
             return e.getEntityResponse();
         }
