@@ -37,14 +37,26 @@ public class NotificationService implements NotificationServiceInterface {
     }
 
     public void sendRecommendation(RecommendationDto recommendation) {
-        recommendation.getReceivers().forEach(receiver -> {
-            var user = userRepository.findById(UUID.fromString(receiver.getId()));
-            if (user.isEmpty()) {
-                log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
-                return;
-            }
-            messagingTemplate.convertAndSend(getTopicFromUser(user.get()), recommendation);
-        });
+        if (recommendation.getReceivers() != null) {
+            recommendation.getReceivers().forEach(receiver -> {
+                var user = userRepository.findById(UUID.fromString(receiver.getId()));
+                if (user.isEmpty()) {
+                    log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
+                    return;
+                }
+                messagingTemplate.convertAndSend(getTopicFromUser(user.get()), recommendation);
+            });
+        }
+        if (recommendation.getCircles() != null) {
+            recommendation.getCircles().forEach(circle -> circle.getUsers().forEach(receiver -> {
+                var user = userRepository.findById(UUID.fromString(receiver.getId()));
+                if (user.isEmpty()) {
+                    log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
+                    return;
+                }
+                messagingTemplate.convertAndSend(getTopicFromUser(user.get()), recommendation);
+            }));
+        }
     }
 
     private String getTopicFromUser(User user) {

@@ -29,6 +29,14 @@ public class NotificationServiceMock implements NotificationServiceInterface {
             recommendationsForUser.add(recommendation);
             recommendationsSent.put(receiver.getUsername(), recommendationsForUser);
         });
+        recommendation.getCircles().forEach(circle -> circle.getUsers().forEach(receiver -> {
+            if (!recommendationsSent.containsKey(receiver.getUsername())) {
+                recommendationsSent.put(receiver.getUsername(), new ArrayList<>());
+            }
+            var recommendationsForUser = recommendationsSent.get(receiver.getUsername());
+            recommendationsForUser.add(recommendation);
+            recommendationsSent.put(receiver.getUsername(), recommendationsForUser);
+        }));
     }
 
     public List<RecommendationDto> getRecommendationsSentForUser(String username) {

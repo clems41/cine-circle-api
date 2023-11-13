@@ -203,7 +203,7 @@ public class MediaService {
         matchingSender.setId(user.getId());
         Media matchingMedia = new Media();
         matchingMedia.setId(mediaId);
-        var matchingRecommendation = new Recommendation(matchingSender, matchingMedia, null, null, null);
+        var matchingRecommendation = new Recommendation(matchingSender, matchingMedia, null, null, null, null);
         matchingRecommendation.setSentAt(null);
 
         return recommendationRepository.findAll(Example.of(matchingRecommendation, matcher));

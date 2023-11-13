@@ -7,11 +7,13 @@ import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
+import com.teasy.CineCircleApi.models.entities.Circle;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.exceptions.CustomException;
 import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.repositories.CircleRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -33,18 +35,21 @@ public class RecommendationService {
     private final UserRepository userRepository;
     private final MediaRepository mediaRepository;
     private final LibraryService libraryService;
+    private final CircleRepository circleRepository;
 
     @Autowired
     public RecommendationService(RecommendationRepository recommendationRepository,
                                  UserRepository userRepository,
                                  MediaRepository mediaRepository,
                                  LibraryService libraryService,
+                                 CircleRepository circleRepository,
                                  NotificationServiceInterface notificationService) {
         this.recommendationRepository = recommendationRepository;
         this.userRepository = userRepository;
         this.mediaRepository = mediaRepository;
         this.notificationService = notificationService;
         this.libraryService = libraryService;
+        this.circleRepository = circleRepository;
     }
 
     public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
@@ -53,8 +58,17 @@ public class RecommendationService {
 
         // adding receivers
         Set<User> receivers = new HashSet<>();
-        recommendationCreateRequest.userIds()
-                .forEach(userId -> receivers.add(findUserByIdOrElseThrow(userId)));
+        if (recommendationCreateRequest.userIds() != null) {
+            recommendationCreateRequest.userIds()
+                    .forEach(userId -> receivers.add(findUserByIdOrElseThrow(userId)));
+        }
+
+        // adding circles
+        Set<Circle> circles = new HashSet<>();
+        if (recommendationCreateRequest.circleIds() != null) {
+            recommendationCreateRequest.circleIds()
+                    .forEach(circleId -> circles.add(findCircleByIdOrElseThrow(circleId)));
+        }
 
         // find media
         var media = findMediaByIdOrElseThrow(recommendationCreateRequest.mediaId());
@@ -64,6 +78,7 @@ public class RecommendationService {
                 user,
                 media,
                 receivers,
+                circles,
                 recommendationCreateRequest.comment(),
                 recommendationCreateRequest.rating());
         recommendationRepository.save(recommendation);
@@ -101,7 +116,7 @@ public class RecommendationService {
                 .withIgnoreNullValues();
         User matchingSender = new User();
         matchingSender.setId(user.getId());
-        var matchingRecommendation = new Recommendation(matchingSender, null, null, null, null);
+        var matchingRecommendation = new Recommendation(matchingSender, null, null, null, null, null);
         matchingRecommendation.setSentAt(null);
 
         var result = recommendationRepository.findAll(Example.of(matchingRecommendation, matcher), pageable);
@@ -113,6 +128,13 @@ public class RecommendationService {
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
         return mapper.convertValue(recommendation, RecommendationDto.class);
+    }
+
+    private Circle findCircleByIdOrElseThrow(UUID circleId) {
+        // check if media exists
+        return circleRepository
+                .findById(circleId)
+                .orElseThrow(() -> CustomExceptionHandler.circleWithIdNotFound(circleId));
     }
 
     private Media findMediaByIdOrElseThrow(UUID mediaId) {

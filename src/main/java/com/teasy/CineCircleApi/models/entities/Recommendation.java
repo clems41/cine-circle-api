@@ -34,6 +34,13 @@ public class Recommendation {
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     private Set<User> receivers;
 
+    @ManyToMany
+    @JoinTable(
+            name = "recommendation_circles",
+            joinColumns = @JoinColumn(name = "recommendation_id"),
+            inverseJoinColumns = @JoinColumn(name = "circle_id"))
+    private Set<Circle> circles;
+
     @Column(name = "comment", nullable = false)
     private String comment;
 
@@ -47,11 +54,13 @@ public class Recommendation {
             User sentBy,
             Media media,
             Set<User> receivers,
+            Set<Circle> circles,
             String comment,
             Integer rating) {
         this.sentBy = sentBy;
         this.media = media;
         this.receivers = receivers;
+        this.circles = circles;
         this.comment = comment;
         this.rating = rating;
         this.sentAt = LocalDateTime.now();

@@ -346,6 +346,7 @@ public class LibraryTest {
         var sendRecommendationRequest = new RecommendationCreateRequest(
                 media.getId(),
                 receivers.stream().map(User::getId).toList(),
+                null,
                 RandomStringUtils.random(20, true, false),
                 RandomUtils.nextInt(1, 5)
         );
@@ -407,6 +408,7 @@ public class LibraryTest {
         var sendRecommendationRequest = new RecommendationCreateRequest(
                 media.getId(),
                 receivers.stream().map(User::getId).toList(),
+                null,
                 RandomStringUtils.random(20, true, false),
                 RandomUtils.nextInt(1, 5)
         );

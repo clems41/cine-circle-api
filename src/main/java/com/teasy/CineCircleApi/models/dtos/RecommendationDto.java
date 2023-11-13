@@ -13,6 +13,7 @@ public class RecommendationDto {
     private UserDto sentBy;
     private MediaShortDto media;
     private Set<UserDto> receivers;
+    private Set<CircleDto> circles;
     private String comment;
     private Integer rating;
     private LocalDateTime sentAt;

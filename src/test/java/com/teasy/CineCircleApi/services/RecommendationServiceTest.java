@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.services;
 import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
+import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.*;
@@ -20,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @DataJpaTest
 @ActiveProfiles("test")
@@ -46,7 +48,7 @@ public class RecommendationServiceTest {
     public void setUp() {
         notificationService = new NotificationServiceMock();
         libraryService = new LibraryService(libraryRepository, mediaRepository, userRepository);
-        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, libraryService, notificationService);
+        recommendationService = new RecommendationService(recommendationRepository, userRepository, mediaRepository, libraryService, circleRepository, notificationService);
         dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository, circleRepository);
     }
 
@@ -67,6 +69,7 @@ public class RecommendationServiceTest {
             RecommendationCreateRequest creationRequest = new RecommendationCreateRequest(
                     dummyMedia.getId(),
                     dummyReceivers.stream().map(User::getId).toList(),
+                    null,
                     RandomStringUtils.random(20, true, false),
                     RandomUtils.nextInt(1, 5)
             );
@@ -87,6 +90,7 @@ public class RecommendationServiceTest {
             RecommendationCreateRequest creationRequest = new RecommendationCreateRequest(
                     dummyMedia.getId(),
                     dummyReceivers.stream().map(User::getId).toList(),
+                    null,
                     RandomStringUtils.random(20, true, false),
                     RandomUtils.nextInt(1, 5)
             );
@@ -100,6 +104,58 @@ public class RecommendationServiceTest {
         Assertions.assertEquals(receivedRecommendations.size(), matchingRecommendations.size());
         matchingRecommendations.forEach(expectedRecommendation -> {
             Assertions.assertTrue(receivedRecommendations.stream().anyMatch(expectedRecommendation::equals));
+        });
+    }
+
+    @Test
+    public void checkThatRecommendationHasBeenSentWhenCreated_PublicCircleUsers() {
+        // In this testcase, we will send recommendation to a specific circle and check if all users from this circle have been received notification
+        var circle = dummyDataCreator.generateCircle(true, null, true, null);
+
+        // create recommendation without existing users from circle
+        for (int i = 0; i < RandomUtils.nextInt(10, 30); i++) {
+            var dummyMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
+            var dummySentBy = dummyDataCreator.generateUser(true);
+            var dummyCircle = dummyDataCreator.generateCircle(true, null, true, null);
+            List<UUID> circleIds = new ArrayList<>();
+            circleIds.add(dummyCircle.getId());
+            RecommendationCreateRequest creationRequest = new RecommendationCreateRequest(
+                    dummyMedia.getId(),
+                    null,
+                    circleIds,
+                    RandomStringUtils.random(20, true, false),
+                    RandomUtils.nextInt(1, 5)
+            );
+            var result = recommendationService.createRecommendation(creationRequest, dummySentBy.getUsername());
+            Assertions.assertNotNull(result);
+        }
+
+        // create one recommendation for existing circle
+        var dummyMedia = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
+        var dummySentBy = dummyDataCreator.generateUser(true);
+        List<UUID> circleIds = new ArrayList<>();
+        circleIds.add(circle.getId());
+        RecommendationCreateRequest creationRequest = new RecommendationCreateRequest(
+                dummyMedia.getId(),
+                null,
+                circleIds,
+                RandomStringUtils.random(15, true, false),
+                RandomUtils.nextInt(1, 5)
+        );
+        var actualRecommendation = recommendationService.createRecommendation(creationRequest, dummySentBy.getUsername());
+        Assertions.assertNotNull(actualRecommendation);
+
+        // check that all circle users have been received recommendation
+        circle.getUsers().forEach(user -> {
+            var receivedRecommendations = notificationService.getRecommendationsSentForUser(user.getUsername());
+            Assertions.assertEquals(receivedRecommendations.size(), 1);
+            Assertions.assertEquals(receivedRecommendations.getFirst(), actualRecommendation);
+            // check that recommendation have been stored in database
+            var recommendation = recommendationRepository.findById(UUID.fromString(receivedRecommendations.getFirst().getId()));
+            Assertions.assertTrue(recommendation.isPresent());
+            Assertions.assertEquals(recommendation.get().getMedia().getId(), creationRequest.mediaId());
+            Assertions.assertEquals(recommendation.get().getRating(), creationRequest.rating());
+            Assertions.assertEquals(recommendation.get().getComment(), creationRequest.comment());
         });
     }
 }
