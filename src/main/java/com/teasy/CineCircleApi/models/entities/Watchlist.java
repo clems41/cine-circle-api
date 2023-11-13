@@ -12,7 +12,14 @@ import java.util.UUID;
 @Getter
 @Entity
 @Setter
-@Table(name = "watchlists")
+@Table(name = "watchlists",
+        indexes = {
+                @Index(columnList = "user_id"),
+                @Index(columnList = "media_id"),
+                @Index(columnList = "addedAt DESC"),
+                @Index(columnList = "user_id, addedAt")
+        }
+)
 @NoArgsConstructor
 public class Watchlist {
     @Id
@@ -28,7 +35,7 @@ public class Watchlist {
     Media media;
 
 
-    @Column(name = "added_at", nullable = false)
+    @Column(nullable = false)
     LocalDateTime addedAt;
 
     public Watchlist(User user, Media media) {

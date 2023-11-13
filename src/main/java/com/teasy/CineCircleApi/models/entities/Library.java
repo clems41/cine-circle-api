@@ -12,7 +12,14 @@ import java.util.UUID;
 @Getter
 @Entity
 @Setter
-@Table(name = "libraries")
+@Table(name = "libraries",
+        indexes = {
+                @Index(columnList = "user_id"),
+                @Index(columnList = "media_id"),
+                @Index(columnList = "addedAt DESC"),
+                @Index(columnList = "user_id, addedAt")
+        }
+)
 @NoArgsConstructor
 public class Library {
     @Id
@@ -28,7 +35,7 @@ public class Library {
     Media media;
 
 
-    @Column(name = "added_at", nullable = false)
+    @Column(nullable = false)
     LocalDateTime addedAt;
 
     String comment;

@@ -13,20 +13,26 @@ import java.util.UUID;
 @Getter
 @Entity
 @Setter
-@Table(name = "circles")
+@Table(
+        name = "circles",
+        indexes = {
+                @Index(columnList = "name"),
+                @Index(columnList = "isPublic"),
+                @Index(columnList = "created_by")
+        }
+)
 @NoArgsConstructor
 public class Circle {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "is_public", nullable = false)
+    @Column(nullable = false)
     private Boolean isPublic;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description")
     private String description;
 
     @ManyToMany

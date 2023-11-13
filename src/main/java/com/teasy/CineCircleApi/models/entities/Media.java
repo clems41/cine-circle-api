@@ -15,7 +15,11 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "medias")
+@Table(name = "medias",
+        indexes = {
+                @Index(columnList = "externalId, mediaProvider")
+        }
+)
 public class Media {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -12,7 +12,13 @@ import java.util.UUID;
 @Getter
 @Entity
 @Setter
-@Table(name = "recommendations")
+@Table(name = "recommendations",
+        indexes = {
+                @Index(columnList = "sent_by"),
+                @Index(columnList = "media_id"),
+                @Index(columnList = "sentAt DESC")
+        }
+)
 @NoArgsConstructor
 public class Recommendation {
     @Id
@@ -20,11 +26,11 @@ public class Recommendation {
     private UUID id;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinColumn(name = "sent_by", referencedColumnName = "id", nullable=false)
+    @JoinColumn(name = "sent_by", referencedColumnName = "id", nullable = false)
     private User sentBy;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinColumn(name = "media_id", referencedColumnName = "id", nullable=false)
+    @JoinColumn(name = "media_id", referencedColumnName = "id", nullable = false)
     private Media media;
 
     @ManyToMany
@@ -41,13 +47,13 @@ public class Recommendation {
             inverseJoinColumns = @JoinColumn(name = "circle_id"))
     private Set<Circle> circles;
 
-    @Column(name = "comment", nullable = false)
+    @Column(nullable = false)
     private String comment;
 
-    @Column(name = "rating", nullable = false)
+    @Column(nullable = false)
     private Integer rating;
 
-    @Column(name = "sent_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime sentAt;
 
     public Recommendation(

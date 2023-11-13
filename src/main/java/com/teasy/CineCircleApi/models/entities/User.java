@@ -21,28 +21,33 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {
+                @Index(columnList = "username", unique = true),
+                @Index(columnList = "email", unique = true),
+                @Index(columnList = "password")
+        }
+)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
-    
+
     @Column(name = "password", nullable = false)
     private String hashPassword;
 
-    @Column(name = "enabled", nullable = false)
+    @Column(nullable = false)
     private Boolean enabled;
 
-    @Column(name = "display_name", nullable = false)
+    @Column(nullable = false)
     private String displayName;
 
-    @Column(name = "reset_password_token")
     private String resetPasswordToken;
 
     @Column(unique = true, updatable = false)
