@@ -431,4 +431,36 @@ public class CircleTest {
             Assertions.assertThat(actualCircle.getCreatedBy().getId()).isEqualTo(expectedCircle.getCreatedBy().getId().toString());
         });
     }
+
+    @Test
+    public void JoinPublicCircle() {
+        /* Create circle */
+        var circle = dummyDataCreator.generateCircle(true, null, true, null);
+
+        /* Create user */
+        var signUpRequest = authenticator.authenticateNewUser();
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+
+        /* User joins circle */
+        ResponseEntity<CirclePublicDto> joinPublicCircleResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port)
+                                .concat(HttpUtils.circleUrl)
+                                .concat("public/")
+                                .concat(circle.getId().toString())
+                                .concat("/join"),
+                        HttpMethod.PUT,
+                        new HttpEntity<>(null, headers),
+                        CirclePublicDto.class
+                );
+        Assertions.assertThat(joinPublicCircleResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(joinPublicCircleResponse.getBody()).isNotNull();
+        Assertions.assertThat(joinPublicCircleResponse.getBody().getId()).isEqualTo(circle.getId().toString());
+
+        /* Check that circle contains user in database */
+        var updatedCircle = circleRepository.findById(circle.getId()).orElseThrow();
+        Assertions.assertThat(updatedCircle.getUsers().size()).isEqualTo(circle.getUsers().size() + 1);
+        Assertions.assertThat(updatedCircle.getUsers().stream().anyMatch(user -> user.getId().equals(authenticatedUser.getId()))).isTrue();
+    }
 }

@@ -44,6 +44,17 @@ public class CircleService {
                 .toList();
     }
 
+    public CirclePublicDto joinPublicCircle(UUID circleId, String authenticatedUsername) {
+        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var circle = findCircleByIdOrElseThrow(circleId);
+        if (!circle.getIsPublic()) {
+            throw CustomExceptionHandler.circleWithIdNotFound(circleId);
+        }
+        circle.addUser(user);
+        circleRepository.save(circle);
+        return fromCircleEntityToCircleDto(circle, CirclePublicDto.class);
+    }
+
     public Page<CirclePublicDto> searchPublicCircles(CircleSearchPublicRequest circleSearchPublicRequest, Pageable pageable) {
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()

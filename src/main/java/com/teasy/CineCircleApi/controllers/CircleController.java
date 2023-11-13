@@ -60,6 +60,19 @@ public class CircleController {
         }
     }
 
+    @PutMapping("/public/{circle_id}/join")
+    @Operation(summary = "Join existing public circle")
+    public ResponseEntity<?> joinPublicCircle(
+            @PathVariable("circle_id") UUID circleId,
+            Principal principal
+    ) {
+        try {
+            return ResponseEntity.ok().body(circleService.joinPublicCircle(circleId, principal.getName()));
+        } catch (CustomException e) {
+            return e.getEntityResponse();
+        }
+    }
+
     @PostMapping("/")
     @Operation(summary = "Create new circle")
     public ResponseEntity<?> createCircle(
