@@ -2,6 +2,7 @@ package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.CineCircleApiApplication;
 import com.teasy.CineCircleApi.models.dtos.CircleDto;
+import com.teasy.CineCircleApi.models.dtos.CirclePublicDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
@@ -402,7 +403,7 @@ public class CircleTest {
                 .queryParam("query", keyword)
                 .encode()
                 .toUriString();
-        ResponseEntity<CustomPageImpl<CircleDto>> searchPublicCircleResponse = this.restTemplate
+        ResponseEntity<CustomPageImpl<CirclePublicDto>> searchPublicCircleResponse = this.restTemplate
                 .exchange(
                         urlTemplate,
                         HttpMethod.GET,
@@ -416,22 +417,18 @@ public class CircleTest {
         var actualCircles = searchPublicCircleResponse.getBody().stream().toList();
         Assertions.assertThat(matchingCircles.size()).isEqualTo(actualCircles.size());
         actualCircles.forEach(actualCircle -> {
+            // find if circle is one of the expected
             var matchingCircle = matchingCircles
                     .stream()
                     .filter(circle -> Objects.equals(circle.getId().toString(), actualCircle.getId()))
                     .findAny();
             Assertions.assertThat(matchingCircle.isPresent()).isTrue();
             var expectedCircle = matchingCircle.get();
+            // compare fields value
             Assertions.assertThat(actualCircle.getIsPublic()).isEqualTo(expectedCircle.getIsPublic());
             Assertions.assertThat(actualCircle.getName()).isEqualTo(expectedCircle.getName());
             Assertions.assertThat(actualCircle.getDescription()).isEqualTo(expectedCircle.getDescription());
             Assertions.assertThat(actualCircle.getCreatedBy().getId()).isEqualTo(expectedCircle.getCreatedBy().getId().toString());
-            // extract users id and sort it to compare them
-            var actualCircleUserIds = new ArrayList<>(actualCircle.getUsers().stream().map(UserDto::getId).toList());
-            Collections.sort(actualCircleUserIds);
-            var expectedCircleUserIds = new ArrayList<>(expectedCircle.getUsers().stream().map(User::getId).map(UUID::toString).toList());
-            Collections.sort(expectedCircleUserIds);
-            Assertions.assertThat(actualCircleUserIds).isEqualTo(expectedCircleUserIds);
         });
     }
 }

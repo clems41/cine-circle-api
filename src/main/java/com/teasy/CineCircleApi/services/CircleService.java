@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.CircleDto;
+import com.teasy.CineCircleApi.models.dtos.CirclePublicDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleSearchPublicRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
@@ -39,11 +40,11 @@ public class CircleService {
         var circles = circleRepository.findAllByUsers_Id(user.getId());
         return circles
                 .stream()
-                .map(this::fromCircleEntityToCircleDto)
+                .map(circle -> fromCircleEntityToCircleDto(circle, CircleDto.class))
                 .toList();
     }
 
-    public Page<CircleDto> searchPublicCircles(CircleSearchPublicRequest circleSearchPublicRequest, Pageable pageable) {
+    public Page<CirclePublicDto> searchPublicCircles(CircleSearchPublicRequest circleSearchPublicRequest, Pageable pageable) {
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues()
@@ -53,7 +54,7 @@ public class CircleService {
         matchingCircle.setIsPublic(true);
 
         var circles = circleRepository.findAll(Example.of(matchingCircle, matcher), pageable);
-        return circles.map(this::fromCircleEntityToCircleDto);
+        return circles.map(circle -> fromCircleEntityToCircleDto(circle, CirclePublicDto.class));
     }
 
     public CircleDto createCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, String authenticatedUsername) {
@@ -65,7 +66,7 @@ public class CircleService {
                 user
         );
         circleRepository.save(newCircle);
-        return fromCircleEntityToCircleDto(newCircle);
+        return fromCircleEntityToCircleDto(newCircle, CircleDto.class);
     }
 
     public CircleDto updateCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, UUID circleId, String authenticatedUsername) throws CustomException {
@@ -76,7 +77,7 @@ public class CircleService {
         circle.setName(circleCreateUpdateRequest.name());
         circle.setIsPublic(circleCreateUpdateRequest.isPublic());
         circleRepository.save(circle);
-        return fromCircleEntityToCircleDto(circle);
+        return fromCircleEntityToCircleDto(circle, CircleDto.class);
     }
 
     public void deleteCircle(UUID circleId, String authenticatedUsername) throws CustomException {
@@ -95,7 +96,7 @@ public class CircleService {
         // add user
         circle.addUser(userToAdd);
         circleRepository.save(circle);
-        return fromCircleEntityToCircleDto(circle);
+        return fromCircleEntityToCircleDto(circle, CircleDto.class);
     }
 
     public CircleDto removeUserFromCircle(UUID userIdToRemove, UUID circleId, String authenticatedUsername) throws CustomException {
@@ -107,7 +108,7 @@ public class CircleService {
         // add user
         circle.removeUser(userToRemove);
         circleRepository.save(circle);
-        return fromCircleEntityToCircleDto(circle);
+        return fromCircleEntityToCircleDto(circle, CircleDto.class);
     }
 
     public CircleDto getCircle(UUID circleId, String authenticatedUsername) {
@@ -118,7 +119,7 @@ public class CircleService {
         if (circle.getUsers().stream().noneMatch(circleUser -> circleUser.getId() == user.getId())) {
             throw CustomExceptionHandler.circleWithIdNotFound(circleId);
         }
-        return fromCircleEntityToCircleDto(circle);
+        return fromCircleEntityToCircleDto(circle, CircleDto.class);
     }
 
     private Circle getCircleAndCheckPermissions(UUID circleId, String authenticatedUsername) {
@@ -152,10 +153,10 @@ public class CircleService {
                 .orElseThrow(() -> CustomExceptionHandler.circleWithIdNotFound(circleId));
     }
 
-    private CircleDto fromCircleEntityToCircleDto(Circle circle) {
+    private <T> T fromCircleEntityToCircleDto(Circle circle, Class<T> circleDtoType) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(circle, CircleDto.class);
+        return mapper.convertValue(circle, circleDtoType);
     }
 }
