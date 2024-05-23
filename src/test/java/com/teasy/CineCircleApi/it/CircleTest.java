@@ -1,70 +1,27 @@
 package com.teasy.CineCircleApi.it;
 
-import com.teasy.CineCircleApi.CineCircleApiApplication;
 import com.teasy.CineCircleApi.models.dtos.CircleDto;
 import com.teasy.CineCircleApi.models.dtos.CirclePublicDto;
-import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
-import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
-import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.repositories.*;
-import com.teasy.CineCircleApi.utils.Authenticator;
 import com.teasy.CineCircleApi.utils.CustomPageImpl;
-import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import com.teasy.CineCircleApi.utils.HttpUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-@ActiveProfiles("test")
-@SpringBootTest(classes = CineCircleApiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class CircleTest {
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    @Autowired
-    private MediaRepository mediaRepository;
-
-    @Autowired
-    private CircleRepository circleRepository;
-
-    @Autowired
-    private LibraryRepository libraryRepository;
-
-    @Autowired
-    private RecommendationRepository recommendationRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-    private Authenticator authenticator;
-    private DummyDataCreator dummyDataCreator;
-
-    @BeforeEach
-    public void setUp() {
-        authenticator = new Authenticator(restTemplate, port);
-        dummyDataCreator = new DummyDataCreator(userRepository, mediaRepository, recommendationRepository, libraryRepository, circleRepository);
-    }
-
+public class CircleTest extends IntegrationTestAbstract {
     @Test
     public void CRUDCircleAddAndRemoveUsers() {
         /* Data */

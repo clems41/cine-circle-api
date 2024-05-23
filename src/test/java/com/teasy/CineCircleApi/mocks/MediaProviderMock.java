@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.externals.ExternalMedia;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
@@ -14,6 +15,7 @@ import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,7 +46,7 @@ public class MediaProviderMock implements MediaProvider {
     }
 
     @Override
-    public ExternalMedia getMedia(String externalId, MediaTypeEnum mediaType) {
+    public ExternalMedia getMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException {
         if (database == null || database.isEmpty()) {
             var result = generateMedia();
             result.setExternalId(externalId);
@@ -55,7 +57,7 @@ public class MediaProviderMock implements MediaProvider {
                     .stream()
                     .filter(externalMedia -> Objects.equals(externalMedia.getExternalId(), externalId))
                     .findAny()
-                    .orElseThrow(() -> CustomExceptionHandler.mediaWithExternalIdNotFound(externalId));
+                    .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
         }
     }
 

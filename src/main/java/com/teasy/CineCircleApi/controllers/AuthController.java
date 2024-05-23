@@ -1,10 +1,12 @@
 package com.teasy.CineCircleApi.controllers;
 
+import com.teasy.CineCircleApi.models.dtos.UserDto;
+import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.TokenService;
 import com.teasy.CineCircleApi.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -44,75 +47,65 @@ public class AuthController {
             description = "Generate JWT token based on user credentials defined as Basic Auth in request header"
     )
     @SecurityRequirement(name = "basic")
-    public ResponseEntity<?> createAuthenticationToken(Authentication authentication) {
-        try {
-            var jwtToken = tokenService.generateToken(authentication);
-            var username = tokenService.getUsernameFromToken(jwtToken.tokenString());
-            var user = userService.getUserFullInfoByUsernameOrEmail(username, username);
-            return ResponseEntity.ok().body(new AuthSignInResponse(jwtToken, user));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    public ResponseEntity<AuthSignInResponse> createAuthenticationToken(Authentication authentication) throws ExpectedException {
+        var jwtToken = tokenService.generateToken(authentication);
+        var username = tokenService.getUsernameFromToken(jwtToken.tokenString());
+        var user = userService.getUserFullInfoByUsernameOrEmail(username, username);
+        return ResponseEntity.ok().body(new AuthSignInResponse(jwtToken, user));
     }
 
     @PostMapping("/sign-up")
     @Operation(summary = "Create new user account")
-    public ResponseEntity<?> createUser(
+    public ResponseEntity<UserFullInfoDto> createUser(
             @RequestBody @Valid AuthSignUpRequest request
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.createUser(request));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.createUser(request));
     }
 
     @PutMapping("/me")
     @Operation(summary = "Update authenticated user informations")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> updateUser(
+    public ResponseEntity<UserFullInfoDto> updateUser(
             @RequestBody @Valid AuthMeUpdateRequest request,
             Principal principal
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.updateUser(request, principal.getName()));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.updateUser(request, principal.getName()));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Get authenticated user informations")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> me(Principal principal) {
-        try {
-            return ResponseEntity.ok().body(userService.getUserFullInfo(principal.getName()));
-        } catch (CustomException e) {
-            // here we want to return 401 if user is not found
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-            } else {
-                return e.getEntityResponse();
-            }
-        }
+    public ResponseEntity<UserFullInfoDto> me(Principal principal) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.getUserFullInfo(principal.getName()));
     }
 
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password for authenticated user (old password needed)")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> resetPassword(
+    public ResponseEntity<UserDto> resetPassword(
             @RequestBody @Valid AuthResetPasswordRequest authResetPasswordRequest,
             Principal principal
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));
-        } catch (CustomException e) {
-            // here we want to return 401 if user is not found
-            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-            } else {
-                return e.getEntityResponse();
-            }
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));
+    }
+
+    @PutMapping("/me/related/{related_user_id}")
+    @Operation(summary = "Add user in related users")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<UserFullInfoDto> addUserInRelatedUsers(
+            Principal principal,
+            @PathVariable UUID related_user_id
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.addUserToRelatedUsers(principal.getName(), related_user_id));
+    }
+
+    @DeleteMapping("/me/related/{related_user_id}")
+    @Operation(summary = "Remove user from related users")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<UserFullInfoDto> removeUserFromRelatedUsers(
+            Principal principal,
+            @PathVariable UUID related_user_id
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.removeUserFromRelatedUsers(principal.getName(), related_user_id));
     }
 }

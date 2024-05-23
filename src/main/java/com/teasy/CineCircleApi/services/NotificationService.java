@@ -2,16 +2,16 @@ package com.teasy.CineCircleApi.services;
 
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.responses.NotificationTopicResponse;
-import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -29,10 +29,10 @@ public class NotificationService implements NotificationServiceInterface {
         this.userRepository = userRepository;
     }
 
-    public NotificationTopicResponse getTopicForUsername(String username) {
+    public NotificationTopicResponse getTopicForUsername(String username) throws ExpectedException {
         var user = userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
         return new NotificationTopicResponse(getTopicFromUser(user));
     }
 

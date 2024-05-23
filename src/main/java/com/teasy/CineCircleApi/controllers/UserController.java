@@ -1,10 +1,12 @@
 package com.teasy.CineCircleApi.controllers;
 
 
+import com.teasy.CineCircleApi.models.dtos.UserDto;
+import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.UserResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSendResetPasswordEmailRequest;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -13,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,52 +39,36 @@ public class UserController {
     @GetMapping("/")
     @Operation(summary = "Search for user")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> searchUsers(
+    public ResponseEntity<Page<UserDto>> searchUsers(
             Pageable page,
             @Valid UserSearchRequest request
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.searchUsers(page, request));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.searchUsers(page, request));
     }
 
     @GetMapping("/reset-password")
     @Operation(summary = "Send email with unique token to reset password for an unauthenticated user")
-    public ResponseEntity<?> sendResetPasswordEmail(
+    public ResponseEntity<String> sendResetPasswordEmail(
             @Valid UserSendResetPasswordEmailRequest userSendResetPasswordEmailRequest
     ) {
-        try {
-            userService.sendResetPasswordEmail(userSendResetPasswordEmailRequest.email());
-            return ResponseEntity.ok().body("");
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+        userService.sendResetPasswordEmail(userSendResetPasswordEmailRequest.email());
+        return ResponseEntity.ok().body("");
     }
 
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password with unique token received by email for an unauthenticated user")
-    public ResponseEntity<?> resetPassword(
+    public ResponseEntity<UserDto> resetPassword(
             @RequestBody @Valid UserResetPasswordRequest userResetPasswordRequest
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.resetPasswordWithToken(userResetPasswordRequest));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.resetPasswordWithToken(userResetPasswordRequest));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get details about specific user")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<?> getUser(
+    public ResponseEntity<UserDto> getUser(
             @PathVariable UUID id
-    ) {
-        try {
-            return ResponseEntity.ok().body(userService.getUser(id));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.getUser(id));
     }
 }

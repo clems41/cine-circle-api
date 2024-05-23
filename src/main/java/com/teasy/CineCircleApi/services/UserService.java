@@ -1,15 +1,13 @@
 package com.teasy.CineCircleApi.services;
 
-//import com.teasy.CineCircleApi.repositories.UserRepository;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.*;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.utils.SendEmailRequest;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.services.utils.EmailService;
@@ -20,6 +18,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -50,13 +49,13 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    public UserFullInfoDto createUser(AuthSignUpRequest request) throws CustomException {
+    public UserFullInfoDto createUser(AuthSignUpRequest request) throws ExpectedException {
         if (usernameAlreadyExists(request.username())) {
-            throw CustomExceptionHandler.userWithUsernameAlreadyExists(request.username());
+            throw new ExpectedException(ErrorMessage.USER_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
 
         if (emailAlreadyExists(request.email())) {
-            throw CustomExceptionHandler.userWithEmailAlreadyExists(request.email());
+            throw new ExpectedException(ErrorMessage.USER_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
 
         var user = new User(
@@ -70,15 +69,15 @@ public class UserService {
         return entityToFullInfoDto(user);
     }
 
-    public UserFullInfoDto getUserFullInfo(String username) throws CustomException {
+    public UserFullInfoDto getUserFullInfo(String username) throws ExpectedException {
         return entityToFullInfoDto(findUserByUsernameOrElseThrow(username));
     }
 
-    public UserDto resetPassword(String username, AuthResetPasswordRequest authResetPasswordRequest) throws CustomException {
+    public UserDto resetPassword(String username, AuthResetPasswordRequest authResetPasswordRequest) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         // check if oldPassword i correct
         if (!passwordEncoder.matches(authResetPasswordRequest.oldPassword(), user.getHashPassword())) {
-            throw CustomExceptionHandler.userWithUsernameBadCredentials(username);
+            throw new ExpectedException(ErrorMessage.USER_BAD_CREDENTIALS, HttpStatus.FORBIDDEN);
         }
 
         // update password
@@ -87,11 +86,11 @@ public class UserService {
         return entityToDto(user);
     }
 
-    public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws CustomException {
+    public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws ExpectedException {
         var user = findUserByEmailOrElseThrow(userResetPasswordRequest.email());
         // check if token ius correct
         if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
-            throw CustomExceptionHandler.userWithEmailBadCredentials(userResetPasswordRequest.email());
+            throw new ExpectedException(ErrorMessage.USER_BAD_CREDENTIALS, HttpStatus.FORBIDDEN);
         }
 
         // update password
@@ -101,25 +100,25 @@ public class UserService {
         return entityToDto(user);
     }
 
-    public UserFullInfoDto getUserFullInfoByUsernameOrEmail(String username, String email) throws CustomException {
+    public UserFullInfoDto getUserFullInfoByUsernameOrEmail(String username, String email) throws ExpectedException {
         return entityToFullInfoDto(findUserByUsernameOrEmailOrElseThrow(username, email));
     }
 
-    public UserDto getUser(UUID id) throws CustomException {
+    public UserDto getUser(UUID id) throws ExpectedException {
         return entityToDto(findUserByIdOrElseThrow(id));
     }
 
-    public UserDto updateUser(AuthMeUpdateRequest request, String username) throws CustomException {
+    public UserFullInfoDto updateUser(AuthMeUpdateRequest request, String username) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         user.setDisplayName(request.displayName());
         userRepository.save(user);
-        return entityToDto(user);
+        return entityToFullInfoDto(user);
     }
 
-    public Page<UserDto> searchUsers(Pageable pageable, UserSearchRequest request) throws CustomException {
+    public Page<UserDto> searchUsers(Pageable pageable, UserSearchRequest request) throws ExpectedException {
         // check query content
         if (request.query().isEmpty()) {
-            throw CustomExceptionHandler.userSearchQueryEmpty();
+            throw new ExpectedException(ErrorMessage.USER_SEARCH_BAD_QUERY, HttpStatus.NOT_FOUND);
         }
         // create example with query that can match username, email or displayName
         ExampleMatcher matcher = ExampleMatcher
@@ -167,28 +166,44 @@ public class UserService {
         }
     }
 
-    private User findUserByUsernameOrElseThrow(String username) throws CustomException {
+    public UserFullInfoDto addUserToRelatedUsers(String username, UUID relatedUserId) throws ExpectedException {
+        var user = findUserByUsernameOrElseThrow(username);
+        var relatedUser = findUserByIdOrElseThrow(relatedUserId);
+        user.addRelatedUser(relatedUser);
+        userRepository.save(user);
+        return entityToFullInfoDto(user);
+    }
+
+    public UserFullInfoDto removeUserFromRelatedUsers(String username, UUID relatedUserId) throws ExpectedException {
+        var user = findUserByUsernameOrElseThrow(username);
+        var relatedUser = findUserByIdOrElseThrow(relatedUserId);
+        user.removeRelatedUser(relatedUser);
+        userRepository.save(user);
+        return entityToFullInfoDto(user);
+    }
+
+    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private User findUserByEmailOrElseThrow(String email) throws CustomException {
+    private User findUserByEmailOrElseThrow(String email) throws ExpectedException {
         return userRepository
                 .findByEmail(email)
-                .orElseThrow(() -> CustomExceptionHandler.userWithEmailNotFound(email));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private User findUserByUsernameOrEmailOrElseThrow(String username, String email) throws CustomException {
+    private User findUserByUsernameOrEmailOrElseThrow(String username, String email) throws ExpectedException {
         return userRepository
                 .findByUsernameOrEmail(username, email)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameOrEmailNotFound(username, email));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private User findUserByIdOrElseThrow(UUID id) throws CustomException {
+    private User findUserByIdOrElseThrow(UUID id) throws ExpectedException {
         return userRepository
                 .findById(id)
-                .orElseThrow(() -> CustomExceptionHandler.userWithIdNotFound(id));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private Boolean usernameAlreadyExists(String username) {

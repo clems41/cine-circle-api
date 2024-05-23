@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.externals.ExternalMedia;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
 import com.teasy.CineCircleApi.models.externals.theMovieDb.WatchProviderInfo;
@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -87,7 +88,7 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public ExternalMedia getMedia(String externalId, MediaTypeEnum mediaType) throws CustomException {
+    public ExternalMedia getMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException {
         initTmdbApi();
         // get casting
         List<PersonCast> cast;
@@ -118,7 +119,10 @@ public class TheMovieDbService implements MediaProvider {
             videos = tvSeries.getVideos();
             crew = new ArrayList<>();
         } else {
-            throw CustomExceptionHandler.mediaWithExternalIdNotFound(externalId);
+            throw new ExpectedException(
+                    ErrorMessage.MEDIA_NOT_FOUND,
+                    HttpStatus.NOT_FOUND
+            );
         }
         var media = new ExternalMedia();
 

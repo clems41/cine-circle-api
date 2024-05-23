@@ -6,6 +6,7 @@ import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.mocks.NotificationServiceMock;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
@@ -53,7 +54,7 @@ public class RecommendationServiceTest {
     }
 
     @Test
-    public void checkThatRecommendationHasBeenSentWhenCreated() {
+    public void checkThatRecommendationHasBeenSentWhenCreated() throws ExpectedException {
         var receiver = dummyDataCreator.generateUser(true);
         List<RecommendationDto> matchingRecommendations = new ArrayList<>();
 
@@ -108,7 +109,7 @@ public class RecommendationServiceTest {
     }
 
     @Test
-    public void checkThatRecommendationHasBeenSentWhenCreated_PublicCircleUsers() {
+    public void checkThatRecommendationHasBeenSentWhenCreated_PublicCircleUsers() throws ExpectedException {
         // In this testcase, we will send recommendation to a specific circle and check if all users from this circle have been received notification
         var circle = dummyDataCreator.generateCircle(true, null, true, null);
 

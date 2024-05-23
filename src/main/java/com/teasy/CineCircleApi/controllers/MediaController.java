@@ -1,11 +1,12 @@
 package com.teasy.CineCircleApi.controllers;
 
 
+import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.MediaGenreResponse;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.MediaService;
-import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -37,50 +39,34 @@ public class MediaController {
 
     @GetMapping("/")
     @Operation(summary = "Search media (movie or tv show)")
-    public ResponseEntity<?> searchMedias(
+    public ResponseEntity<List<MediaShortDto>> searchMedias(
             Pageable page,
             @Valid MediaSearchRequest request,
             Principal principal
     ) {
-        try {
-            return ResponseEntity.ok().body(mediaService.searchMedia(page, request, principal.getName()));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+        return ResponseEntity.ok().body(mediaService.searchMedia(page, request, principal.getName()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get more details about specific media")
-    public ResponseEntity<?> getMedia(
+    public ResponseEntity<MediaFullDto> getMedia(
             @PathVariable("id") UUID id,
             Principal principal
-    ) {
-        try {
-            return ResponseEntity.ok().body(mediaService.getMedia(id, principal.getName()));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(mediaService.getMedia(id, principal.getName()));
     }
 
     @GetMapping("/{id}/watch-providers")
     @Operation(summary = "Get watch providers for specific media")
-    public ResponseEntity<?> getWatchProviders(
+    public ResponseEntity<List<String>> getWatchProviders(
             @PathVariable("id") UUID id
-    ) {
-        try {
-            return ResponseEntity.ok().body(mediaService.getWatchProviders(id));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(mediaService.getWatchProviders(id));
     }
 
     @GetMapping("/genres")
     @Operation(summary = "List all existing genres")
-    public ResponseEntity<?> listExistingGenres() {
-        try {
-            return ResponseEntity.ok().body(new MediaGenreResponse(mediaService.listGenres()));
-        } catch (CustomException e) {
-            return e.getEntityResponse();
-        }
+    public ResponseEntity<MediaGenreResponse> listExistingGenres() {
+        return ResponseEntity.ok().body(new MediaGenreResponse(mediaService.listGenres()));
     }
 }

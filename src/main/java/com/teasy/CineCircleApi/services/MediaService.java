@@ -11,9 +11,8 @@ import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
 import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
@@ -26,6 +25,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -62,13 +62,17 @@ public class MediaService {
         medias.forEach(externalMedia -> {
             // store result in database with internalId if not already exists
             var existingMedia = findMediaWithExternalId(externalMedia.getExternalId());
-            if (existingMedia.isEmpty()) {
-                var newMedia = fromExternalMediaShortToMediaEntity(externalMedia);
-                newMedia.setCompleted(false);
-                mediaRepository.save(newMedia);
-                result.add(fromMediaEntityToDto(newMedia, MediaShortDto.class, authenticatedUsername));
-            } else {
-                result.add(fromMediaEntityToDto(existingMedia.get(), MediaShortDto.class, authenticatedUsername));
+            try {
+                if (existingMedia.isPresent()) {
+                    result.add(fromMediaEntityToDto(existingMedia.get(), MediaShortDto.class, authenticatedUsername));
+                } else {
+                    var newMedia = fromExternalMediaShortToMediaEntity(externalMedia);
+                    newMedia.setCompleted(false);
+                    mediaRepository.save(newMedia);
+                    result.add(fromMediaEntityToDto(newMedia, MediaShortDto.class, authenticatedUsername));
+                }
+            } catch (ExpectedException e) {
+                log.error("Error while converting media entity to dto: " + e.getMessage());
             }
         });
         return result;
@@ -78,12 +82,12 @@ public class MediaService {
         return mediaProvider.listGenres();
     }
 
-    public List<String> getWatchProviders(UUID id) {
+    public List<String> getWatchProviders(UUID id) throws ExpectedException {
         var media = findMediaWithIdOrElseThrow(id);
-        return mediaProvider.getWatchProvidersForMedia(media.getExternalId(), MediaTypeEnum.valueOf(media.getMediaType()));
+        return mediaProvider.getWatchProvidersForMedia(media.getExternalId(), media.getMediaType());
     }
 
-    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws CustomException {
+    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws ExpectedException {
         // get media from database
         var media = findMediaWithIdOrElseThrow(id);
 
@@ -95,8 +99,8 @@ public class MediaService {
         return fromMediaEntityToDto(media, MediaFullDto.class, authenticatedUsername);
     }
 
-    private void completeMedia(Media media) {
-        var completedMedia = mediaProvider.getMedia(media.getExternalId(), MediaTypeEnum.valueOf(media.getMediaType()));
+    private void completeMedia(Media media) throws ExpectedException {
+        var completedMedia = mediaProvider.getMedia(media.getExternalId(), media.getMediaType());
         media.setDirector(completedMedia.getDirector());
         media.setActors(completedMedia.getActors());
         media.setTrailerUrl(completedMedia.getTrailerUrl());
@@ -108,7 +112,7 @@ public class MediaService {
         media.setCompleted(true);
     }
 
-    private <T> void addRecommendationRatingFields(T mediaDto, String authenticatedUsername) {
+    private <T> void addRecommendationRatingFields(T mediaDto, String authenticatedUsername) throws ExpectedException {
         if (mediaDto.getClass() != MediaShortDto.class && mediaDto.getClass() != MediaFullDto.class) {
             return;
         }
@@ -146,7 +150,7 @@ public class MediaService {
         }
     }
 
-    private <T> void addPersonalFields(T mediaDto, String authenticatedUsername) {
+    private <T> void addPersonalFields(T mediaDto, String authenticatedUsername) throws ExpectedException {
         if (mediaDto.getClass() != MediaShortDto.class && mediaDto.getClass() != MediaFullDto.class) {
             return;
         }
@@ -163,7 +167,7 @@ public class MediaService {
         var user = findUserByUsernameOrElseThrow(authenticatedUsername);
         var media = mediaRepository
                 .findById(mediaId)
-                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
 
         // find library record if exist
         ExampleMatcher matcher = ExampleMatcher
@@ -183,7 +187,7 @@ public class MediaService {
         }
     }
 
-    private List<Recommendation> findRecommendationsReceivedForMediaAndAuthenticatedUsername(UUID mediaId, String username) {
+    private List<Recommendation> findRecommendationsReceivedForMediaAndAuthenticatedUsername(UUID mediaId, String username) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         return recommendationRepository.findAllByReceivers_IdAndMedia_Id(
                         PageRequest.ofSize(1000),
@@ -194,7 +198,7 @@ public class MediaService {
                 .toList();
     }
 
-    private List<Recommendation> findRecommendationsSentForMediaAndAuthenticatedUsername(UUID mediaId, String username) {
+    private List<Recommendation> findRecommendationsSentForMediaAndAuthenticatedUsername(UUID mediaId, String username) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         var matcher = ExampleMatcher
                 .matchingAll()
@@ -222,19 +226,19 @@ public class MediaService {
                 .findOne(Example.of(exampleMedia, matcher));
     }
 
-    private Media findMediaWithIdOrElseThrow(UUID id) {
+    private Media findMediaWithIdOrElseThrow(UUID id) throws ExpectedException {
         return mediaRepository
                 .findById(id).
-                orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(id));
+                orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private User findUserByUsernameOrElseThrow(String username) throws CustomException {
+    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private <T> T fromMediaEntityToDto(Media media, Class<T> toValueType, String authenticatedUsername) {
+    private <T> T fromMediaEntityToDto(Media media, Class<T> toValueType, String authenticatedUsername) throws ExpectedException {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());

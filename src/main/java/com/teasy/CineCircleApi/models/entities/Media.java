@@ -1,6 +1,7 @@
 package com.teasy.CineCircleApi.models.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,7 +48,7 @@ public class Media {
     @Column(columnDefinition = "TEXT")
     private String genres;
 
-    private String mediaType;
+    private MediaTypeEnum mediaType;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate releaseDate;

@@ -53,6 +53,13 @@ public class User {
     @Column(unique = true, updatable = false)
     private UUID topicName;
 
+    @ManyToMany
+    @JoinTable(
+            name = "user_relationships",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "related_to_user_id"))
+    private Set<User> relatedUsers;
+
     @PrePersist
     protected void onCreateAbstractBaseEntity() {
         this.topicName = UUID.randomUUID();
@@ -64,6 +71,15 @@ public class User {
         this.hashPassword = hashPassword;
         this.displayName = displayName;
         this.enabled = true;
+        this.relatedUsers = Set.of();
+    }
+
+    public void addRelatedUser(User user) {
+        this.relatedUsers.add(user);
+    }
+
+    public void removeRelatedUser(User user) {
+        this.relatedUsers.remove(user);
     }
 }
 

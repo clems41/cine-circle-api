@@ -1,6 +1,7 @@
 package com.teasy.CineCircleApi.models.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,7 +18,7 @@ public class MediaShortDto {
     private String posterUrl;
     private String backdropUrl;
     private String overview;
-    private String mediaType;
+    private MediaTypeEnum mediaType;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate releaseDate;
     private Integer runtime;

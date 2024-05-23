@@ -7,6 +7,7 @@ import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.*;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
@@ -54,7 +55,7 @@ public class MediaServiceTest {
     }
 
     @Test
-    public void getMedia_CheckRecommendationFields_RecommendationsReceived() {
+    public void getMedia_CheckRecommendationFields_RecommendationsReceived() throws ExpectedException {
         // creation du user et du media en DB
         var user = dummyDataCreator.generateUser(true);
         var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE);
@@ -121,7 +122,7 @@ public class MediaServiceTest {
     }
 
     @Test
-    public void getMedia_CheckRecommendationFields_RecommendationsSent() {
+    public void getMedia_CheckRecommendationFields_RecommendationsSent() throws ExpectedException {
         // creation du user et du media en DB
         var sender = dummyDataCreator.generateUser(true);
         var wrongSender = dummyDataCreator.generateUser(true);
@@ -170,7 +171,7 @@ public class MediaServiceTest {
     }
 
     @Test
-    public void searchThenGetMedia_ShouldBeCompleted() {
+    public void searchThenGetMedia_ShouldBeCompleted() throws ExpectedException {
         /* Create user */
         var user = dummyDataCreator.generateUser(true);
 
@@ -192,7 +193,7 @@ public class MediaServiceTest {
             assertThat(media.get().getPosterUrl()).isNotEmpty();
             assertThat(media.get().getBackdropUrl()).isNotEmpty();
             assertThat(media.get().getOverview()).isNotEmpty();
-            assertThat(media.get().getMediaType()).isNotEmpty();
+            assertThat(media.get().getMediaType()).isNotNull();
             assertThat(media.get().getReleaseDate()).isNotNull();
             assertThat(media.get().getRuntime()).isNotZero().isPositive();
             assertThat(media.get().getOriginalLanguage()).isNotEmpty();
@@ -205,7 +206,7 @@ public class MediaServiceTest {
             assertThat(mediaDto.getPosterUrl()).isNotEmpty();
             assertThat(mediaDto.getBackdropUrl()).isNotEmpty();
             assertThat(mediaDto.getOverview()).isNotEmpty();
-            assertThat(mediaDto.getMediaType()).isNotEmpty();
+            assertThat(mediaDto.getMediaType()).isNotNull();
             assertThat(mediaDto.getReleaseDate()).isNotNull();
             assertThat(mediaDto.getRuntime()).isNotZero().isPositive();
             assertThat(mediaDto.getOriginalLanguage()).isNotEmpty();

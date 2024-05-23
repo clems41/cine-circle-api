@@ -9,8 +9,8 @@ import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.LibraryRepository;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
@@ -19,6 +19,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -38,7 +39,7 @@ public class LibraryService {
         this.userRepository = userRepository;
     }
 
-    public void addToLibrary(UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest, String username) throws CustomException {
+    public void addToLibrary(UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest, String username) throws ExpectedException {
         // update existing library adding if exists
         var existingRecord = findExistingRecord(username, mediaId);
         if (existingRecord.isPresent()) {
@@ -57,7 +58,7 @@ public class LibraryService {
 
     }
 
-    public void removeFromLibrary(String username, UUID mediaId) {
+    public void removeFromLibrary(String username, UUID mediaId) throws ExpectedException {
         // get existing library record
         var existingRecord = findExistingRecord(username, mediaId);
 
@@ -66,7 +67,7 @@ public class LibraryService {
 
     public Page<MediaShortDto> searchInLibrary(Pageable pageable,
                                                LibrarySearchRequest librarySearchRequest,
-                                               String username) {
+                                               String username) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
@@ -90,7 +91,7 @@ public class LibraryService {
         });
     }
 
-    private Optional<Library> findExistingRecord(String username, UUID mediaId) {
+    private Optional<Library> findExistingRecord(String username, UUID mediaId) throws ExpectedException {
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
@@ -109,24 +110,24 @@ public class LibraryService {
         return matchingMedia;
     }
 
-    private Library newLibrary(String username, UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest) {
+    private Library newLibrary(String username, UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);
         return new Library(user, media, libraryAddMediaRequest.comment(), libraryAddMediaRequest.rating());
     }
 
-    private User findUserByUsernameOrElseThrow(String username) {
+    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
         // check if user exist
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private Media findMediaByIdOrElseThrow(UUID mediaId) {
+    private Media findMediaByIdOrElseThrow(UUID mediaId) throws ExpectedException {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
-                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private MediaShortDto fromMediaEntityToMediaDto(Media media) {

@@ -12,6 +12,7 @@ import org.apache.commons.lang3.RandomUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @NoArgsConstructor
@@ -49,11 +50,7 @@ public class DummyDataCreator {
         media.setGenres(String.join(",",
                 RandomStringUtils.random(6, true, false),
                 RandomStringUtils.random(6, true, false)));
-        if (mediaTypeEnum != null) {
-            media.setMediaType(mediaTypeEnum.name());
-        } else {
-            media.setMediaType(MediaTypeEnum.MOVIE.name());
-        }
+        media.setMediaType(Objects.requireNonNullElse(mediaTypeEnum, MediaTypeEnum.MOVIE));
         media.setOverview(RandomStringUtils.random(100, true, false));
         media.setReleaseDate(LocalDate.now());
         media.setRuntime(RandomUtils.nextInt(40, 180));

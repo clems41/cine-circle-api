@@ -7,8 +7,8 @@ import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.entities.Watchlist;
-import com.teasy.CineCircleApi.models.exceptions.CustomException;
-import com.teasy.CineCircleApi.models.exceptions.CustomExceptionHandler;
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.repositories.WatchlistRepository;
@@ -17,6 +17,7 @@ import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -35,11 +36,11 @@ public class WatchlistService {
         this.userRepository = userRepository;
     }
 
-    public void addToWatchlist(String username, UUID mediaId) throws CustomException {
+    public void addToWatchlist(String username, UUID mediaId) throws ExpectedException {
         watchlistRepository.save(newWatchlist(username, mediaId));
     }
 
-    public void removeFromWatchlist(String username, UUID mediaId) {
+    public void removeFromWatchlist(String username, UUID mediaId) throws ExpectedException {
         // get existing watchlist record
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -51,7 +52,7 @@ public class WatchlistService {
         existingRecord.ifPresent(watchlist -> watchlistRepository.delete(watchlist));
     }
 
-    public Page<MediaShortDto> getWatchlist(Pageable pageable, String username) {
+    public Page<MediaShortDto> getWatchlist(Pageable pageable, String username) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
@@ -64,24 +65,24 @@ public class WatchlistService {
         return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
     }
 
-    private Watchlist newWatchlist(String username, UUID mediaId) {
+    private Watchlist newWatchlist(String username, UUID mediaId) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);
         return new Watchlist(user, media);
     }
 
-    private User findUserByUsernameOrElseThrow(String username) {
+    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
         // check if user exist
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> CustomExceptionHandler.userWithUsernameNotFound(username));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
-    private Media findMediaByIdOrElseThrow(UUID mediaId) {
+    private Media findMediaByIdOrElseThrow(UUID mediaId) throws ExpectedException {
         // check if media exists
         return mediaRepository
                 .findById(mediaId)
-                .orElseThrow(() -> CustomExceptionHandler.mediaWithIdNotFound(mediaId));
+                .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private MediaShortDto fromMediaEntityToMediaDto(Media media) {
