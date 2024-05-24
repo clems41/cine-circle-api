@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorMessage {
     /* Users errors */
     USER_NOT_FOUND("User not found"),
-    USER_ALREADY_EXISTS("User already exists"),
+    USER_USERNAME_ALREADY_EXISTS("Username already exists"),
+    USER_EMAIL_ALREADY_EXISTS("Email already exists"),
     USER_BAD_CREDENTIALS("Bad credentials"),
     USER_SEARCH_BAD_QUERY("Bad query for user search"),
 

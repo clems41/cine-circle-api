@@ -51,11 +51,11 @@ public class UserService {
 
     public UserFullInfoDto createUser(AuthSignUpRequest request) throws ExpectedException {
         if (usernameAlreadyExists(request.username())) {
-            throw new ExpectedException(ErrorMessage.USER_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new ExpectedException(ErrorMessage.USER_USERNAME_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
 
         if (emailAlreadyExists(request.email())) {
-            throw new ExpectedException(ErrorMessage.USER_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new ExpectedException(ErrorMessage.USER_EMAIL_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
 
         var user = new User(
