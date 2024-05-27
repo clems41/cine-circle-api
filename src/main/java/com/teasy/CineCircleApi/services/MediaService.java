@@ -229,7 +229,7 @@ public class MediaService {
     private Media findMediaWithIdOrElseThrow(UUID id) throws ExpectedException {
         return mediaRepository
                 .findById(id).
-                orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {

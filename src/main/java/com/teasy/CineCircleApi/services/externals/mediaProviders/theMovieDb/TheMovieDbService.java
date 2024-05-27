@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -27,6 +28,8 @@ import info.movito.themoviedbapi.model.people.Person;
 import info.movito.themoviedbapi.model.people.PersonCast;
 import info.movito.themoviedbapi.model.people.PersonCrew;
 import info.movito.themoviedbapi.model.tv.TvSeries;
+import info.movito.themoviedbapi.tools.ApiUrl;
+import info.movito.themoviedbapi.tools.RequestMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
@@ -167,31 +170,28 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) {
+    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException {
         // define url depending on media type and id
-        String url = theMovieDbApiBaseUrl;
+        String url = "";
         if (mediaType.equals(MediaTypeEnum.MOVIE)) {
             url = url.concat(movieSuffix);
         } else {
             url = url.concat(tvSuffix);
         }
         url = url.concat("/").concat(externalId).concat(watchProvidersSuffix);
-
-        // create request with authorization header
-        var customHttpClient = new CustomHttpClient();
-        Map<String, String> queryParameters = new HashMap<>();
-        queryParameters.put("api_key", apiKey);
-        var request = new CustomHttpClientSendRequest(
-                HttpMethod.GET,
-                url,
-                queryParameters,
-                null);
-        WatchProvidersResponse response = customHttpClient.sendRequest(request, WatchProvidersResponse.class);
+        ApiUrl apiUrl = new ApiUrl(url);
+        var response = tmdbApi.requestWebPage(apiUrl, null, RequestMethod.GET);
+        ObjectMapper mapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
-            return response.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
-        } catch (Exception e) {
+            var watchProvidersResponse = mapper.readValue(response, WatchProvidersResponse.class);
+            return watchProvidersResponse.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
+        } catch (Exception e){
             log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
-            return new ArrayList<>();
+            throw new ExpectedException(
+                    ErrorMessage.MEDIA_NOT_FOUND,
+                    HttpStatus.NOT_FOUND
+            );
         }
     }
 
@@ -228,7 +228,7 @@ public class TheMovieDbService implements MediaProvider {
             media.setPosterUrl(getCompleteImageUrl(tvSeries.getPosterPath()));
             media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
             media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
-                    tvSeries.getEpisodeRuntime().getFirst() : null);
+                    tvSeries.getEpisodeRuntime().get(0) : null);
             media.setMediaType(MediaTypeEnum.TV_SHOW.name());
             media.setOriginalTitle(tvSeries.getOriginalName());
             media.setTitle(tvSeries.getName());
@@ -246,7 +246,7 @@ public class TheMovieDbService implements MediaProvider {
                         Objects.equals(video.getType(), trailerVideoType))
                 .map(Video::getKey)
                 .toList()
-                .getFirst();
+                .get(0);
         return youtubeVideoUrlPrefix.concat(youtubeVideoKey);
     }
 

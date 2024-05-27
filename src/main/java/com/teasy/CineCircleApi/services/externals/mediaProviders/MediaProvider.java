@@ -19,5 +19,5 @@ public interface MediaProvider {
 
     MediaProviderEnum getMediaProvider();
 
-    List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType);
+    List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException;
 }

@@ -150,9 +150,9 @@ public class RecommendationServiceTest {
         circle.getUsers().forEach(user -> {
             var receivedRecommendations = notificationService.getRecommendationsSentForUser(user.getUsername());
             Assertions.assertEquals(receivedRecommendations.size(), 1);
-            Assertions.assertEquals(receivedRecommendations.getFirst(), actualRecommendation);
+            Assertions.assertEquals(receivedRecommendations.get(0), actualRecommendation);
             // check that recommendation have been stored in database
-            var recommendation = recommendationRepository.findById(UUID.fromString(receivedRecommendations.getFirst().getId()));
+            var recommendation = recommendationRepository.findById(UUID.fromString(receivedRecommendations.get(0).getId()));
             Assertions.assertTrue(recommendation.isPresent());
             Assertions.assertEquals(recommendation.get().getMedia().getId(), creationRequest.mediaId());
             Assertions.assertEquals(recommendation.get().getRating(), creationRequest.rating());

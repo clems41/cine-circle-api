@@ -37,7 +37,7 @@ public class MediaController {
         this.mediaService = mediaService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     @Operation(summary = "Search media (movie or tv show)")
     public ResponseEntity<List<MediaShortDto>> searchMedias(
             Pageable page,
