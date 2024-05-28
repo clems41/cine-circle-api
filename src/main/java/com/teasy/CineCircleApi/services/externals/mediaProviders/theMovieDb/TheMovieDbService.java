@@ -279,6 +279,9 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     private String getCompleteImageUrl(String posterUrl) {
+        if (posterUrl == null || posterUrl.isEmpty()) {
+            return null;
+        }
         return String.format("%s%s", imageUrlPrefix, posterUrl);
     }
 }

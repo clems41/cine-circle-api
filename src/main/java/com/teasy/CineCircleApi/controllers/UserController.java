@@ -36,7 +36,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     @Operation(summary = "Search for user")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Page<UserDto>> searchUsers(
