@@ -109,6 +109,7 @@ public class MediaService {
         media.setVoteCount(completedMedia.getVoteCount());
         media.setPopularity(completedMedia.getPopularity());
         media.setOriginCountry(completedMedia.getOriginCountry());
+        media.setRuntime(completedMedia.getRuntime());
         media.setCompleted(true);
     }
 
