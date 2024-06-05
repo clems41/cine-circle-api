@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.UUID;
 
 public record RecommendationReceivedRequest(
-        @RequestParam @ValidUuid UUID mediaId
+        @RequestParam UUID mediaId
 ) {
-    ;
 }

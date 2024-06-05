@@ -65,6 +65,11 @@ public class WatchlistService {
         return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
     }
 
+    public boolean isInWatchlist(String username, UUID mediaId) throws ExpectedException {
+        var user = findUserByUsernameOrElseThrow(username);
+        return watchlistRepository.existsByUser_IdAndMedia_Id(user.getId(), mediaId);
+    }
+
     private Watchlist newWatchlist(String username, UUID mediaId) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         var media = findMediaByIdOrElseThrow(mediaId);

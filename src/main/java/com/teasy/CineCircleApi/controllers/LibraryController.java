@@ -66,4 +66,13 @@ public class LibraryController {
         libraryService.removeFromLibrary(principal.getName(), mediaId);
         return ResponseEntity.ok().body("");
     }
+
+    @GetMapping("/{mediaId}")
+    @Operation(summary = "Check if media is in authenticated user library")
+    public ResponseEntity<Boolean> isInLibrary(
+            @PathVariable("mediaId") UUID mediaId,
+            Principal principal
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(libraryService.isInLibrary(principal.getName(), mediaId));
+    }
 }

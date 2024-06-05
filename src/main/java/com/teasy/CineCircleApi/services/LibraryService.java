@@ -91,6 +91,11 @@ public class LibraryService {
         });
     }
 
+    public boolean isInLibrary(String username, UUID mediaId) throws ExpectedException {
+        var user = findUserByUsernameOrElseThrow(username);
+        return libraryRepository.existsByUser_IdAndMedia_Id(user.getId(), mediaId);
+    }
+
     private Optional<Library> findExistingRecord(String username, UUID mediaId) throws ExpectedException {
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()

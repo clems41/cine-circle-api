@@ -64,7 +64,6 @@ public class TheMovieDbService implements MediaProvider {
     private TmdbApi tmdbApi;
 
 
-
     @Override
     public List<ExternalMediaShort> searchMedia(Pageable pageable,
                                                 MediaSearchRequest mediaSearchRequest) {
@@ -99,6 +98,7 @@ public class TheMovieDbService implements MediaProvider {
         List<Person> persons;
         List<Genre> genres;
         List<Video> videos;
+        Integer runtime = null;
         if (Objects.equals(mediaType, MediaTypeEnum.MOVIE)) {
             MovieDb movie = tmdbApi.getMovies()
                     .getMovie(Integer.parseInt(externalId),
@@ -110,6 +110,7 @@ public class TheMovieDbService implements MediaProvider {
             genres = movie.getGenres();
             videos = movie.getVideos();
             persons = new ArrayList<>();
+            runtime = movie.getRuntime();
         } else if (Objects.equals(mediaType, MediaTypeEnum.TV_SHOW)) {
             TvSeries tvSeries = tmdbApi.getTvSeries()
                     .getSeries(Integer.parseInt(externalId),
@@ -121,6 +122,8 @@ public class TheMovieDbService implements MediaProvider {
             genres = tvSeries.getGenres();
             videos = tvSeries.getVideos();
             crew = new ArrayList<>();
+            runtime = tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
+                    tvSeries.getEpisodeRuntime().get(0) : null;
         } else {
             throw new ExpectedException(
                     ErrorMessage.MEDIA_NOT_FOUND,
@@ -154,6 +157,9 @@ public class TheMovieDbService implements MediaProvider {
         if (videos != null && !videos.isEmpty()) {
             media.setTrailerUrl(getTrailerUrl(videos));
         }
+
+        // adding runtime
+        media.setRuntime(runtime);
         return media;
     }
 
@@ -186,7 +192,7 @@ public class TheMovieDbService implements MediaProvider {
         try {
             var watchProvidersResponse = mapper.readValue(response, WatchProvidersResponse.class);
             return watchProvidersResponse.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
             throw new ExpectedException(
                     ErrorMessage.MEDIA_NOT_FOUND,
@@ -214,7 +220,6 @@ public class TheMovieDbService implements MediaProvider {
             media.setExternalId(String.valueOf(movie.getId()));
             media.setPosterUrl(getCompleteImageUrl(movie.getPosterPath()));
             media.setBackdropUrl(getCompleteImageUrl(movie.getBackdropPath()));
-            media.setRuntime(movie.getRuntime());
             media.setMediaType(MediaTypeEnum.MOVIE.name());
             media.setOriginalTitle(movie.getOriginalTitle());
             media.setTitle(movie.getTitle());
@@ -227,8 +232,6 @@ public class TheMovieDbService implements MediaProvider {
             media.setExternalId(String.valueOf(tvSeries.getId()));
             media.setPosterUrl(getCompleteImageUrl(tvSeries.getPosterPath()));
             media.setBackdropUrl(getCompleteImageUrl(tvSeries.getBackdropPath()));
-            media.setRuntime(tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
-                    tvSeries.getEpisodeRuntime().get(0) : null);
             media.setMediaType(MediaTypeEnum.TV_SHOW.name());
             media.setOriginalTitle(tvSeries.getOriginalName());
             media.setTitle(tvSeries.getName());

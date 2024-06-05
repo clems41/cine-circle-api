@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface WatchlistRepository extends JpaRepository<Watchlist, UUID> {
+    Boolean existsByUser_IdAndMedia_Id(UUID userId, UUID mediaId);
 }

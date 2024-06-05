@@ -18,6 +18,5 @@ public class ExternalMediaShort {
     private String mediaType;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate releaseDate;
-    private Integer runtime;
     private String originalLanguage;
 }

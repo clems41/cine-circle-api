@@ -12,7 +12,7 @@ import java.util.UUID;
 public record RecommendationCreateRequest(
     @ValidUuid UUID mediaId,
     @Nullable @Size(min = 1) List<UUID> userIds,
-    @Nullable @Size(min = 1) List<UUID> circleIds,
+    @Nullable List<UUID> circleIds,
     @Nullable String comment,
     @Nullable @Min(1) @Max(5) Integer rating
 ){}

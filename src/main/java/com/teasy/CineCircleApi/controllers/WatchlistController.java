@@ -33,7 +33,7 @@ public class WatchlistController {
         this.watchlistService = watchlistService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     @Operation(summary = "List medias from authenticated user watchlist")
     public ResponseEntity<Page<MediaShortDto>> getWatchlist(
             Pageable page,
@@ -50,6 +50,15 @@ public class WatchlistController {
     ) throws ExpectedException {
         watchlistService.addToWatchlist(principal.getName(), mediaId);
         return ResponseEntity.ok().body("");
+    }
+
+    @GetMapping("/{mediaId}")
+    @Operation(summary = "Check if media is in authenticated user watchlist")
+    public ResponseEntity<Boolean> isInWatchlist(
+            @PathVariable("mediaId") UUID mediaId,
+            Principal principal
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(watchlistService.isInWatchlist(principal.getName(), mediaId));
     }
 
     @DeleteMapping("/{mediaId}")

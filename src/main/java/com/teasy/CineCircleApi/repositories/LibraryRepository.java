@@ -9,4 +9,5 @@ import java.util.UUID;
 
 @Repository
 public interface LibraryRepository extends JpaRepository<Library, UUID> {
+    Boolean existsByUser_IdAndMedia_Id(UUID userId, UUID mediaId);
 }
