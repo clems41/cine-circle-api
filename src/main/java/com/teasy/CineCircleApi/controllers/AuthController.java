@@ -88,24 +88,4 @@ public class AuthController {
     ) throws ExpectedException {
         return ResponseEntity.ok().body(userService.resetPassword(principal.getName(), authResetPasswordRequest));
     }
-
-    @PutMapping("/me/related/{related_user_id}")
-    @Operation(summary = "Add user in related users")
-    @SecurityRequirement(name = "JWT")
-    public ResponseEntity<UserFullInfoDto> addUserInRelatedUsers(
-            Principal principal,
-            @PathVariable UUID related_user_id
-    ) throws ExpectedException {
-        return ResponseEntity.ok().body(userService.addUserToRelatedUsers(principal.getName(), related_user_id));
-    }
-
-    @DeleteMapping("/me/related/{related_user_id}")
-    @Operation(summary = "Remove user from related users")
-    @SecurityRequirement(name = "JWT")
-    public ResponseEntity<UserFullInfoDto> removeUserFromRelatedUsers(
-            Principal principal,
-            @PathVariable UUID related_user_id
-    ) throws ExpectedException {
-        return ResponseEntity.ok().body(userService.removeUserFromRelatedUsers(principal.getName(), related_user_id));
-    }
 }

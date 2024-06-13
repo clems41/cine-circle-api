@@ -18,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.UUID;
 
 @RestController
@@ -41,9 +43,10 @@ public class UserController {
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<Page<UserDto>> searchUsers(
             Pageable page,
-            @Valid UserSearchRequest request
+            @Valid UserSearchRequest request,
+            Authentication authentication
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(userService.searchUsers(page, request));
+        return ResponseEntity.ok().body(userService.searchUsers(authentication.getName(), page, request));
     }
 
     @GetMapping("/reset-password")
@@ -70,5 +73,25 @@ public class UserController {
             @PathVariable UUID id
     ) throws ExpectedException {
         return ResponseEntity.ok().body(userService.getUser(id));
+    }
+
+    @PutMapping("/related/{related_user_id}")
+    @Operation(summary = "Add user in related users")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<UserFullInfoDto> addUserInRelatedUsers(
+            Principal principal,
+            @PathVariable UUID related_user_id
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.addUserToRelatedUsers(principal.getName(), related_user_id));
+    }
+
+    @DeleteMapping("/related/{related_user_id}")
+    @Operation(summary = "Remove user from related users")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<UserFullInfoDto> removeUserFromRelatedUsers(
+            Principal principal,
+            @PathVariable UUID related_user_id
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.removeUserFromRelatedUsers(principal.getName(), related_user_id));
     }
 }

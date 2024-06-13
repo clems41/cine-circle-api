@@ -58,7 +58,7 @@ public class RecommendationController {
         return ResponseEntity.ok().body(recommendationService.listSentRecommendations(pageable, principal.getName()));
     }
 
-    @PostMapping("/")
+    @PostMapping("")
     @Operation(summary = "Send new recommendation")
     public ResponseEntity<RecommendationDto> createRecommendation(
             @RequestBody @Valid RecommendationCreateRequest recommendationCreateRequest,

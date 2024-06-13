@@ -115,25 +115,15 @@ public class UserService {
         return entityToFullInfoDto(user);
     }
 
-    public Page<UserDto> searchUsers(Pageable pageable, UserSearchRequest request) throws ExpectedException {
+    public Page<UserDto> searchUsers(String username, Pageable pageable, UserSearchRequest request) throws ExpectedException {
         // check query content
         if (request.query().isEmpty()) {
             throw new ExpectedException(ErrorMessage.USER_SEARCH_BAD_QUERY, HttpStatus.NOT_FOUND);
         }
+        User user = findUserByUsernameOrElseThrow(username);
         // create example with query that can match username, email or displayName
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAny()
-                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
-                .withIgnoreCase()
-                .withIgnoreNullValues();
-        var exampleUser = new User();
-        exampleUser.setUsername(request.query());
-        exampleUser.setDisplayName(request.query());
-
-        // find users
-        var users = userRepository
-                .findAll(Example.of(exampleUser, matcher), pageable);
-        return users.map(this::entityToDto);
+        return userRepository.searchUsers(request.query(), user.getId(), pageable)
+                .map(this::entityToDto);
     }
 
     public void sendResetPasswordEmail(String email) {
@@ -168,6 +158,9 @@ public class UserService {
 
     public UserFullInfoDto addUserToRelatedUsers(String username, UUID relatedUserId) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
+        if (user.getId().equals(relatedUserId)) {
+            return entityToFullInfoDto(user);
+        }
         var relatedUser = findUserByIdOrElseThrow(relatedUserId);
         user.addRelatedUser(relatedUser);
         userRepository.save(user);
