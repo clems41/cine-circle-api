@@ -30,7 +30,7 @@ SMTP_PASSWORD="XXX"
 ```
 
 Remplacez les `XXX` par les valeurs correspondantes :
-- `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started, qui peut s'obtenir gratuitement. 
+- `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started), qui peut s'obtenir gratuitement. 
 Il suffit de se créer un compte sur le site.
 - `SMTP_PASSWORD` : mot de passe du compte Gmail Teasy pour l'utiliser comme server SMTP.
 
