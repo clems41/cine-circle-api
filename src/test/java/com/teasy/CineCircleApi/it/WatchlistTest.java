@@ -34,7 +34,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Add media1 to watchlist */
         ResponseEntity<String> addMedia1Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media1.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media1.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -44,7 +44,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Add non-existing media to watchlist */
         ResponseEntity<String> addNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(nonExistingMediaId.toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -54,7 +54,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Add media2 to watchlist */
         ResponseEntity<String> addMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media2.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -84,7 +84,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Remove non-existing media from watchlist */
         ResponseEntity<String> removeNonExistingMediaResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(nonExistingMediaId.toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(nonExistingMediaId.toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -94,7 +94,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Remove media2 from watchlist */
         ResponseEntity<String> removeMedia2Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -104,7 +104,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Remove media2 a 2nd time from watchlist */
         ResponseEntity<String> removeMedia2SecondTimeResponse = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media2.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media2.getId().toString()),
                         HttpMethod.DELETE,
                         new HttpEntity<>(null, headers),
                         String.class
@@ -131,7 +131,7 @@ public class WatchlistTest extends IntegrationTestAbstract {
         /* Add media3 to watchlist */
         ResponseEntity<String> addMedia3Response = this.restTemplate
                 .exchange(
-                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat(media3.getId().toString()),
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media3.getId().toString()),
                         HttpMethod.PUT,
                         new HttpEntity<>(null, headers),
                         String.class

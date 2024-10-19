@@ -24,9 +24,9 @@ public class UserTest extends IntegrationTestAbstract {
         var userToAdd3 = dummyDataCreator.generateUser(true);
 
         /* Add user1 as relatedUsers */
-        String urlToAddUser1 = String.format("%s%sme/related/%s",
+        String urlToAddUser1 = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 userToAdd1.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response = this.restTemplate
@@ -46,9 +46,9 @@ public class UserTest extends IntegrationTestAbstract {
                 .isTrue();
 
         /* Add user2 as relatedUsers */
-        String urlToAddUser2 = String.format("%s%sme/related/%s",
+        String urlToAddUser2 = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 userToAdd2.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response2 = this.restTemplate
@@ -68,9 +68,9 @@ public class UserTest extends IntegrationTestAbstract {
                 .isTrue();
 
         /* Add user1 as relatedUsers */
-        String urlToAddUser3 = String.format("%s%sme/related/%s",
+        String urlToAddUser3 = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 userToAdd3.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response3 = this.restTemplate
@@ -127,9 +127,9 @@ public class UserTest extends IntegrationTestAbstract {
         fakeUser.setId(UUID.randomUUID());
 
         /* Add fakeUser as relatedUsers */
-        String urlToAddFakeUser = String.format("%s%sme/related/%s",
+        String urlToAddFakeUser = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 fakeUser.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response = this.restTemplate
@@ -157,9 +157,9 @@ public class UserTest extends IntegrationTestAbstract {
         userRepository.save(authenticatedUser);
 
         /* Remove userToRemove from relatedUsers */
-        String urlToRemoveUser = String.format("%s%sme/related/%s",
+        String urlToRemoveUser = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 userToRemove.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response = this.restTemplate
@@ -216,9 +216,9 @@ public class UserTest extends IntegrationTestAbstract {
         fakeUser.setId(UUID.randomUUID());
 
         /* Add fakeUser as relatedUsers */
-        String urlToAddFakeUser = String.format("%s%sme/related/%s",
+        String urlToAddFakeUser = String.format("%s%srelated/%s",
                 HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl,
+                HttpUtils.userUrl,
                 fakeUser.getId().toString()
         );
         ResponseEntity<UserFullInfoDto> response = this.restTemplate

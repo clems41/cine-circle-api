@@ -40,3 +40,6 @@ build/
 
 ### Env vars ###
 local.yaml
+
+### Local H2 database ###
+.data/

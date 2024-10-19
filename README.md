@@ -67,7 +67,7 @@ openssl rsa -in keypair.pem -pubout -out public.pem
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
 ```
 
-Copier les clés `keypair.pem` et `private.pem` dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
+Copier les clés `public.pem` et `private.pem` dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
 La clé `keypair.pem` peut ensuite être supprimée.
 
 **PostgreSQL**

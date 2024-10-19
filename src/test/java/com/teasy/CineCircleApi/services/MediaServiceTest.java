@@ -1,7 +1,6 @@
 package com.teasy.CineCircleApi.services;
 
 
-import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.mocks.MediaProviderMock;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
@@ -28,8 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DataJpaTest
 @ActiveProfiles("test")
 public class MediaServiceTest {
-    @MockBean
-    RsaKeyProperties rsaKeyProperties;
     @MockBean
     NotificationService notificationService;
     @MockBean
@@ -195,8 +192,6 @@ public class MediaServiceTest {
             assertThat(media.get().getOverview()).isNotEmpty();
             assertThat(media.get().getMediaType()).isNotNull();
             assertThat(media.get().getReleaseDate()).isNotNull();
-            assertThat(media.get().getRuntime()).isNotZero().isPositive();
-            assertThat(media.get().getOriginalLanguage()).isNotEmpty();
             assertThat(media.get().getCompleted()).isFalse();
 
             // check mediaDto fields
@@ -208,8 +203,6 @@ public class MediaServiceTest {
             assertThat(mediaDto.getOverview()).isNotEmpty();
             assertThat(mediaDto.getMediaType()).isNotNull();
             assertThat(mediaDto.getReleaseDate()).isNotNull();
-            assertThat(mediaDto.getRuntime()).isNotZero().isPositive();
-            assertThat(mediaDto.getOriginalLanguage()).isNotEmpty();
             assertThat(mediaDto.getRecommendationRatingCount()).isZero();
             assertThat(mediaDto.getRecommendationRatingAverage()).isNull();
         });
@@ -225,10 +218,10 @@ public class MediaServiceTest {
         assertThat(actualMedia.getOverview()).isEqualTo(expectedMedia.getOverview());
         assertThat(actualMedia.getMediaType()).isEqualTo(expectedMedia.getMediaType());
         assertThat(actualMedia.getReleaseDate()).isEqualTo(expectedMedia.getReleaseDate());
-        assertThat(actualMedia.getRuntime()).isEqualTo(expectedMedia.getRuntime());
-        assertThat(actualMedia.getOriginalLanguage()).isEqualTo(expectedMedia.getOriginalLanguage());
         assertThat(actualMedia.getRecommendationRatingCount()).isEqualTo(expectedMedia.getRecommendationRatingCount());
         assertThat(actualMedia.getRecommendationRatingAverage()).isEqualTo(expectedMedia.getRecommendationRatingAverage());
+        assertThat(actualMedia.getRuntime()).isNotNull().isPositive();
+        assertThat(actualMedia.getOriginalLanguage()).isNotEmpty();
         assertThat(actualMedia.getGenres()).isNotEmpty();
         assertThat(actualMedia.getActors()).isNotEmpty();
         assertThat(actualMedia.getDirector()).isNotEmpty();

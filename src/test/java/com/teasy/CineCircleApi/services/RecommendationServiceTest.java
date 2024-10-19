@@ -1,6 +1,5 @@
 package com.teasy.CineCircleApi.services;
 
-import com.teasy.CineCircleApi.config.RsaKeyProperties;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
@@ -27,8 +26,6 @@ import java.util.UUID;
 @DataJpaTest
 @ActiveProfiles("test")
 public class RecommendationServiceTest {
-    @MockBean
-    RsaKeyProperties rsaKeyProperties;
     NotificationServiceMock notificationService;
     @Autowired
     private UserRepository userRepository;
