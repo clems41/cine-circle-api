@@ -43,3 +43,6 @@ local.yaml
 
 ### Local H2 database ###
 .data/
+
+### Local files ###
+movies.txt

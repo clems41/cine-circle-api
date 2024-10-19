@@ -31,7 +31,7 @@ public class HeadingController {
         this.headingService = headingService;
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/users/{userId}")
     @Operation(summary = "List headings for specific user")
     public ResponseEntity<List<MediaShortDto>> listHeadings(
             @PathVariable("userId") UUID userId

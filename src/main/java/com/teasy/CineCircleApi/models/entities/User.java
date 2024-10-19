@@ -60,6 +60,13 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "related_to_user_id"))
     private Set<User> relatedUsers;
 
+    @ManyToMany
+    @JoinTable(
+            name = "headings",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "media_id"))
+    private Set<Media> headings;
+
     @PrePersist
     protected void onCreateAbstractBaseEntity() {
         this.topicName = UUID.randomUUID();
@@ -80,6 +87,14 @@ public class User {
 
     public void removeRelatedUser(User user) {
         this.relatedUsers.remove(user);
+    }
+
+    public void addMediaToHeadings(Media media) {
+        this.headings.add(media);
+    }
+
+    public void removeMediaFromHeadings(Media media) {
+        this.headings.remove(media);
     }
 }
 
