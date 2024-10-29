@@ -2,6 +2,7 @@ package com.teasy.CineCircleApi.services;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.*;
@@ -218,6 +219,7 @@ public class UserService {
     private UserFullInfoDto entityToFullInfoDto(User user) {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.registerModule(new JavaTimeModule());
         return mapper.convertValue(user, UserFullInfoDto.class);
     }
 }
