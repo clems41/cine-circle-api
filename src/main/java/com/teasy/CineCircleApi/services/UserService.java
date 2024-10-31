@@ -212,14 +212,15 @@ public class UserService {
 
     private UserDto entityToDto(User user) {
         var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .registerModule(new JavaTimeModule());
         return mapper.convertValue(user, UserDto.class);
     }
 
     private UserFullInfoDto entityToFullInfoDto(User user) {
         var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        mapper.registerModule(new JavaTimeModule());
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .registerModule(new JavaTimeModule());
         return mapper.convertValue(user, UserFullInfoDto.class);
     }
 }
