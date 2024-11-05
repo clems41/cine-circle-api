@@ -58,16 +58,15 @@ public class TheMovieDbService implements MediaProvider {
     private final static String youtubeVideoSite = "YouTube";
     private final static String trailerVideoType = "Trailer";
 
-    @Value("${the-movie-db.api-key}")
-    private String apiKey;
+    private final TmdbApi tmdbApi;
 
-    private TmdbApi tmdbApi;
-
+    public TheMovieDbService(@Value("${the-movie-db.api-key}") String apiKey) {
+        tmdbApi = new TmdbApi(apiKey);
+    }
 
     @Override
     public List<ExternalMediaShort> searchMedia(Pageable pageable,
                                                 MediaSearchRequest mediaSearchRequest) {
-        initTmdbApi();
         var multiResponse = tmdbApi.getSearch()
                 .searchMulti(mediaSearchRequest.query(), language, pageable.getPageNumber())
                 .getResults();
@@ -91,7 +90,6 @@ public class TheMovieDbService implements MediaProvider {
 
     @Override
     public ExternalMedia getMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException {
-        initTmdbApi();
         // get casting
         List<PersonCast> cast;
         List<PersonCrew> crew;
@@ -165,7 +163,6 @@ public class TheMovieDbService implements MediaProvider {
 
     @Override
     public List<String> listGenres() {
-        initTmdbApi();
         var genres = tmdbApi.getGenre().getGenreList(language);
         return genres.stream().map(NamedIdElement::getName).toList();
     }
@@ -184,13 +181,16 @@ public class TheMovieDbService implements MediaProvider {
         } else {
             url = url.concat(tvSuffix);
         }
-        url = url.concat("/").concat(externalId).concat(watchProvidersSuffix);
+        url = url.concat("/").concat(externalId).concat(watchProvidersSuffix).substring(1);
         ApiUrl apiUrl = new ApiUrl(url);
         var response = tmdbApi.requestWebPage(apiUrl, null, RequestMethod.GET);
         ObjectMapper mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
             var watchProvidersResponse = mapper.readValue(response, WatchProvidersResponse.class);
+            if (watchProvidersResponse.getResults() == null) {
+                return new ArrayList<>();
+            }
             return watchProvidersResponse.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
         } catch (Exception e) {
             log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
@@ -198,12 +198,6 @@ public class TheMovieDbService implements MediaProvider {
                     ErrorMessage.MEDIA_NOT_FOUND,
                     HttpStatus.NOT_FOUND
             );
-        }
-    }
-
-    private void initTmdbApi() {
-        if (tmdbApi == null) {
-            tmdbApi = new TmdbApi(apiKey);
         }
     }
 
