@@ -1,0 +1,1 @@
+release: ./generate_keys.sh
