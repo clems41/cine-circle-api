@@ -6,6 +6,10 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
+import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,34 +32,38 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
 import javax.sql.DataSource;
+
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.KeyFactory;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@Slf4j
 public class SecurityConfig {
-    @Value("${rsa.public-key}")
-    private RSAPublicKey publicKey;
+    private final RSAKeyConfig keys;
 
-    @Value("${rsa.private-key}")
-    private RSAPrivateKey privateKey;
-
-    public SecurityConfig() {
+    public SecurityConfig(RSAKeyConfig keys) {
+        this.keys = keys;
     }
 
     @Bean
     JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(publicKey).privateKey(privateKey).build();
+        JWK jwk = new RSAKey.Builder(keys.getPublicKey())
+                .privateKey(keys.getPrivateKey()).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+
         return new NimbusJwtEncoder(jwks);
+
     }
 
     @Bean
     JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+        return NimbusJwtDecoder.withPublicKey(keys.getPublicKey()).build();
     }
 
     @Bean
@@ -69,7 +77,7 @@ public class SecurityConfig {
                     configuration.setAllowedHeaders(List.of("*"));
                     return configuration;
                 }))
-                .authorizeHttpRequests( auth -> auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/api/v1/auth/sign-up"),
