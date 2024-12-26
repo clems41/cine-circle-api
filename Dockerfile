@@ -5,7 +5,6 @@ COPY pom.xml /build
 RUN mvn -U -Dmaven.compiler.debug=true -Dmaven.compiler.debuglevel=lines,vars,source clean dependency:go-offline
 COPY . /build
 RUN mvn -Dmaven.compiler.debug=true -Dmaven.compiler.debuglevel=lines,vars,source -DskipTests package
-RUN ls /build/src/main/resources/certs/
 
 FROM openjdk:21-jdk-slim AS run
 WORKDIR /app
