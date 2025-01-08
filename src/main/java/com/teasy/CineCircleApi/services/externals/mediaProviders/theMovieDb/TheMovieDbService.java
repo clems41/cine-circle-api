@@ -194,10 +194,7 @@ public class TheMovieDbService implements MediaProvider {
             return watchProvidersResponse.getResults().getFr().getFlatrate().stream().map(WatchProviderInfo::getProviderName).toList();
         } catch (Exception e) {
             log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
-            throw new ExpectedException(
-                    ErrorMessage.MEDIA_NOT_FOUND,
-                    HttpStatus.NOT_FOUND
-            );
+            return List.of();
         }
     }
 
