@@ -9,7 +9,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@OpenAPIDefinition(info = @Info(title = "Cine Circle", version = "2.0.0", description = "La plateforme pour trouver le films du soir !"))
+@OpenAPIDefinition(info =
+@Info(title = "Cine Circle", version = "2.0.0", description = "La plateforme pour trouver le film du soir !"))
 @SecurityScheme(name = "JWT", scheme = "bearer", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
 @SecurityScheme(name = "basic", scheme = "basic", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
 public class CineCircleApiApplication {
