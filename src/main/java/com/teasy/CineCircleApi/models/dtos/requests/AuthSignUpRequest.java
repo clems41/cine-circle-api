@@ -6,7 +6,7 @@ import org.hibernate.validator.constraints.Length;
 import lombok.NonNull;
 
 public record AuthSignUpRequest(
-        @NotEmpty @Length(min = 6) String username,
+        @NotEmpty @Length(min = 4) String username,
         @NotEmpty @Email(regexp = ".+@.+\\..+") String email,
         @NotEmpty @Length(min = 6) String password,
         @NotEmpty @Length(min = 4, max = 20) String displayName

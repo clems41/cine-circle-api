@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.models.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -57,7 +58,9 @@ public class User {
     @JoinTable(
             name = "user_relationships",
             joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "related_to_user_id"))
+            inverseJoinColumns = @JoinColumn(name = "related_to_user_id")
+    )
+    @JsonIgnoreProperties(value = "relatedUsers")
     private Set<User> relatedUsers;
 
     @ManyToMany
