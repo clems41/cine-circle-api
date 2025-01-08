@@ -234,14 +234,13 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     private String getTrailerUrl(List<Video> videos) {
-        String youtubeVideoKey = videos
+        var trailerKeys = videos
                 .stream()
                 .filter(video -> Objects.equals(video.getSite(), youtubeVideoSite) &&
                         Objects.equals(video.getType(), trailerVideoType))
                 .map(Video::getKey)
-                .toList()
-                .get(0);
-        return youtubeVideoUrlPrefix.concat(youtubeVideoKey);
+                .toList();
+        return !trailerKeys.isEmpty() ? youtubeVideoUrlPrefix.concat(trailerKeys.get(0)) : "";
     }
 
     private String getOnlyActorsFromCast(List<PersonCast> cast) {
