@@ -15,8 +15,6 @@ import com.teasy.CineCircleApi.services.utils.EmailService;
 import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -51,7 +49,10 @@ public class UserService {
     }
 
     public UserFullInfoDto createUser(AuthSignUpRequest request) throws ExpectedException {
-        if (usernameAlreadyExists(request.username())) {
+        // username should be only lowercase
+        var finalUsername = request.username().toLowerCase();
+
+        if (usernameAlreadyExists(finalUsername)) {
             throw new ExpectedException(ErrorMessage.USER_USERNAME_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
         }
 
@@ -60,7 +61,7 @@ public class UserService {
         }
 
         var user = new User(
-                request.username(),
+                finalUsername,
                 request.email(),
                 passwordEncoder.encode(request.password()),
                 request.displayName()
@@ -89,7 +90,7 @@ public class UserService {
 
     public UserDto resetPasswordWithToken(UserResetPasswordRequest userResetPasswordRequest) throws ExpectedException {
         var user = findUserByEmailOrElseThrow(userResetPasswordRequest.email());
-        // check if token ius correct
+        // check if token is correct
         if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
             throw new ExpectedException(ErrorMessage.USER_BAD_CREDENTIALS, HttpStatus.FORBIDDEN);
         }
