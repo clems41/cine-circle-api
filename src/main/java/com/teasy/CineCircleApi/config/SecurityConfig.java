@@ -98,10 +98,11 @@ public class SecurityConfig {
 
     @Bean
     JdbcUserDetailsManager users(DataSource dataSource) {
-        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
-        jdbcUserDetailsManager.setUsersByUsernameQuery("select username, password, enabled from users where username = ?");
-        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select username, 'USER' from users where username=?");
-        return jdbcUserDetailsManager;
+        CustomJdbcUserDetailsManager customJdbcUserDetailsManager = new CustomJdbcUserDetailsManager(dataSource);
+        // Custom Jbdc implementation allows to pass 2 argument instead of one for the queries loading user details
+        customJdbcUserDetailsManager.setUsersByUsernameQuery("select username, password, enabled from users where username=? or email=?");
+        customJdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select username, 'USER' from users where username=? or email=?");
+        return customJdbcUserDetailsManager;
     }
 
     @Bean
