@@ -35,9 +35,9 @@ public class UserService {
 
     private final static String resetPasswordUrlKey = "resetPasswordUrl";
     private final static String usernameKey = "username";
-    private final static String tokenKey = "token";
     private final static String resetPasswordMailSubject = "Réinitialisation de votre mot de passe";
     private final static String resetPasswordTemplateName = "reset-password.html";
+    private final static String resetPasswordTUrlPrefix = "huco-app://reset-password?token=";
 
     @Autowired
     public UserService(UserRepository userRepository,
@@ -132,6 +132,7 @@ public class UserService {
         var result = userRepository.findByEmail(email);
         // if user cannot be found, we should not let requester know it, it will avoid anyone knowing that an email exists in database
         if (result.isEmpty()) {
+            log.warn("User cannot be found with email {}", email);
             return;
         }
         var user = result.get();
@@ -144,18 +145,13 @@ public class UserService {
         // send email if user exists
         Map<String, String> templateValues = new HashMap<>();
         templateValues.put(usernameKey, user.getUsername());
-        templateValues.put(resetPasswordUrlKey, "TODO");
-        templateValues.put(tokenKey, token);
+        templateValues.put(resetPasswordUrlKey, resetPasswordTUrlPrefix + token);
         SendEmailRequest sendEmailRequest = new SendEmailRequest(
                 resetPasswordMailSubject,
                 email,
                 resetPasswordTemplateName,
                 templateValues);
-        try {
-            emailService.sendEmail(sendEmailRequest);
-        } catch (MessagingException e) {
-            log.error("cannot send reset password email : {}", e.getMessage());
-        }
+        emailService.sendEmail(sendEmailRequest);
     }
 
     public UserFullInfoDto addUserToRelatedUsers(String username, UUID relatedUserId) throws ExpectedException {
