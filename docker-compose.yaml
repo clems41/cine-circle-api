@@ -1,17 +1,12 @@
 services:
   api:
     build: .
-    depends_on:
-      database:
-        condition: service_healthy
     ports:
-      - "8080:8080"
+      - "5000:5000"
     environment:
-      - DB_HOST=database
-      - DB_PORT=5432
+      - SPRING_PROFILES_ACTIVE=local
       - DB_USER=${DATABASE_USER}
       - DB_PASSWORD=${DATABASE_PASSWORD}
-      - DB_NAME=${DATABASE_NAME}
       - THE_MOVIE_DATABASE_API_KEY=${THE_MOVIE_DATABASE_API_KEY}
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_USERNAME=${SMTP_USERNAME}
@@ -23,23 +18,3 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-  database:
-    image: postgres:15
-    environment:
-      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-      - POSTGRES_USERNAME=${DATABASE_USER}
-      - POSTGRES_DB=${DATABASE_NAME}
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "${POSTGRES_DB}" ]
-      interval: 15s
-      timeout: 20s
-      retries: 5
-      start_period: 40s
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
