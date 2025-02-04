@@ -37,7 +37,7 @@ public class UserService {
     private final static String usernameKey = "username";
     private final static String resetPasswordMailSubject = "Réinitialisation de votre mot de passe";
     private final static String resetPasswordTemplateName = "reset-password.html";
-    private final static String resetPasswordTUrlPrefix = "huco-app://reset-password?token=";
+    private final static String resetPasswordTUrlPrefix = "https://huco-reset-password.vercel.app/reset-pwd?token=";
 
     @Autowired
     public UserService(UserRepository userRepository,
