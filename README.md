@@ -157,6 +157,8 @@ Ce système de notification fonctionne via SockJS qui utilise la technologie de 
 Le webservice ``/api/v1/notifications/topic`` permet à un utilisateur authentifié de récupérer le nom du topic à utiliser pour sa connection SockJS.
 Ce topic est unique par utilisateur, ce qui permet que seul un utilisateur authentifié peut connaître le nom du topic où recevoir ses propres notifications.
 
+Côté front, il faut utiliser le websocket mis en place sur l'url ``ws://localhost:5000/api/v1/notifications/websocket`` et en précisant le topic reçu précédemment ``/topic/XXX`` lors de la subscription.
+
 Pour chaque nouvelle recommendation reçue par un utilisateur, un message sera envoyé sur le topic correspondant afin qu'il puisse récupérer la notification.
 Ce message contiendra toutes les informations d'une recommendations (media concerné, expéditeur, destinataires, commentaire et note).
 
