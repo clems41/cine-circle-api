@@ -128,7 +128,7 @@ public class UserService {
                 .map(this::entityToDto);
     }
 
-    public void sendResetPasswordEmail(String email) {
+    public void sendResetPasswordEmail(String email) throws ExpectedException {
         var result = userRepository.findByEmail(email);
         // if user cannot be found, we should not let requester know it, it will avoid anyone knowing that an email exists in database
         if (result.isEmpty()) {

@@ -20,7 +20,11 @@ public enum ErrorMessage {
     /* Circle errors */
 
     CIRCLE_NOT_FOUND("Circle not found"),
-    CIRCLE_USER_BAD_PERMISSIONS("User does not have the required permissions for this circle");
+    CIRCLE_USER_BAD_PERMISSIONS("User does not have the required permissions for this circle"),
+
+    /* Internal server errors */
+
+    ERR_EMAILSERVICE_CANNOT_SEND_EMAIL("An error occurred while sending an email"),;
 
     private final String message;
 

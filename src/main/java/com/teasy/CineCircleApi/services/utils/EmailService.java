@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.services.utils;
 
+import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.utils.SendEmailRequest;
 import jakarta.mail.MessagingException;
@@ -38,7 +39,7 @@ public class EmailService {
         this.emailSender = emailSender;
     }
 
-    public void sendEmail(SendEmailRequest sendEmailRequest) {
+    public void sendEmail(SendEmailRequest sendEmailRequest) throws ExpectedException {
         try {
             MimeMessage message = emailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -52,6 +53,7 @@ public class EmailService {
             emailSender.send(message);
         } catch(MailException | MessagingException | UnsupportedEncodingException e) {
             log.error("Error while sending email to {} : e", sendEmailRequest.receiver(), e);
+            throw new ExpectedException(ErrorMessage.ERR_EMAILSERVICE_CANNOT_SEND_EMAIL, e);
         }
     }
 

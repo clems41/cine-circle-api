@@ -53,7 +53,7 @@ public class UserController {
     @Operation(summary = "Send email with unique token to reset password for an unauthenticated user")
     public ResponseEntity<String> sendResetPasswordEmail(
             @Valid UserSendResetPasswordEmailRequest userSendResetPasswordEmailRequest
-    ) {
+    ) throws ExpectedException {
         userService.sendResetPasswordEmail(userSendResetPasswordEmailRequest.email());
         return ResponseEntity.ok().body("");
     }
