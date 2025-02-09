@@ -1,3 +1,6 @@
 ## RSA keys
 **/public.pem
 **/private.pem
+.data
+.idea
+target
