@@ -93,8 +93,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 .filter(mediaDto -> Objects.equals(mediaDto.getId(), media2.getId().toString()))
                 .findAny();
         Assertions.assertThat(media2FromList.isPresent()).isTrue(); // check that library contains media2
-        Assertions.assertThat(media2FromList.get().getPersonalComment()).isEqualTo(requestMedia2.comment());
-        Assertions.assertThat(media2FromList.get().getPersonalRating()).isEqualTo(requestMedia2.rating());
 
         /* Remove non-existing media from library */
         ResponseEntity<String> removeNonExistingMediaResponse = this.restTemplate
@@ -177,8 +175,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 .filter(mediaDto -> Objects.equals(mediaDto.getId(), media3.getId().toString()))
                 .findAny();
         Assertions.assertThat(media3FromList.isPresent()).isTrue(); // check that library contains media2
-        Assertions.assertThat(media3FromList.get().getPersonalComment()).isEqualTo(requestMedia3.comment());
-        Assertions.assertThat(media3FromList.get().getPersonalRating()).isEqualTo(requestMedia3.rating());
 
         /* Add media3 to library a second time with new comment and new rating */
         var requestMedia3SecondTime = new LibraryAddMediaRequest(
@@ -214,8 +210,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 .filter(mediaDto -> Objects.equals(mediaDto.getId(), media3.getId().toString()))
                 .findAny();
         Assertions.assertThat(media3FromListSecondTime.isPresent()).isTrue(); // check that library contains media2
-        Assertions.assertThat(media3FromListSecondTime.get().getPersonalComment()).isEqualTo(requestMedia3SecondTime.comment());
-        Assertions.assertThat(media3FromListSecondTime.get().getPersonalRating()).isEqualTo(requestMedia3SecondTime.rating());
     }
     @Test
     public void AddMedia_ShouldContainsCommentAndRatingWhenGettingMedia() {
@@ -251,8 +245,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 );
         Assertions.assertThat(getMediaResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(getMediaResponse.getBody()).isNotNull();
-        Assertions.assertThat(getMediaResponse.getBody().getPersonalComment()).isEqualTo(addMediaRequest.comment());
-        Assertions.assertThat(getMediaResponse.getBody().getPersonalRating()).isEqualTo(addMediaRequest.rating());
 
         /* Add same media to library with new comment and new rating */
         var addMediaSecondTimeRequest = new LibraryAddMediaRequest(
@@ -277,8 +269,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 );
         Assertions.assertThat(getMediaSecondTimeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(getMediaSecondTimeResponse.getBody()).isNotNull();
-        Assertions.assertThat(getMediaSecondTimeResponse.getBody().getPersonalComment()).isEqualTo(addMediaSecondTimeRequest.comment());
-        Assertions.assertThat(getMediaSecondTimeResponse.getBody().getPersonalRating()).isEqualTo(addMediaSecondTimeRequest.rating());
     }
     
     @Test
@@ -335,11 +325,6 @@ public class LibraryTest extends IntegrationTestAbstract {
                 .filter(mediaDto -> Objects.equals(mediaDto.getId(), media.getId().toString()))
                 .findAny();
         Assertions.assertThat(mediaFromList.isPresent()).isTrue();
-        // check media fields are not filled with recommendation fields
-        Assertions.assertThat(mediaFromList.get().getPersonalComment()).isNull();
-        Assertions.assertThat(mediaFromList.get().getPersonalRating()).isNull();
-        Assertions.assertThat(mediaFromList.get().getRecommendationRatingAverage()).isNull();
-        Assertions.assertThat(mediaFromList.get().getRecommendationRatingCount()).isNull();
     }
 
     @Test
@@ -357,7 +342,7 @@ public class LibraryTest extends IntegrationTestAbstract {
         for (int i = 0; i < nbExistingMediaInUserLibrary; i++) { // add some media to user library
             dummyDataCreator.addMediaToLibrary(user, dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE));
         }
-        var libraryRecord = dummyDataCreator.addMediaToLibrary(user, media);
+        dummyDataCreator.addMediaToLibrary(user, media);
         List<User> receivers = new ArrayList<>();
         for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // add some media to user library
             receivers.add(dummyDataCreator.generateUser(true));
@@ -397,10 +382,5 @@ public class LibraryTest extends IntegrationTestAbstract {
                 .filter(mediaDto -> Objects.equals(mediaDto.getId(), media.getId().toString()))
                 .findAny();
         Assertions.assertThat(mediaFromList.isPresent()).isTrue();
-        // check media personal fields are still filled with library record
-        Assertions.assertThat(mediaFromList.get().getPersonalComment()).isEqualTo(libraryRecord.getComment());
-        Assertions.assertThat(mediaFromList.get().getPersonalRating()).isEqualTo(libraryRecord.getRating());
-        Assertions.assertThat(mediaFromList.get().getRecommendationRatingAverage()).isNull();
-        Assertions.assertThat(mediaFromList.get().getRecommendationRatingCount()).isNull();
     }
 }

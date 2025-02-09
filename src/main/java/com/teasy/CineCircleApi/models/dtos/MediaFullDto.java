@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter
@@ -32,10 +31,4 @@ public class MediaFullDto {
     private String originCountry;
     private String actors;
     private String director;
-    private Integer recommendationRatingCount;
-    private Double recommendationRatingAverage;
-    private List<RecommendationMediaDto> recommendationsReceived;
-    private List<RecommendationMediaDto> recommendationsSent;
-    private String personalComment;
-    private Integer personalRating;
 }

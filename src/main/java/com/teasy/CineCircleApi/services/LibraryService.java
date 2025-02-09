@@ -8,18 +8,13 @@ import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
-import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.LibraryRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -27,16 +22,15 @@ import java.util.UUID;
 
 @Service
 public class LibraryService {
-
-    LibraryRepository libraryRepository;
-    MediaRepository mediaRepository;
-    UserRepository userRepository;
+    private final LibraryRepository libraryRepository;
+    private final UserService userService;
+    private final MediaService mediaService;
 
     @Autowired
-    public LibraryService(LibraryRepository libraryRepository, MediaRepository mediaRepository, UserRepository userRepository) {
+    public LibraryService(LibraryRepository libraryRepository, UserService userService, MediaService mediaService) {
         this.libraryRepository = libraryRepository;
-        this.mediaRepository = mediaRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
+        this.mediaService = mediaService;
     }
 
     public void addToLibrary(UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest, String username) throws ExpectedException {
@@ -61,14 +55,13 @@ public class LibraryService {
     public void removeFromLibrary(String username, UUID mediaId) throws ExpectedException {
         // get existing library record
         var existingRecord = findExistingRecord(username, mediaId);
-
-        existingRecord.ifPresent(library -> libraryRepository.delete(library));
+        existingRecord.ifPresent(libraryRepository::delete);
     }
 
     public Page<MediaShortDto> searchInLibrary(Pageable pageable,
                                                LibrarySearchRequest librarySearchRequest,
                                                String username) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(username);
+        var user = userService.findUserByUsernameOrElseThrow(username);
 
         ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
@@ -82,17 +75,11 @@ public class LibraryService {
         matchingLibrary.setMedia(createMatchingMedia(librarySearchRequest));
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
-        return records.map(library -> {
-            var mediaDto = fromMediaEntityToMediaDto(library.getMedia());
-            // add personal comment and rating
-            mediaDto.setPersonalComment(library.getComment());
-            mediaDto.setPersonalRating(library.getRating());
-            return mediaDto;
-        });
+        return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));
     }
 
     public boolean isInLibrary(String username, UUID mediaId) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(username);
+        var user = userService.findUserByUsernameOrElseThrow(username);
         return libraryRepository.existsByUser_IdAndMedia_Id(user.getId(), mediaId);
     }
 
@@ -116,23 +103,9 @@ public class LibraryService {
     }
 
     private Library newLibrary(String username, UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(username);
-        var media = findMediaByIdOrElseThrow(mediaId);
+        var user = userService.findUserByUsernameOrElseThrow(username);
+        var media = mediaService.findMediaByIdOrElseThrow(mediaId);
         return new Library(user, media, libraryAddMediaRequest.comment(), libraryAddMediaRequest.rating());
-    }
-
-    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
-        // check if user exist
-        return userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private Media findMediaByIdOrElseThrow(UUID mediaId) throws ExpectedException {
-        // check if media exists
-        return mediaRepository
-                .findById(mediaId)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private MediaShortDto fromMediaEntityToMediaDto(Media media) {

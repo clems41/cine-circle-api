@@ -1,21 +1,18 @@
 package com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.externals.ExternalMedia;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
 import com.teasy.CineCircleApi.models.externals.theMovieDb.WatchProviderInfo;
 import com.teasy.CineCircleApi.models.externals.theMovieDb.WatchProvidersResponse;
-import com.teasy.CineCircleApi.models.utils.CustomHttpClientSendRequest;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
-import com.teasy.CineCircleApi.services.utils.CustomHttpClient;
 import info.movito.themoviedbapi.TmdbApi;
 import info.movito.themoviedbapi.TmdbMovies;
 import info.movito.themoviedbapi.TmdbTV;
@@ -33,8 +30,6 @@ import info.movito.themoviedbapi.tools.RequestMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -45,7 +40,6 @@ import java.util.*;
 public class TheMovieDbService implements MediaProvider {
     private final static String stringArrayDelimiter = ",";
 
-    private final static String theMovieDbApiBaseUrl = "https://api.themoviedb.org/3";
     private final static String tvSuffix = "/tv";
     private final static String movieSuffix = "/movie";
     private final static String watchProvidersSuffix = "/watch/providers";
@@ -96,7 +90,7 @@ public class TheMovieDbService implements MediaProvider {
         List<Person> persons;
         List<Genre> genres;
         List<Video> videos;
-        Integer runtime = null;
+        Integer runtime;
         if (Objects.equals(mediaType, MediaTypeEnum.MOVIE)) {
             MovieDb movie = tmdbApi.getMovies()
                     .getMovie(Integer.parseInt(externalId),
@@ -123,10 +117,7 @@ public class TheMovieDbService implements MediaProvider {
             runtime = tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
                     tvSeries.getEpisodeRuntime().get(0) : null;
         } else {
-            throw new ExpectedException(
-                    ErrorMessage.MEDIA_NOT_FOUND,
-                    HttpStatus.NOT_FOUND
-            );
+            throw new ExpectedException(ErrorDetails.ERR_MEDIA_TYPE_NOT_SUPPORTED.addingArgs(mediaType));
         }
         var media = new ExternalMedia();
 
@@ -173,7 +164,7 @@ public class TheMovieDbService implements MediaProvider {
     }
 
     @Override
-    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) throws ExpectedException {
+    public List<String> getWatchProvidersForMedia(String externalId, MediaTypeEnum mediaType) {
         // define url depending on media type and id
         String url = "";
         if (mediaType.equals(MediaTypeEnum.MOVIE)) {

@@ -3,7 +3,6 @@ package com.teasy.CineCircleApi.utils;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
-import com.teasy.CineCircleApi.models.entities.User;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -17,8 +16,6 @@ public class Authenticator {
     private final static String authSignInUrl = "/auth/sign-in";
     private final TestRestTemplate restTemplate;
     private final int port;
-
-    private User authenticatedUSer;
 
     public Authenticator(
             TestRestTemplate restTemplate,
@@ -38,7 +35,7 @@ public class Authenticator {
                 );
         Assertions.assertThat(signUpResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(signUpResponse.getBody()).isNotNull();
-        Assertions.assertThat(signUpResponse.getBody().getUsername()).isEqualTo(authSignUpRequest.username());
+        Assertions.assertThat(signUpResponse.getBody().getUsername()).isEqualTo(authSignUpRequest.username().toLowerCase());
         Assertions.assertThat(signUpResponse.getBody().getEmail()).isEqualTo(authSignUpRequest.email());
         Assertions.assertThat(signUpResponse.getBody().getDisplayName()).isEqualTo(authSignUpRequest.displayName());
         Assertions.assertThat(signUpResponse.getBody().getTopicName()).isNotEmpty();
@@ -66,7 +63,7 @@ public class Authenticator {
     }
 
     private AuthSignUpRequest generateAuthSignUpRequest() {
-        var username = RandomStringUtils.random(10, true, true);
+        var username = RandomStringUtils.random(10, true, true).toLowerCase();
         var email = String.format("%s@%s.com",
                 RandomStringUtils.random(10, true, false),
                 RandomStringUtils.random(5, true, false));

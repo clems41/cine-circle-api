@@ -7,56 +7,46 @@ import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
-import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
-import com.teasy.CineCircleApi.repositories.CircleRepository;
-import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 @Slf4j
 public class RecommendationService {
-    private final NotificationServiceInterface notificationService;
+    private final NotificationService notificationService;
     private final RecommendationRepository recommendationRepository;
-    private final UserRepository userRepository;
-    private final MediaRepository mediaRepository;
+    private final UserService userService;
+    private final MediaService mediaService;
     private final LibraryService libraryService;
-    private final CircleRepository circleRepository;
+    private final CircleService circleService;
 
     @Autowired
     public RecommendationService(RecommendationRepository recommendationRepository,
-                                 UserRepository userRepository,
-                                 MediaRepository mediaRepository,
+                                 UserService userService,
+                                 MediaService mediaService,
                                  LibraryService libraryService,
-                                 CircleRepository circleRepository,
-                                 NotificationServiceInterface notificationService) {
+                                 CircleService circleService,
+                                 NotificationService notificationService) {
         this.recommendationRepository = recommendationRepository;
-        this.userRepository = userRepository;
-        this.mediaRepository = mediaRepository;
+        this.userService = userService;
+        this.mediaService = mediaService;
         this.notificationService = notificationService;
         this.libraryService = libraryService;
-        this.circleRepository = circleRepository;
+        this.circleService = circleService;
     }
 
     public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
                                                   String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
 
         // adding receivers
         Set<User> receivers = new HashSet<>();
@@ -64,7 +54,7 @@ public class RecommendationService {
             recommendationCreateRequest.userIds()
                     .forEach(userId -> {
                         try {
-                            receivers.add(findUserByIdOrElseThrow(userId));
+                            receivers.add(userService.findUserByIdOrElseThrow(userId));
                         } catch (ExpectedException e) {
                             log.error("User not found", e);
                         }
@@ -77,7 +67,7 @@ public class RecommendationService {
             recommendationCreateRequest.circleIds()
                     .forEach(circleId -> {
                         try {
-                            circles.add(findCircleByIdOrElseThrow(circleId));
+                            circles.add(circleService.findCircleByIdOrElseThrow(circleId));
                         } catch (ExpectedException e) {
                             throw new RuntimeException(e);
                         }
@@ -85,7 +75,7 @@ public class RecommendationService {
         }
 
         // find media
-        var media = findMediaByIdOrElseThrow(recommendationCreateRequest.mediaId());
+        var media = mediaService.findMediaByIdOrElseThrow(recommendationCreateRequest.mediaId());
 
         // create recommendation
         var recommendation = new Recommendation(
@@ -101,20 +91,19 @@ public class RecommendationService {
         libraryService.addToLibrary(media.getId(), null, authenticatedUsername);
 
         // send recommendation to concerned users
-        var recommendationDto = fromEntityToDto(recommendation);
-        notificationService.sendRecommendation(recommendationDto);
+        notificationService.sendRecommendation(recommendation);
 
-        return recommendationDto;
+        return fromEntityToDto(recommendation);
     }
 
     public Page<RecommendationDto> listReceivedRecommendations(
             Pageable pageable,
             RecommendationReceivedRequest recommendationReceivedRequest,
             String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         Page<Recommendation> result;
         if (recommendationReceivedRequest.mediaId() != null) {
-            var media = findMediaByIdOrElseThrow(recommendationReceivedRequest.mediaId());
+            var media = mediaService.findMediaByIdOrElseThrow(recommendationReceivedRequest.mediaId());
             result = recommendationRepository.findAllByReceivers_IdAndMedia_Id(pageable, user.getId(), media.getId());
         } else {
             result = recommendationRepository.findAllByReceivers_Id(pageable, user.getId());
@@ -124,7 +113,7 @@ public class RecommendationService {
 
     public Page<RecommendationDto> listSentRecommendations(Pageable pageable, String authenticatedUsername) throws ExpectedException {
         // creating matching example
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
@@ -142,31 +131,5 @@ public class RecommendationService {
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
         return mapper.convertValue(recommendation, RecommendationDto.class);
-    }
-
-    private Circle findCircleByIdOrElseThrow(UUID circleId) throws ExpectedException {
-        // check if media exists
-        return circleRepository
-                .findById(circleId)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.CIRCLE_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private Media findMediaByIdOrElseThrow(UUID mediaId) throws ExpectedException {
-        // check if media exists
-        return mediaRepository
-                .findById(mediaId)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.MEDIA_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private User findUserByIdOrElseThrow(UUID id) throws ExpectedException {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
-        return userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 }

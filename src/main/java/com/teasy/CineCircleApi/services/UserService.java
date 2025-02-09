@@ -7,17 +7,15 @@ import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.*;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.utils.SendEmailRequest;
 import com.teasy.CineCircleApi.repositories.UserRepository;
 import com.teasy.CineCircleApi.services.utils.EmailService;
-import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,9 +27,9 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class UserService {
-    UserRepository userRepository;
-    PasswordEncoder passwordEncoder;
-    EmailService emailService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     private final static String resetPasswordUrlKey = "resetPasswordUrl";
     private final static String usernameKey = "username";
@@ -53,11 +51,11 @@ public class UserService {
         var finalUsername = request.username().toLowerCase();
 
         if (usernameAlreadyExists(finalUsername)) {
-            throw new ExpectedException(ErrorMessage.USER_USERNAME_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new ExpectedException(ErrorDetails.ERR_USER_USERNAME_ALREADY_EXISTS.addingArgs(finalUsername));
         }
 
         if (emailAlreadyExists(request.email())) {
-            throw new ExpectedException(ErrorMessage.USER_EMAIL_ALREADY_EXISTS, HttpStatus.BAD_REQUEST);
+            throw new ExpectedException(ErrorDetails.ERR_USER_EMAIL_ALREADY_EXISTS.addingArgs(request.email()));
         }
 
         var user = new User(
@@ -79,7 +77,7 @@ public class UserService {
         var user = findUserByUsernameOrElseThrow(username);
         // check if oldPassword i correct
         if (!passwordEncoder.matches(authResetPasswordRequest.oldPassword(), user.getHashPassword())) {
-            throw new ExpectedException(ErrorMessage.USER_BAD_CREDENTIALS, HttpStatus.FORBIDDEN);
+            throw new ExpectedException(ErrorDetails.ERR_USER_PASSWORD_INCORRECT.addingArgs(user.getId()));
         }
 
         // update password
@@ -92,7 +90,7 @@ public class UserService {
         var user = findUserByEmailOrElseThrow(userResetPasswordRequest.email());
         // check if token is correct
         if (!Objects.equals(user.getResetPasswordToken(), userResetPasswordRequest.token())) {
-            throw new ExpectedException(ErrorMessage.USER_BAD_CREDENTIALS, HttpStatus.FORBIDDEN);
+            throw new ExpectedException(ErrorDetails.ERR_USER_RESET_PASSWORD_TOKEN_INCORRECT.addingArgs(user.getId()));
         }
 
         // update password
@@ -120,7 +118,7 @@ public class UserService {
     public Page<UserDto> searchUsers(String username, Pageable pageable, UserSearchRequest request) throws ExpectedException {
         // check query content
         if (request.query().isEmpty()) {
-            throw new ExpectedException(ErrorMessage.USER_SEARCH_BAD_QUERY, HttpStatus.NOT_FOUND);
+            throw new ExpectedException(ErrorDetails.ERR_USER_SEARCH_QUERY_EMPTY);
         }
         User user = findUserByUsernameOrElseThrow(username);
         // create example with query that can match username, email or displayName
@@ -173,28 +171,40 @@ public class UserService {
         return entityToFullInfoDto(user);
     }
 
-    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
+    public User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
         return userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ExpectedException(
+                        ErrorDetails.ERR_USER_NOT_FOUND.addingArgs(username))
+                );
     }
 
-    private User findUserByEmailOrElseThrow(String email) throws ExpectedException {
+    public User findUserByEmailOrElseThrow(String email) throws ExpectedException {
         return userRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ExpectedException(
+                        ErrorDetails.ERR_USER_NOT_FOUND.addingArgs(email))
+                );
     }
 
-    private User findUserByUsernameOrEmailOrElseThrow(String username, String email) throws ExpectedException {
+    public User findUserByUsernameOrEmailOrElseThrow(String username, String email) throws ExpectedException {
         return userRepository
                 .findByUsernameOrEmail(username, email)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ExpectedException(
+                        ErrorDetails.ERR_USER_NOT_FOUND.addingArgs(String.format("%s / %s", username, email)))
+                );
     }
 
-    private User findUserByIdOrElseThrow(UUID id) throws ExpectedException {
+    public User findUserByIdOrElseThrow(UUID id) throws ExpectedException {
         return userRepository
                 .findById(id)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ExpectedException(
+                        ErrorDetails.ERR_USER_NOT_FOUND.addingArgs(id))
+                );
+    }
+
+    public void save(User user) {
+        userRepository.save(user);
     }
 
     private Boolean usernameAlreadyExists(String username) {

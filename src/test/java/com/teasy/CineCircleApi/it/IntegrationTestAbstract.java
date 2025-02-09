@@ -2,11 +2,13 @@ package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.CineCircleApiApplication;
 import com.teasy.CineCircleApi.repositories.*;
+import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
 import com.teasy.CineCircleApi.utils.Authenticator;
 import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,6 +17,8 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @SpringBootTest(classes = CineCircleApiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class IntegrationTestAbstract {
+    @MockBean
+    MediaProvider mediaProvider;
     @LocalServerPort
     protected int port;
 

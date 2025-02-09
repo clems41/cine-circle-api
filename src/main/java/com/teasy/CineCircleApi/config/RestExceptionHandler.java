@@ -1,5 +1,6 @@
 package com.teasy.CineCircleApi.config;
 
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ErrorResponse;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import lombok.extern.slf4j.Slf4j;
@@ -18,21 +19,25 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ExpectedException.class)
     // when exception is expected, we should use its HttpStatus when returning ErrorResponse
     private ResponseEntity<ErrorResponse> buildResponseEntityForExpectedException(ExpectedException exception) {
-        log.error("Expected exception occurred with code {} : ", exception.getError().getCode(), exception.getCause());
-        return new ResponseEntity<>(buildErrorResponse(exception, exception.getError().getCode()), exception.getHttpStatus());
+        log.error("Expected exception occurred with code {} : ", exception.getErrorDetails().getCode(), exception.getCause());
+        return new ResponseEntity<>(buildErrorResponse(exception, exception.getErrorDetails()), exception.getErrorDetails().getHttpStatus());
     }
 
     @ExceptionHandler(Exception.class)
     // when exception is not expected, we should use HttpStatus.INTERNAL_SERVER_ERROR when returning ErrorResponse
     private ResponseEntity<ErrorResponse> buildResponseEntityForException(Exception exception) {
         log.error("Unexpected exception occurred : ", exception);
-        return new ResponseEntity<>(buildErrorResponse(exception, null), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(
+                buildErrorResponse(exception, ErrorDetails.ERR_UNEXPECTED_ERROR_OCCURRED.addingArgs(exception.getMessage())),
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private ErrorResponse buildErrorResponse(Exception exception, String errorCode) {
+    private ErrorResponse buildErrorResponse(Exception exception, ErrorDetails errorDetails) {
         return new ErrorResponse(
                 exception.getMessage(),
-                errorCode,
+                errorDetails.getCode(),
+                errorDetails.getErrorOnObject().name(),
+                errorDetails.getErrorOnField().name(),
                 exception.getCause() != null ? exception.getCause().getMessage() : "",
                 exception.getCause() != null ? exception.getCause().getStackTrace() : null
         );

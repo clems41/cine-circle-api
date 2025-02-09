@@ -2,12 +2,8 @@ package com.teasy.CineCircleApi.services;
 
 import com.teasy.CineCircleApi.models.dtos.JwtTokenDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.*;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -15,16 +11,13 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import io.jsonwebtoken.Claims;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class TokenService {
     private final JwtEncoder encoder;
-    private JwtDecoder decoder;
+    private final JwtDecoder decoder;
     private static final Integer hoursBeforeExpiration = 24;
 
     @Autowired

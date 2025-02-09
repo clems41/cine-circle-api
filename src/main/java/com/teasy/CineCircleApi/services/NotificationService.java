@@ -1,14 +1,12 @@
 package com.teasy.CineCircleApi.services;
 
-import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.responses.NotificationTopicResponse;
+import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
-import com.teasy.CineCircleApi.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -16,47 +14,51 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class NotificationService implements NotificationServiceInterface {
+public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     private final static String topicPrefix = "/topic";
 
     @Autowired
-    public NotificationService(SimpMessagingTemplate messagingTemplate,
-                               UserRepository userRepository) {
+    public NotificationService(SimpMessagingTemplate messagingTemplate, UserService userService) {
         this.messagingTemplate = messagingTemplate;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     public NotificationTopicResponse getTopicForUsername(String username) throws ExpectedException {
-        var user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+        var user = userService.findUserByUsernameOrElseThrow(username);
         return new NotificationTopicResponse(getTopicFromUser(user));
     }
 
-    public void sendRecommendation(RecommendationDto recommendation) {
+    public void sendRecommendation(Recommendation recommendation) throws ExpectedException {
         if (recommendation.getReceivers() != null) {
-            recommendation.getReceivers().forEach(receiver -> {
-                var user = userRepository.findById(UUID.fromString(receiver.getId()));
-                if (user.isEmpty()) {
-                    log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
-                    return;
-                }
-                messagingTemplate.convertAndSend(getTopicFromUser(user.get()), recommendation);
-            });
+            for (var receiver : recommendation.getReceivers()) {
+                sendRecommendationToUser(receiver.getId(), recommendation);
+            }
         }
         if (recommendation.getCircles() != null) {
-            recommendation.getCircles().forEach(circle -> circle.getUsers().forEach(receiver -> {
-                var user = userRepository.findById(UUID.fromString(receiver.getId()));
-                if (user.isEmpty()) {
-                    log.warn("user with id {} cannot be found and will not received notification", receiver.getId());
-                    return;
+            for (var circle : recommendation.getCircles()) {
+                for (var receiver : circle.getUsers()) {
+                    sendRecommendationToUser(receiver.getId(), recommendation);
                 }
-                messagingTemplate.convertAndSend(getTopicFromUser(user.get()), recommendation);
-            }));
+            }
         }
+    }
+
+    private void sendRecommendationToUser(UUID userId, Recommendation recommendation) throws ExpectedException {
+        User user;
+        try {
+            user = userService.findUserByIdOrElseThrow(userId);
+        } catch (ExpectedException e) {
+            if (e.getErrorDetails() != null && e.getErrorDetails().isSameErrorThan(ErrorDetails.ERR_USER_NOT_FOUND)) {
+                log.warn("User with id {} cannot be found and will not received notification", userId);
+                return;
+            } else {
+                throw e;
+            }
+        }
+        messagingTemplate.convertAndSend(getTopicFromUser(user), recommendation);
     }
 
     private String getTopicFromUser(User user) {

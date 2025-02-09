@@ -8,17 +8,14 @@ import com.teasy.CineCircleApi.models.dtos.CirclePublicDto;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.CircleSearchPublicRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
-import com.teasy.CineCircleApi.models.entities.User;
-import com.teasy.CineCircleApi.models.enums.ErrorMessage;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.CircleRepository;
-import com.teasy.CineCircleApi.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,17 +24,17 @@ import java.util.UUID;
 
 @Service
 public class CircleService {
-    CircleRepository circleRepository;
-    UserRepository userRepository;
+    private final CircleRepository circleRepository;
+    private final UserService userService;
 
     @Autowired
-    public CircleService(CircleRepository circleRepository, UserRepository userRepository) {
+    public CircleService(CircleRepository circleRepository, UserService userService) {
         this.circleRepository = circleRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     public List<CircleDto> listCircles(String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var circles = circleRepository.findAllByUsers_Id(user.getId());
         return circles
                 .stream()
@@ -46,10 +43,10 @@ public class CircleService {
     }
 
     public CirclePublicDto joinPublicCircle(UUID circleId, String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var circle = findCircleByIdOrElseThrow(circleId);
         if (!circle.getIsPublic()) {
-            throw new ExpectedException(ErrorMessage.CIRCLE_NOT_FOUND, HttpStatus.NOT_FOUND);
+            throw new ExpectedException(ErrorDetails.ERR_CIRCLE_USER_BAD_PERMISSIONS.addingArgs(authenticatedUsername));
         }
         circle.addUser(user);
         circleRepository.save(circle);
@@ -70,7 +67,7 @@ public class CircleService {
     }
 
     public CircleDto createCircle(CircleCreateUpdateRequest circleCreateUpdateRequest, String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var newCircle = new Circle(
                 circleCreateUpdateRequest.isPublic(),
                 circleCreateUpdateRequest.name(),
@@ -103,7 +100,7 @@ public class CircleService {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to add
-        var userToAdd = findUserByIdOrElseThrow(userIdToAdd);
+        var userToAdd = userService.findUserByIdOrElseThrow(userIdToAdd);
 
         // add user
         circle.addUser(userToAdd);
@@ -115,7 +112,7 @@ public class CircleService {
         var circle = getCircleAndCheckPermissions(circleId, authenticatedUsername);
 
         // find user to remove
-        var userToRemove = findUserByIdOrElseThrow(userIdToRemove);
+        var userToRemove = userService.findUserByIdOrElseThrow(userIdToRemove);
 
         // add user
         circle.removeUser(userToRemove);
@@ -124,45 +121,33 @@ public class CircleService {
     }
 
     public CircleDto getCircle(UUID circleId, String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var circle = findCircleByIdOrElseThrow(circleId);
 
         // if user is not in circle he cannot get circle info
         if (circle.getUsers().stream().noneMatch(circleUser -> circleUser.getId() == user.getId())) {
-            throw new ExpectedException(ErrorMessage.CIRCLE_NOT_FOUND, HttpStatus.NOT_FOUND);
+            throw new ExpectedException(ErrorDetails.ERR_CIRCLE_USER_BAD_PERMISSIONS.addingArgs(authenticatedUsername));
         }
         return fromCircleEntityToCircleDto(circle, CircleDto.class);
     }
 
+    public Circle findCircleByIdOrElseThrow(UUID circleId) throws ExpectedException {
+        // check if circle exist
+        return circleRepository
+                .findById(circleId)
+                .orElseThrow(() -> new ExpectedException(ErrorDetails.ERR_CIRCLE_NOT_FOUND.addingArgs(circleId)));
+    }
+
     private Circle getCircleAndCheckPermissions(UUID circleId, String authenticatedUsername) throws ExpectedException {
-        var user = findUserByUsernameOrElseThrow(authenticatedUsername);
+        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
         var circle = findCircleByIdOrElseThrow(circleId);
 
         // user should the one created the circle to update or delete it
         if (!Objects.equals(circle.getCreatedBy().getId(), user.getId())) {
-            throw new ExpectedException(ErrorMessage.CIRCLE_USER_BAD_PERMISSIONS, HttpStatus.FORBIDDEN);
+            throw new ExpectedException(ErrorDetails.ERR_CIRCLE_USER_BAD_PERMISSIONS.addingArgs(authenticatedUsername));
         }
 
         return circle;
-    }
-
-    private User findUserByIdOrElseThrow(UUID id) throws ExpectedException {
-        return userRepository
-                .findById(id)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private User findUserByUsernameOrElseThrow(String username) throws ExpectedException {
-        return userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
-    }
-
-    private Circle findCircleByIdOrElseThrow(UUID circleId) throws ExpectedException {
-        // check if circle exist
-        return circleRepository
-                .findById(circleId)
-                .orElseThrow(() -> new ExpectedException(ErrorMessage.CIRCLE_NOT_FOUND, HttpStatus.NOT_FOUND));
     }
 
     private <T> T fromCircleEntityToCircleDto(Circle circle, Class<T> circleDtoType) {
