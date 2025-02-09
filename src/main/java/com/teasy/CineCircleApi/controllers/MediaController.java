@@ -1,6 +1,5 @@
 package com.teasy.CineCircleApi.controllers;
 
-
 import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
@@ -18,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,19 +39,17 @@ public class MediaController {
     @Operation(summary = "Search media (movie or tv show)")
     public ResponseEntity<List<MediaShortDto>> searchMedias(
             Pageable page,
-            @Valid MediaSearchRequest request,
-            Principal principal
+            @Valid MediaSearchRequest request
     ) {
-        return ResponseEntity.ok().body(mediaService.searchMedia(page, request, principal.getName()));
+        return ResponseEntity.ok().body(mediaService.searchMedia(page, request));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get more details about specific media")
     public ResponseEntity<MediaFullDto> getMedia(
-            @PathVariable("id") UUID id,
-            Principal principal
+            @PathVariable("id") UUID id
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(mediaService.getMedia(id, principal.getName()));
+        return ResponseEntity.ok().body(mediaService.getMedia(id));
     }
 
     @GetMapping("/{id}/watch-providers")
