@@ -47,10 +47,10 @@ public class Recommendation {
             inverseJoinColumns = @JoinColumn(name = "circle_id"))
     private Set<Circle> circles;
 
-    @Column(nullable = false)
+    @Column
     private String comment;
 
-    @Column(nullable = false)
+    @Column
     private Integer rating;
 
     @Column(nullable = false)
