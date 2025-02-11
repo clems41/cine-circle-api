@@ -6,8 +6,7 @@ import com.teasy.CineCircleApi.models.dtos.requests.CircleCreateUpdateRequest;
 import com.teasy.CineCircleApi.models.entities.Circle;
 import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.utils.HttpUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import com.teasy.CineCircleApi.utils.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
@@ -15,11 +14,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class CircleTest extends IntegrationTestAbstract {
     @Test
@@ -31,10 +27,10 @@ public class CircleTest extends IntegrationTestAbstract {
         var userToAdd1 = dummyDataCreator.generateUser(true);
         var userToAdd2 = dummyDataCreator.generateUser(true);
         var userToAdd3 = dummyDataCreator.generateUser(true);
-        var name1 = RandomStringUtils.random(15, true, false);
-        var name2 = RandomStringUtils.random(15, true, false);
-        var description1 = RandomStringUtils.random(30, true, true);
-        var description2 = RandomStringUtils.random(30, true, true);
+        var name1 = RandomUtils.randomString(15);
+        var name2 = RandomUtils.randomString(15);
+        var description1 = RandomUtils.randomString(30);
+        var description2 = RandomUtils.randomString(30);
 
         /* Create circle and check that creator is has been added the users list */
         var createCircleRequest = new CircleCreateUpdateRequest(name1, description1, false);
@@ -307,62 +303,58 @@ public class CircleTest extends IntegrationTestAbstract {
         var signUpRequest = authenticator.authenticateNewUser();
         var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
         List<Circle> matchingCircles = new ArrayList<>();
-        var keyword = RandomStringUtils.random(5, true, true);
+        var keyword = RandomUtils.randomString(5);
 
         /* Create some non-matching keyword private circles */
-        for (int i = 0; i < RandomUtils.nextInt(5, 10); i++) {
+        for (int i = 0; i < RandomUtils.randomInt(5, 10); i++) {
             dummyDataCreator.generateCircle(true, null, false, null);
         }
 
         /* Create some non-matching keyword public circles */
-        for (int i = 0; i < RandomUtils.nextInt(5, 10); i++) {
+        for (int i = 0; i < RandomUtils.randomInt(5, 10); i++) {
             dummyDataCreator.generateCircle(true, null, true, null);
         }
 
         /* Create some matching keyword private circles */
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the beginning
-            var matchingName = keyword.concat(RandomStringUtils.random(15, true, true));
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword at the beginning
+            var matchingName = keyword.concat(RandomUtils.randomString(15));
             dummyDataCreator.generateCircle(true, null, false, matchingName);
         }
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the end
-            var matchingName = RandomStringUtils.random(15, true, true).concat(keyword);
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword at the end
+            var matchingName = RandomUtils.randomString(15).concat(keyword);
             dummyDataCreator.generateCircle(true, null, false, matchingName);
         }
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword in the middle
-            var matchingName = RandomStringUtils.random(7, true, true)
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword in the middle
+            var matchingName = RandomUtils.randomString(7)
                     .concat(keyword)
-                    .concat(RandomStringUtils.random(7, true, true));
+                    .concat(RandomUtils.randomString(7));
             dummyDataCreator.generateCircle(true, null, false, matchingName);
         }
 
         /* Create some matching keyword public circles */
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the beginning
-            var matchingName = keyword.concat(RandomStringUtils.random(15, true, true));
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword at the beginning
+            var matchingName = keyword.concat(RandomUtils.randomString(15));
             matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
         }
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword at the end
-            var matchingName = RandomStringUtils.random(15, true, true).concat(keyword);
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword at the end
+            var matchingName = RandomUtils.randomString(15).concat(keyword);
             matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
         }
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // with keyword in the middle
-            var matchingName = RandomStringUtils.random(7, true, true)
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // with keyword in the middle
+            var matchingName = RandomUtils.randomString(7)
                     .concat(keyword)
-                    .concat(RandomStringUtils.random(7, true, true));
+                    .concat(RandomUtils.randomString(7));
             matchingCircles.add(dummyDataCreator.generateCircle(true, null, true, matchingName));
         }
 
         /* Search public with keyword */
-        String urlTemplate = UriComponentsBuilder.fromHttpUrl(HttpUtils.getTestingUrl(port)
-                        .concat(HttpUtils.circleUrl)
-                        .concat("public"))
-                .queryParam("page", 0)
-                .queryParam("size", 15)
-                .queryParam("query", keyword)
-                .encode()
-                .toUriString();
+        Map<String, Object> queryParams = new HashMap<>();
+        queryParams.put("page", 0);
+        queryParams.put("size", 15);
+        queryParams.put("query", keyword);
         ResponseEntity<CustomPageImpl<CirclePublicDto>> searchPublicCircleResponse = this.restTemplate
                 .exchange(
-                        urlTemplate,
+                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.circleUrl.concat("public"), queryParams),
                         HttpMethod.GET,
                         new HttpEntity<>(null, headers),
                         new ParameterizedTypeReference<>(){}

@@ -3,7 +3,8 @@ package com.teasy.CineCircleApi.controllers;
 
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.RecommendationCreateResponse;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,10 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.UUID;
 
 @RestController
 @Slf4j
@@ -36,36 +40,39 @@ public class RecommendationController {
         this.recommendationService = recommendationService;
     }
 
-    @GetMapping("/received")
-    @Operation(summary = "Search among all received recommendations")
+    @GetMapping("")
+    @Operation(summary = "Search among all recommendations (received and sent)")
     public ResponseEntity<Page<RecommendationDto>> listReceivedRecommendations(
-            Pageable pageable,
-            @Valid RecommendationReceivedRequest recommendationReceivedRequest,
+            @PageableDefault(sort = "sentAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @Valid RecommendationSearchRequest recommendationSearchRequest,
             Principal principal
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(recommendationService.listReceivedRecommendations(
+        return ResponseEntity.ok().body(recommendationService.searchRecommendations(
                 pageable,
-                recommendationReceivedRequest,
-                principal.getName()));
+                recommendationSearchRequest,
+                principal.getName())
+        );
     }
 
-    @GetMapping("/sent")
-    @Operation(summary = "Search among all sent recommendations")
-    public ResponseEntity<Page<RecommendationDto>> listSentRecommendations(
-            Pageable pageable,
+    @PutMapping("/{recommendationId}/read")
+    @Operation(summary = "Mark a specific recommendation as read for the authenticated user")
+    public ResponseEntity<String> markRecommendationAsRead(
+            @PathVariable("recommendationId") UUID recommendationId,
             Principal principal
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(recommendationService.listSentRecommendations(pageable, principal.getName()));
+        recommendationService.markRecommendationAsRead(recommendationId, principal.getName());
+        return ResponseEntity.ok().body("");
     }
 
     @PostMapping("")
     @Operation(summary = "Send new recommendation")
-    public ResponseEntity<RecommendationDto> createRecommendation(
+    public ResponseEntity<RecommendationCreateResponse> createRecommendation(
             @RequestBody @Valid RecommendationCreateRequest recommendationCreateRequest,
             Principal principal
     ) throws ExpectedException {
         return ResponseEntity.ok().body(recommendationService.createRecommendation(
                 recommendationCreateRequest,
-                principal.getName()));
+                principal.getName())
+        );
     }
 }

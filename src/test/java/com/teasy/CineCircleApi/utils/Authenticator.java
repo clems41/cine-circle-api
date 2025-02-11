@@ -3,7 +3,6 @@ package com.teasy.CineCircleApi.utils;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpHeaders;
@@ -63,12 +62,12 @@ public class Authenticator {
     }
 
     private AuthSignUpRequest generateAuthSignUpRequest() {
-        var username = RandomStringUtils.random(10, true, true).toLowerCase();
+        var username = RandomUtils.randomString(10).toLowerCase();
         var email = String.format("%s@%s.com",
-                RandomStringUtils.random(10, true, false),
-                RandomStringUtils.random(5, true, false));
-        var password = RandomStringUtils.random(15, true, true);
-        var displayName = RandomStringUtils.random(20, true, true);
+                RandomUtils.randomString(20),
+                RandomUtils.randomString(5));
+        var password = RandomUtils.randomString(15);
+        var displayName = RandomUtils.randomString(20);
         return new AuthSignUpRequest(username, email, password, displayName);
     }
 }

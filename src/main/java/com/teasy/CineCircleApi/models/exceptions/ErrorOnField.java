@@ -18,6 +18,9 @@ public enum ErrorOnField {
     /* Notification fields */
 
     /* Recommendation fields */
+    RECOMMENDATION_ID,
+    RECOMMENDATION_TYPE,
+    RECOMMENDATION_RECEIVER,
 
     /* Token fields */
 

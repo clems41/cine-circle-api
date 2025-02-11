@@ -9,8 +9,7 @@ import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.utils.HttpUtils;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
+import com.teasy.CineCircleApi.utils.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
@@ -19,10 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class LibraryTest extends IntegrationTestAbstract {
     @Test
@@ -61,8 +57,8 @@ public class LibraryTest extends IntegrationTestAbstract {
 
         /* Add media2 to library with comment and rating */
         var requestMedia2 = new LibraryAddMediaRequest(
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
         ResponseEntity<String> addMedia2Response = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media2.getId().toString()),
@@ -143,8 +139,8 @@ public class LibraryTest extends IntegrationTestAbstract {
 
         /* Add media3 to library with comment and rating */
         var requestMedia3 = new LibraryAddMediaRequest(
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
         ResponseEntity<String> addMedia3Response = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media3.getId().toString()),
@@ -178,8 +174,8 @@ public class LibraryTest extends IntegrationTestAbstract {
 
         /* Add media3 to library a second time with new comment and new rating */
         var requestMedia3SecondTime = new LibraryAddMediaRequest(
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
         ResponseEntity<String> addMedia3SecondTimeResponse = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media3.getId().toString()),
@@ -224,8 +220,8 @@ public class LibraryTest extends IntegrationTestAbstract {
 
         /* Add media to library */
         var addMediaRequest = new LibraryAddMediaRequest(
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
         ResponseEntity<String> addMediaResponse = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media.getId().toString()),
@@ -248,8 +244,8 @@ public class LibraryTest extends IntegrationTestAbstract {
 
         /* Add same media to library with new comment and new rating */
         var addMediaSecondTimeRequest = new LibraryAddMediaRequest(
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
         ResponseEntity<String> addMediaSecondTimeResponse = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.libraryUrl).concat(media.getId().toString()),
@@ -282,12 +278,12 @@ public class LibraryTest extends IntegrationTestAbstract {
         /* Data */
         var user = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
         var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
-        int nbExistingMediaInUserLibrary = RandomUtils.nextInt(3, 7);
+        int nbExistingMediaInUserLibrary = RandomUtils.randomInt(3, 7);
         for (int i = 0; i < nbExistingMediaInUserLibrary; i++) { // add some media to user library
             dummyDataCreator.addMediaToLibrary(user, dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE));
         }
         List<User> receivers = new ArrayList<>();
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // add some media to user library
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // add some media to user library
             receivers.add(dummyDataCreator.generateUser(true));
         }
         
@@ -296,8 +292,8 @@ public class LibraryTest extends IntegrationTestAbstract {
                 media.getId(),
                 receivers.stream().map(User::getId).toList(),
                 null,
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5)
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5)
         );
         ResponseEntity<RecommendationDto> sendRecommendationResponse = this.restTemplate
                 .exchange(
@@ -338,13 +334,13 @@ public class LibraryTest extends IntegrationTestAbstract {
         /* Data */
         var user = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
         var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
-        int nbExistingMediaInUserLibrary = RandomUtils.nextInt(3, 7);
+        int nbExistingMediaInUserLibrary = RandomUtils.randomInt(3, 7);
         for (int i = 0; i < nbExistingMediaInUserLibrary; i++) { // add some media to user library
             dummyDataCreator.addMediaToLibrary(user, dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE));
         }
         dummyDataCreator.addMediaToLibrary(user, media);
         List<User> receivers = new ArrayList<>();
-        for (int i = 0; i < RandomUtils.nextInt(2, 5); i++) { // add some media to user library
+        for (int i = 0; i < RandomUtils.randomInt(2, 5); i++) { // add some media to user library
             receivers.add(dummyDataCreator.generateUser(true));
         }
 
@@ -353,8 +349,8 @@ public class LibraryTest extends IntegrationTestAbstract {
                 media.getId(),
                 receivers.stream().map(User::getId).toList(),
                 null,
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5)
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5)
         );
         ResponseEntity<RecommendationDto> sendRecommendationResponse = this.restTemplate
                 .exchange(

@@ -29,6 +29,12 @@ public enum ErrorDetails {
     /* Notification errors */
 
     /* Recommendation errors */
+    ERR_RECOMMENDATION_NOT_FOUND("Recommendation with id %s cannot be found",
+            ErrorOnObject.RECOMMENDATION, ErrorOnField.RECOMMENDATION_ID, HttpStatus.NOT_FOUND),
+    ERR_RECOMMENDATION_TYPE_NOT_SUPPORTED("Recommendation type %s is not supported, should be sent or received",
+            ErrorOnObject.RECOMMENDATION, ErrorOnField.RECOMMENDATION_TYPE, HttpStatus.BAD_REQUEST),
+    ERR_RECOMMENDATION_RECEIVER_BAD_PERMISSIONS("Authenticated user %s cannot take action on this recommendation id %s",
+            ErrorOnObject.RECOMMENDATION, ErrorOnField.RECOMMENDATION_TYPE, HttpStatus.FORBIDDEN),
 
     /* Token errors */
 
@@ -82,7 +88,4 @@ public enum ErrorDetails {
         return this.name();
     }
 
-    public boolean isSameErrorThan(ErrorDetails object) {
-        return this.getCode().equals(object.getCode());
-    }
 }

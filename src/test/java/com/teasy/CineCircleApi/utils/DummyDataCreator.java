@@ -6,14 +6,10 @@ import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,12 +21,12 @@ public class DummyDataCreator {
     private CircleRepository circleRepository;
 
     public User generateUser(Boolean storeInDatabase) {
-        var displayName = RandomStringUtils.random(20, true, false);
-        var username = RandomStringUtils.random(10, true, true);
+        var displayName = RandomUtils.randomString(20);
+        var username = RandomUtils.randomString(10);
         var email = String.format("%s@%s.com",
-                RandomStringUtils.random(10, true, true),
-                RandomStringUtils.random(6, true, false));
-        var hashPassword = RandomStringUtils.random(16, true, true);
+                RandomUtils.randomString(10),
+                RandomUtils.randomString(6));
+        var hashPassword = RandomUtils.randomString(16);
         var user = new User(username, email, hashPassword, displayName);
         if (userRepository != null && storeInDatabase) {
             return userRepository.save(user);
@@ -40,82 +36,79 @@ public class DummyDataCreator {
 
     public Media generateMedia(Boolean storeInDatabase, MediaTypeEnum mediaTypeEnum) {
         var media = new Media();
-        media.setExternalId(String.valueOf(RandomUtils.nextInt(1_000, 100_000)));
+        media.setExternalId(String.valueOf(RandomUtils.randomInt(1_000, 999_000)));
         media.setMediaProvider(MediaProviderEnum.THE_MOVIE_DATABASE.name());
-        media.setTitle(RandomStringUtils.random(20, true, false));
-        media.setOriginalTitle(RandomStringUtils.random(20, true, false));
-        media.setPosterUrl(RandomStringUtils.random(20, true, true));
-        media.setBackdropUrl(RandomStringUtils.random(20, true, true));
-        media.setTrailerUrl(RandomStringUtils.random(20, true, true));
+        media.setTitle(RandomUtils.randomString(20));
+        media.setOriginalTitle(RandomUtils.randomString(20));
+        media.setPosterUrl(RandomUtils.randomString(20));
+        media.setBackdropUrl(RandomUtils.randomString(20));
+        media.setTrailerUrl(RandomUtils.randomString(20));
         media.setGenres(String.join(",",
-                RandomStringUtils.random(6, true, false),
-                RandomStringUtils.random(6, true, false)));
+                RandomUtils.randomString(6),
+                RandomUtils.randomString(6)));
         media.setMediaType(Objects.requireNonNullElse(mediaTypeEnum, MediaTypeEnum.MOVIE));
-        media.setOverview(RandomStringUtils.random(100, true, false));
+        media.setOverview(RandomUtils.randomString(100));
         media.setReleaseDate(LocalDate.now());
-        media.setRuntime(RandomUtils.nextInt(40, 180));
-        media.setOriginalLanguage(RandomStringUtils.random(6, true, false));
-        media.setPopularity(RandomUtils.nextFloat(1, 10));
-        media.setVoteAverage(RandomUtils.nextFloat(1, 10));
-        media.setVoteCount(RandomUtils.nextInt(0, 1_000));
-        media.setOriginCountry(RandomStringUtils.random(6, true, false));
+        media.setRuntime(RandomUtils.randomInt(40, 180));
+        media.setOriginalLanguage(RandomUtils.randomString(6));
+        media.setPopularity(RandomUtils.randomFloat(1, 10));
+        media.setVoteAverage(RandomUtils.randomFloat(1, 10));
+        media.setVoteCount(RandomUtils.randomInt(0, 1_000));
+        media.setOriginCountry(RandomUtils.randomString(6));
         media.setCompleted(true);
         media.setActors(String.join(",",
-                RandomStringUtils.random(10, true, false),
-                RandomStringUtils.random(10, true, false),
-                RandomStringUtils.random(10, true, false),
-                RandomStringUtils.random(10, true, false)));
-        media.setDirector(RandomStringUtils.random(15, true, false));
+                RandomUtils.randomString(10),
+                RandomUtils.randomString(10),
+                RandomUtils.randomString(10),
+                RandomUtils.randomString(10)));
+        media.setDirector(RandomUtils.randomString(15));
         if (mediaRepository != null && storeInDatabase) {
             return mediaRepository.save(media);
         }
         return media;
     }
 
-    public Recommendation generateRecommendation(Boolean storeInDatabase, User sentBy, Set<User> receivers, Media media) {
+    public void generateRecommendation(Boolean storeInDatabase, User sentBy, User receiver, Media media, Boolean read) {
         var recommendation = new Recommendation();
         recommendation.setSentAt(LocalDateTime.now());
-        recommendation.setComment(RandomStringUtils.random(30, true, false));
-        recommendation.setRating(RandomUtils.nextInt(1, 5));
+        recommendation.setComment(RandomUtils.randomString(30));
+        recommendation.setRating(RandomUtils.randomInt(1, 5));
         if (sentBy != null) {
             recommendation.setSentBy(sentBy);
         } else {
             recommendation.setSentBy(generateUser(storeInDatabase));
         }
-        if (receivers != null) {
-            recommendation.setReceivers(receivers);
+        if (receiver != null) {
+            recommendation.setReceiver(receiver);
         } else {
-            var receiversSize = RandomUtils.nextInt(1, 5);
-            Set<User> generatedReceivers = new HashSet<>();
-            for (int i = 0; i < receiversSize; i++) {
-                generatedReceivers.add(generateUser(storeInDatabase));
-            }
-            recommendation.setReceivers(generatedReceivers);
+            recommendation.setReceiver(generateUser(storeInDatabase));
         }
         if (media != null) {
             recommendation.setMedia(media);
         } else {
             recommendation.setMedia(generateMedia(storeInDatabase, null));
         }
-        if (recommendationRepository != null && storeInDatabase) {
-            return recommendationRepository.save(recommendation);
+        if (read != null) {
+            recommendation.setRead(read);
         }
-        return recommendation;
+        if (recommendationRepository != null && storeInDatabase) {
+            recommendationRepository.save(recommendation);
+        }
     }
 
-    public Library addMediaToLibrary(User user, Media media) {
+    public void addMediaToLibrary(User user, Media media) {
         var libraryRecord = new Library(
                 user,
                 media,
-                RandomStringUtils.random(20, true, false),
-                RandomUtils.nextInt(1, 5));
-        return libraryRepository.save(libraryRecord);
+                RandomUtils.randomString(20),
+                RandomUtils.randomInt(1, 5));
+        libraryRepository.save(libraryRecord);
     }
 
     public Circle generateCircle(Boolean storeInDatabase, User creator, Boolean isPublic, String name) {
-        var description = RandomStringUtils.random(30, true, true);
+        var description = RandomUtils.randomString(30);
         if (name == null) {
-            name = RandomStringUtils.random(15, true, false);
+            name = RandomUtils.randomString(15);
         }
         if (creator == null) {
             creator = generateUser(storeInDatabase);
@@ -124,7 +117,7 @@ public class DummyDataCreator {
             isPublic = false;
         }
         var circle = new Circle(isPublic, name, description, creator);
-        for (int i = 0; i < RandomUtils.nextInt(2, 8); i++) {
+        for (int i = 0; i < RandomUtils.randomInt(2, 8); i++) {
             circle.addUser(generateUser(storeInDatabase));
         }
         if(storeInDatabase) {

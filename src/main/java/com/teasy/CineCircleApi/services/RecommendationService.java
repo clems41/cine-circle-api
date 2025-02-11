@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
-import com.teasy.CineCircleApi.models.dtos.requests.RecommendationReceivedRequest;
-import com.teasy.CineCircleApi.models.entities.Circle;
+import com.teasy.CineCircleApi.models.dtos.requests.RecommendationSearchRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.RecommendationCreateResponse;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
+import com.teasy.CineCircleApi.models.enums.RecommendationType;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -44,86 +45,92 @@ public class RecommendationService {
         this.circleService = circleService;
     }
 
-    public RecommendationDto createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
-                                                  String authenticatedUsername) throws ExpectedException {
-        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
+    public RecommendationCreateResponse createRecommendation(RecommendationCreateRequest recommendationCreateRequest,
+                                                             String authenticatedUsername) throws ExpectedException {
+        var sentBy = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
+        UUID recommendationRef = UUID.randomUUID(); // unique reference for all recommendations that will be created
 
-        // adding receivers
+        // adding receivers from list of users but also from list of circles
         Set<User> receivers = new HashSet<>();
         if (recommendationCreateRequest.userIds() != null) {
-            recommendationCreateRequest.userIds()
-                    .forEach(userId -> {
-                        try {
-                            receivers.add(userService.findUserByIdOrElseThrow(userId));
-                        } catch (ExpectedException e) {
-                            log.error("User not found", e);
-                        }
-                    });
+            for (UUID userId : recommendationCreateRequest.userIds()) {
+                receivers.add(userService.findUserByIdOrElseThrow(userId));
+            }
         }
-
-        // adding circles
-        Set<Circle> circles = new HashSet<>();
         if (recommendationCreateRequest.circleIds() != null) {
-            recommendationCreateRequest.circleIds()
-                    .forEach(circleId -> {
-                        try {
-                            circles.add(circleService.findCircleByIdOrElseThrow(circleId));
-                        } catch (ExpectedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+            for (UUID circleId : recommendationCreateRequest.circleIds()) {
+                var circle = circleService.findCircleByIdOrElseThrow(circleId);
+                receivers.addAll(circle.getUsers());
+            }
         }
 
         // find media
         var media = mediaService.findMediaByIdOrElseThrow(recommendationCreateRequest.mediaId());
 
-        // create recommendation
-        var recommendation = new Recommendation(
-                user,
-                media,
-                receivers,
-                circles,
-                recommendationCreateRequest.comment(),
-                recommendationCreateRequest.rating());
-        recommendationRepository.save(recommendation);
+        // create one recommendation for every receiver
+        for (User user : receivers) {
+            var recommendation = new Recommendation(
+                    recommendationRef,
+                    sentBy,
+                    media,
+                    user,
+                    recommendationCreateRequest.comment(),
+                    recommendationCreateRequest.rating()
+            );
+            recommendationRepository.save(recommendation);
+
+            // send recommendation to concerned users
+            notificationService.sendRecommendation(recommendation);
+        }
 
         // add media to library for sender
         libraryService.addToLibrary(media.getId(), null, authenticatedUsername);
 
-        // send recommendation to concerned users
-        notificationService.sendRecommendation(recommendation);
-
-        return fromEntityToDto(recommendation);
+        return new RecommendationCreateResponse(recommendationRef.toString());
     }
 
-    public Page<RecommendationDto> listReceivedRecommendations(
+    public Page<RecommendationDto> searchRecommendations(
             Pageable pageable,
-            RecommendationReceivedRequest recommendationReceivedRequest,
-            String authenticatedUsername) throws ExpectedException {
+            RecommendationSearchRequest recommendationSearchRequest,
+            String authenticatedUsername
+    ) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
-        Page<Recommendation> result;
-        if (recommendationReceivedRequest.mediaId() != null) {
-            var media = mediaService.findMediaByIdOrElseThrow(recommendationReceivedRequest.mediaId());
-            result = recommendationRepository.findAllByReceivers_IdAndMedia_Id(pageable, user.getId(), media.getId());
-        } else {
-            result = recommendationRepository.findAllByReceivers_Id(pageable, user.getId());
-        }
-        return result.map(this::fromEntityToDto);
-    }
 
-    public Page<RecommendationDto> listSentRecommendations(Pageable pageable, String authenticatedUsername) throws ExpectedException {
-        // creating matching example
-        var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
-        var matcher = ExampleMatcher
+        ExampleMatcher matcher = ExampleMatcher
                 .matchingAll()
                 .withIgnoreNullValues();
-        User matchingSender = new User();
-        matchingSender.setId(user.getId());
-        var matchingRecommendation = new Recommendation(matchingSender, null, null, null, null, null);
-        matchingRecommendation.setSentAt(null);
+        var matchingRecommendation = new Recommendation();
 
-        var result = recommendationRepository.findAll(Example.of(matchingRecommendation, matcher), pageable);
-        return result.map(this::fromEntityToDto);
+        if (recommendationSearchRequest.type() == null || recommendationSearchRequest.type() == RecommendationType.RECEIVED) {
+            matchingRecommendation.setReceiver(user);
+        } else if (recommendationSearchRequest.type() == RecommendationType.SENT) {
+            matchingRecommendation.setSentBy(user);
+        } else {
+            throw new ExpectedException(ErrorDetails.ERR_RECOMMENDATION_TYPE_NOT_SUPPORTED.addingArgs(recommendationSearchRequest.type()));
+        }
+        if (recommendationSearchRequest.mediaId() != null) {
+            var media = mediaService.findMediaByIdOrElseThrow(recommendationSearchRequest.mediaId());
+            matchingRecommendation.setMedia(media);
+        }
+        if (recommendationSearchRequest.read() != null) {
+            matchingRecommendation.setRead(recommendationSearchRequest.read());
+        }
+        return recommendationRepository.findAll(Example.of(matchingRecommendation, matcher), pageable).map(this::fromEntityToDto);
+    }
+
+    public void markRecommendationAsRead(UUID recommendationId, String authenticatedUsername) throws ExpectedException {
+        // check that authenticated user is the receiver before marking the recommendation as read
+        var recommendation = recommendationRepository
+                .findById(recommendationId)
+                .orElseThrow(() -> new ExpectedException(ErrorDetails.ERR_RECOMMENDATION_NOT_FOUND.addingArgs(recommendationId)));
+        if (!recommendation.getReceiver().getUsername().equals(authenticatedUsername)) {
+            throw new ExpectedException(ErrorDetails.ERR_RECOMMENDATION_RECEIVER_BAD_PERMISSIONS
+                    .addingArgs(authenticatedUsername, recommendationId));
+        }
+
+        // mark as read
+        recommendation.setRead(true);
+        recommendationRepository.save(recommendation);
     }
 
     private RecommendationDto fromEntityToDto(Recommendation recommendation) {

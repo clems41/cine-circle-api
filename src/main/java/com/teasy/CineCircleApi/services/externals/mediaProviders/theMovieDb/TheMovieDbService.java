@@ -115,7 +115,7 @@ public class TheMovieDbService implements MediaProvider {
             videos = tvSeries.getVideos();
             crew = new ArrayList<>();
             runtime = tvSeries.getEpisodeRuntime() != null && !tvSeries.getEpisodeRuntime().isEmpty() ?
-                    tvSeries.getEpisodeRuntime().get(0) : null;
+                    tvSeries.getEpisodeRuntime().getFirst() : null;
         } else {
             throw new ExpectedException(ErrorDetails.ERR_MEDIA_TYPE_NOT_SUPPORTED.addingArgs(mediaType));
         }
@@ -231,7 +231,7 @@ public class TheMovieDbService implements MediaProvider {
                         Objects.equals(video.getType(), trailerVideoType))
                 .map(Video::getKey)
                 .toList();
-        return !trailerKeys.isEmpty() ? youtubeVideoUrlPrefix.concat(trailerKeys.get(0)) : "";
+        return !trailerKeys.isEmpty() ? youtubeVideoUrlPrefix.concat(trailerKeys.getFirst()) : "";
     }
 
     private String getOnlyActorsFromCast(List<PersonCast> cast) {
