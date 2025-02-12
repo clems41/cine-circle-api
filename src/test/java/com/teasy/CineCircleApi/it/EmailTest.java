@@ -9,6 +9,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class EmailTest extends IntegrationTestAbstract {
@@ -54,5 +55,6 @@ public class EmailTest extends IntegrationTestAbstract {
         Assertions.assertThat(email.getTemplateValues()).isNotEmpty();
         Assertions.assertThat(email.getSent()).isFalse();
         Assertions.assertThat(email.getError()).isNotEmpty();
+        Assertions.assertThat(email.getSentAt()).isBefore(LocalDateTime.now());
     }
 }

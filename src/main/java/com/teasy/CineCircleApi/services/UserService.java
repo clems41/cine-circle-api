@@ -77,7 +77,7 @@ public class UserService {
         var user = findUserByUsernameOrElseThrow(username);
         // check if oldPassword i correct
         if (!passwordEncoder.matches(authResetPasswordRequest.oldPassword(), user.getHashPassword())) {
-            throw new ExpectedException(ErrorDetails.ERR_USER_PASSWORD_INCORRECT.addingArgs(user.getId()));
+            throw new ExpectedException(ErrorDetails.ERR_USER_PASSWORD_NOT_MATCHING.addingArgs(user.getId()));
         }
 
         // update password
@@ -118,7 +118,7 @@ public class UserService {
     public Page<UserDto> searchUsers(String username, Pageable pageable, UserSearchRequest request) throws ExpectedException {
         // check query content
         if (request.query().isEmpty()) {
-            throw new ExpectedException(ErrorDetails.ERR_USER_SEARCH_QUERY_EMPTY);
+            throw new ExpectedException(ErrorDetails.ERR_GLOBAL_SEARCH_QUERY_EMPTY);
         }
         User user = findUserByUsernameOrElseThrow(username);
         // create example with query that can match username, email or displayName

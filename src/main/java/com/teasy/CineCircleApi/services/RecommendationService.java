@@ -100,10 +100,15 @@ public class RecommendationService {
                 .matchingAll()
                 .withIgnoreNullValues();
         var matchingRecommendation = new Recommendation();
-
-        if (recommendationSearchRequest.type() == null || recommendationSearchRequest.type() == RecommendationType.RECEIVED) {
+        RecommendationType recommendationType;
+        if (recommendationSearchRequest.type() == null) {
+            recommendationType = RecommendationType.RECEIVED;
+        } else {
+            recommendationType = RecommendationType.getFromString(recommendationSearchRequest.type());
+        }
+        if (recommendationType == RecommendationType.RECEIVED) {
             matchingRecommendation.setReceiver(user);
-        } else if (recommendationSearchRequest.type() == RecommendationType.SENT) {
+        } else if (recommendationType == RecommendationType.SENT) {
             matchingRecommendation.setSentBy(user);
         } else {
             throw new ExpectedException(ErrorDetails.ERR_RECOMMENDATION_TYPE_NOT_SUPPORTED.addingArgs(recommendationSearchRequest.type()));

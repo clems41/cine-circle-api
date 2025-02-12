@@ -1,11 +1,13 @@
 package com.teasy.CineCircleApi.models.entities;
 
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
+import com.teasy.CineCircleApi.models.utils.StringUtils;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -44,10 +46,14 @@ public class Error {
     @Column
     private String firstElementOfStackTrace;
 
+    @Column(nullable = false)
+    private LocalDateTime triggeredAt;
+
     public Error(Exception exception, ErrorDetails errorDetails) {
+        this.triggeredAt = LocalDateTime.now();
         if (errorDetails != null) {
             this.httpStatusCode = errorDetails.getHttpStatus().value();
-            this.message = errorDetails.getMessage();
+            this.message = StringUtils.substringForDatabase(errorDetails.getMessage());
             this.code = errorDetails.getCode();
             if (errorDetails.getErrorOnObject() != null) {
                 this.object = errorDetails.getErrorOnObject().name();
@@ -58,12 +64,13 @@ public class Error {
         }
         if (exception != null && exception.getCause() != null) {
             if (exception.getCause() != null) {
-                this.cause = exception.getCause().getMessage();
+                this.cause = StringUtils.substringForDatabase(exception.getCause().getMessage());
             }
             if (exception.getCause().getStackTrace() != null) {
                 var stackTrace = Arrays.stream(exception.getCause().getStackTrace()).toList();
                 if (!stackTrace.isEmpty()) {
-                    this.firstElementOfStackTrace = stackTrace.getFirst().toString();
+                    var firstElementOfStackTrace = stackTrace.getFirst().toString();
+                    this.firstElementOfStackTrace = StringUtils.substringForDatabase(firstElementOfStackTrace);
                 }
             }
         }

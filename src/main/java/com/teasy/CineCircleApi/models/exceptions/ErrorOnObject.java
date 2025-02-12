@@ -11,5 +11,6 @@ public enum ErrorOnObject {
     WATCHLIST,
     MEDIA,
     CIRCLE,
-    EMAIL_SERVICE
+    EMAIL_SERVICE,
+    GLOBAL
 }

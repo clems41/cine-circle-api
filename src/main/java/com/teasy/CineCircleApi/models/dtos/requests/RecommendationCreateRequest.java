@@ -10,9 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 public record RecommendationCreateRequest(
-    @ValidUuid UUID mediaId,
-    @Nullable @Size(min = 1) List<UUID> userIds,
+    @ValidUuid(message = "ERR_RECOMMENDATION_MEDIA_ID_INCORRECT") UUID mediaId,
+    @Size(min = 1, message = "ERR_RECOMMENDATION_USER_IDS_INCORRECT") List<UUID> userIds,
     @Nullable List<UUID> circleIds,
     @Nullable String comment,
-    @Nullable @Min(1) @Max(5) Integer rating
+    @Nullable @Min(value = 1, message = "ERR_RECOMMENDATION_RATING_INCORRECT")
+    @Max(value =5, message = "ERR_RECOMMENDATION_RATING_INCORRECT") Integer rating
 ){}

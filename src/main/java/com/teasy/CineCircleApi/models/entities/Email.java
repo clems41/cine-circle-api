@@ -2,9 +2,9 @@ package com.teasy.CineCircleApi.models.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -41,8 +41,12 @@ public class Email {
     @Column
     private String error;
 
+    @Column(nullable = false)
+    private LocalDateTime sentAt;
+
     public Email() {
         this.sent = false;
+        this.sentAt = LocalDateTime.now();
     }
 }
 
