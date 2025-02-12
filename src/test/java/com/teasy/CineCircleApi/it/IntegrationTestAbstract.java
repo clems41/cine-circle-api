@@ -8,17 +8,18 @@ import com.teasy.CineCircleApi.utils.DummyDataCreator;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 
 @ActiveProfiles("test")
 @SpringBootTest(classes = CineCircleApiApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class IntegrationTestAbstract {
-    @MockBean
+    @MockitoBean
     MediaProvider mediaProvider;
+
     @LocalServerPort
     protected int port;
 
@@ -36,6 +37,9 @@ public abstract class IntegrationTestAbstract {
 
     @Autowired
     protected RecommendationRepository recommendationRepository;
+
+    @Autowired
+    protected ErrorRepository errorRepository;
 
     @Autowired
     protected UserRepository userRepository;

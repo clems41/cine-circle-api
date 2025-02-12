@@ -1,9 +1,12 @@
 package com.teasy.CineCircleApi.config;
 
+import com.teasy.CineCircleApi.models.entities.Error;
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ErrorResponse;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
+import com.teasy.CineCircleApi.repositories.ErrorRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 @Slf4j
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+    @Autowired
+    ErrorRepository errorRepository;
+
     @ExceptionHandler(ExpectedException.class)
     // when exception is expected, we should use its HttpStatus when returning ErrorResponse
     private ResponseEntity<ErrorResponse> buildResponseEntityForExpectedException(ExpectedException exception) {
@@ -33,12 +39,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private ErrorResponse buildErrorResponse(Exception exception, ErrorDetails errorDetails) {
+        errorRepository.save(new Error(exception, errorDetails));
         return new ErrorResponse(
                 exception.getMessage(),
                 errorDetails.getCode(),
-                errorDetails.getErrorOnObject().name(),
-                errorDetails.getErrorOnField().name(),
-                exception.getCause() != null ? exception.getCause().getMessage() : "",
+                errorDetails.getErrorOnObject() != null ? errorDetails.getErrorOnObject().name() : null,
+                errorDetails.getErrorOnField() != null ? errorDetails.getErrorOnField().name() : null,
+                exception.getCause() != null ? exception.getCause().getMessage() : null,
                 exception.getCause() != null ? exception.getCause().getStackTrace() : null
         );
     }
