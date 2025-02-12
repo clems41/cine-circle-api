@@ -84,7 +84,11 @@ public class ErrorTest extends IntegrationTestAbstract {
                         ErrorResponse.class
                 );
         // check response
-        var expectedErrorDetails = ErrorDetails.ERR_EMAIL_SENDING_REQUEST.addingArgs(existingUser.getEmail());
+        var emailsInDatabase = emailRepository.findAll()
+                .stream().filter(email -> Objects.equals(email.getReceiver(), existingUser.getEmail())).toList();
+        Assertions.assertThat(emailsInDatabase).hasSize(1);
+        var emailStored = emailsInDatabase.getFirst();
+        var expectedErrorDetails = ErrorDetails.ERR_EMAIL_SENDING_REQUEST.addingArgs(emailStored.getId(), existingUser.getEmail());
         Assertions.assertThat(response.getStatusCode()).isEqualTo(expectedErrorDetails.getHttpStatus());
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody().errorMessage())

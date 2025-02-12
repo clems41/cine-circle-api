@@ -42,6 +42,9 @@ public abstract class IntegrationTestAbstract {
     protected ErrorRepository errorRepository;
 
     @Autowired
+    protected EmailRepository emailRepository;
+
+    @Autowired
     protected UserRepository userRepository;
     protected Authenticator authenticator;
     protected DummyDataCreator dummyDataCreator;

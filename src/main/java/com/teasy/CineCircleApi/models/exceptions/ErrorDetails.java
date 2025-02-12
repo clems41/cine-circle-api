@@ -52,13 +52,13 @@ public enum ErrorDetails {
 
     /* Email errors */
     ERR_EMAIL_BUILDING_REQUEST(
-            "An error occurred while building the email from request",
+            "An error occurred while building the email with id %s from request",
             ErrorOnObject.EMAIL_SERVICE,
             null,
             HttpStatus.INTERNAL_SERVER_ERROR
     ),
     ERR_EMAIL_SENDING_REQUEST(
-            "An error occurred while sending the email to %s",
+            "An error occurred while sending the email with id %s to %s",
             ErrorOnObject.EMAIL_SERVICE,
             null,
             HttpStatus.INTERNAL_SERVER_ERROR

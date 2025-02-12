@@ -21,28 +21,28 @@ import java.util.UUID;
 public class Error {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    private UUID id;
 
     @Column
-    Integer httpStatusCode;
+    private Integer httpStatusCode;
 
     @Column
-    String message;
+    private String message;
 
     @Column
-    String code;
+    private String code;
 
     @Column
-    String object;
+    private String object;
 
     @Column
-    String field;
+    private String field;
 
     @Column
-    String cause;
+    private String cause;
 
     @Column
-    String firstElementOfStackTrace;
+    private String firstElementOfStackTrace;
 
     public Error(Exception exception, ErrorDetails errorDetails) {
         if (errorDetails != null) {
