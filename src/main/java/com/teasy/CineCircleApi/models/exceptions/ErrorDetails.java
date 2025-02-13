@@ -27,6 +27,10 @@ public enum ErrorDetails {
             ErrorOnObject.USER, ErrorOnField.USER_DISPLAY_NAME, HttpStatus.BAD_REQUEST),
     ERR_USER_DISPLAY_NAME_INCORRECT("DisplayName provided %s is incorrect, should be between 4 and 20 characters",
             ErrorOnObject.USER, ErrorOnField.USER_DISPLAY_NAME, HttpStatus.BAD_REQUEST),
+    ERR_USER_JWT_TOKEN_EMPTY("Jwt Token provided is empty",
+            ErrorOnObject.USER, ErrorOnField.USER_JWT_TOKEN, HttpStatus.BAD_REQUEST),
+    ERR_USER_REFRESH_TOKEN_EMPTY("Refresh Token provided is empty",
+            ErrorOnObject.USER, ErrorOnField.USER_REFRESH_TOKEN, HttpStatus.BAD_REQUEST),
 
     /* Library errors */
     ERR_LIBRARY_NOT_FOUND("Library for username %s and mediaId %S cannot be found",
@@ -83,6 +87,12 @@ public enum ErrorDetails {
             null,
             HttpStatus.INTERNAL_SERVER_ERROR
     ),
+
+    /* Auth errors */
+    ERR_AUTH_CANNOT_REFRESH_TOKEN("Cannot refresh token with jwt and refreshToken provided",
+            ErrorOnObject.USER, ErrorOnField.USER_JWT_TOKEN, HttpStatus.UNAUTHORIZED),
+    ERR_AUTH_REFRESH_TOKEN_EXPIRED("Refresh token has expired, you should sign-in again",
+            ErrorOnObject.USER, ErrorOnField.USER_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED),
 
     /* Global errors */
     ERR_GLOBAL_SEARCH_QUERY_EMPTY("Query is required to search",

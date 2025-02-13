@@ -3,9 +3,11 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.teasy.CineCircleApi.models.dtos.JwtRefreshTokenDto;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.*;
+import com.teasy.CineCircleApi.models.dtos.responses.AuthRefreshTokenResponse;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -30,6 +33,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final TokenService tokenService;
 
     private final static String resetPasswordUrlKey = "resetPasswordUrl";
     private final static String usernameKey = "username";
@@ -40,10 +44,35 @@ public class UserService {
     @Autowired
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       EmailService emailService) {
+                       EmailService emailService, TokenService tokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.tokenService = tokenService;
+    }
+
+    public AuthRefreshTokenResponse refreshToken(AuthRefreshTokenRequest authRefreshTokenRequest) throws ExpectedException {
+        // check that jwt token is correct, even if expired, with the username in claims
+        String username;
+        try {
+            username = tokenService.getUsernameFromToken(authRefreshTokenRequest.jwtToken());
+        } catch (Exception e) {
+            throw new ExpectedException(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN, e);
+        }
+        var user = findUserByUsernameOrElseThrow(username);
+
+        // check that refreshToken provided match the one in database
+        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(authRefreshTokenRequest.jwtRefreshToken())) {
+            throw new ExpectedException(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN);
+        }
+
+        // check that refresh token is not expired
+        if (user.getRefreshTokenExpirationDate() == null || user.getRefreshTokenExpirationDate().isBefore(LocalDateTime.now())) {
+            throw new ExpectedException(ErrorDetails.ERR_AUTH_REFRESH_TOKEN_EXPIRED);
+        }
+
+        var newJwtToken = tokenService.generateToken(username);
+        return new AuthRefreshTokenResponse(newJwtToken);
     }
 
     public UserFullInfoDto createUser(AuthSignUpRequest request) throws ExpectedException {
@@ -58,15 +87,32 @@ public class UserService {
             throw new ExpectedException(ErrorDetails.ERR_USER_EMAIL_ALREADY_EXISTS.addingArgs(request.email()));
         }
 
+        var refreshToken = tokenService.generateRefreshToken();
+
         var user = new User(
                 finalUsername,
                 request.email(),
                 passwordEncoder.encode(request.password()),
-                request.displayName()
+                request.displayName(),
+                refreshToken.tokenString(),
+                refreshToken.expirationDate()
         );
         userRepository.save(user);
 
         return entityToFullInfoDto(user);
+    }
+
+    public JwtRefreshTokenDto getRefreshTokenForUser(String username) throws ExpectedException {
+        var user = findUserByUsernameOrElseThrow(username);
+        // si le refresh token est nul ou expiré, il faut en générer un nouveau
+        if (user.getRefreshToken() == null || user.getRefreshTokenExpirationDate() == null
+                || user.getRefreshTokenExpirationDate().isBefore(LocalDateTime.now())) {
+            var newRefreshToken = tokenService.generateRefreshToken();
+            user.setRefreshToken(newRefreshToken.tokenString());
+            user.setRefreshTokenExpirationDate(newRefreshToken.expirationDate());
+            userRepository.save(user);
+        }
+        return new JwtRefreshTokenDto(user.getRefreshToken(), user.getRefreshTokenExpirationDate());
     }
 
     public UserFullInfoDto getUserFullInfo(String username) throws ExpectedException {

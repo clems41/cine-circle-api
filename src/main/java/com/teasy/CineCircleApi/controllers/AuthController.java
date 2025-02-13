@@ -3,8 +3,10 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthMeUpdateRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.AuthRefreshTokenRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthResetPasswordRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthSignUpRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.AuthRefreshTokenResponse;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.TokenService;
@@ -46,10 +48,11 @@ public class AuthController {
     )
     @SecurityRequirement(name = "basic")
     public ResponseEntity<AuthSignInResponse> createAuthenticationToken(Authentication authentication) throws ExpectedException {
-        var jwtToken = tokenService.generateToken(authentication);
+        var jwtToken = tokenService.generateToken(authentication.getName());
         var username = tokenService.getUsernameFromToken(jwtToken.tokenString());
         var user = userService.getUserFullInfoByUsernameOrEmail(username, username);
-        return ResponseEntity.ok().body(new AuthSignInResponse(jwtToken, user));
+        var refreshToken = userService.getRefreshTokenForUser(username);
+        return ResponseEntity.ok().body(new AuthSignInResponse(jwtToken, refreshToken, user));
     }
 
     @PostMapping("/sign-up")
@@ -58,6 +61,14 @@ public class AuthController {
             @RequestBody @Valid AuthSignUpRequest request
     ) throws ExpectedException {
         return ResponseEntity.ok().body(userService.createUser(request));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh JWT token")
+    public ResponseEntity<AuthRefreshTokenResponse> refreshToken(
+            @RequestBody @Valid AuthRefreshTokenRequest request
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.refreshToken(request));
     }
 
     @PutMapping("/me")

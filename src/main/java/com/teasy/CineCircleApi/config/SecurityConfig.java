@@ -6,11 +6,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-
 import lombok.extern.slf4j.Slf4j;
-
-import org.apache.commons.codec.binary.Base64;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -32,12 +28,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 
 import javax.sql.DataSource;
-
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.RSAPublicKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.security.KeyFactory;
 import java.util.List;
 
 @Configuration
@@ -81,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 new AntPathRequestMatcher("/h2-console/**"),
                                 new AntPathRequestMatcher("/api/v1/auth/sign-up"),
+                                new AntPathRequestMatcher("/api/v1/auth/refresh"),
                                 new AntPathRequestMatcher("/api/v1/users/reset-password"),
                                 new AntPathRequestMatcher("/api/v1/notifications/websocket/**"),
                                 new AntPathRequestMatcher("/swagger-ui/**"),

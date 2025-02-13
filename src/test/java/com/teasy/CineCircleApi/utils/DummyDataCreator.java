@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,7 +28,7 @@ public class DummyDataCreator {
                 RandomUtils.randomString(10),
                 RandomUtils.randomString(6));
         var hashPassword = RandomUtils.randomString(16);
-        var user = new User(username, email, hashPassword, displayName);
+        var user = new User(username, email, hashPassword, displayName, UUID.randomUUID().toString(), LocalDateTime.now().plusDays(1));
         if (userRepository != null && storeInDatabase) {
             return userRepository.save(user);
         }

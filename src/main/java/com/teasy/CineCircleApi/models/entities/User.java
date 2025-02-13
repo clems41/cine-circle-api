@@ -6,14 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import jakarta.persistence.Id;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.Objects;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -70,18 +64,26 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "media_id"))
     private Set<Media> headings;
 
+    @Column
+    private String refreshToken;
+
+    @Column
+    private LocalDateTime refreshTokenExpirationDate;
+
     @PrePersist
     protected void onCreateAbstractBaseEntity() {
         this.topicName = UUID.randomUUID();
     }
 
-    public User(String username, String email, String hashPassword, String displayName) {
+    public User(String username, String email, String hashPassword, String displayName, String refreshToken, LocalDateTime refreshTokenExpirationDate) {
         this.username = username;
         this.email = email;
         this.hashPassword = hashPassword;
         this.displayName = displayName;
         this.enabled = true;
         this.relatedUsers = Set.of();
+        this.refreshToken = refreshToken;
+        this.refreshTokenExpirationDate = refreshTokenExpirationDate;
     }
 
     public void addRelatedUser(User user) {

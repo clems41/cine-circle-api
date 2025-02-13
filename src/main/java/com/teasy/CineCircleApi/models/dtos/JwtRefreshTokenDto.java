@@ -2,11 +2,11 @@ package com.teasy.CineCircleApi.models.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-public record JwtTokenDto(
+public record JwtRefreshTokenDto(
         String tokenString,
         @JsonFormat(timezone = "Europe/Paris")
-        Date expirationDate
+        LocalDateTime expirationDate
 ) {
 }

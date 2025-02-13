@@ -1,6 +1,11 @@
 package com.teasy.CineCircleApi.it;
 
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
+import com.teasy.CineCircleApi.models.dtos.requests.AuthRefreshTokenRequest;
+import com.teasy.CineCircleApi.models.dtos.responses.AuthRefreshTokenResponse;
+import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
+import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
+import com.teasy.CineCircleApi.models.exceptions.ErrorResponse;
 import com.teasy.CineCircleApi.utils.HttpUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -9,6 +14,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -18,7 +25,6 @@ public class UserTest extends IntegrationTestAbstract {
         /* Data */
         var signUpRequest = authenticator.authenticateNewUser();
         var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
-        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
         var userToAdd1 = dummyDataCreator.generateUser(true);
         var userToAdd2 = dummyDataCreator.generateUser(true);
         var userToAdd3 = dummyDataCreator.generateUser(true);
@@ -122,7 +128,6 @@ public class UserTest extends IntegrationTestAbstract {
         /* Data */
         var signUpRequest = authenticator.authenticateNewUser();
         var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
-        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
         var fakeUser = dummyDataCreator.generateUser(false);
         fakeUser.setId(UUID.randomUUID());
 
@@ -211,7 +216,6 @@ public class UserTest extends IntegrationTestAbstract {
         /* Data */
         var signUpRequest = authenticator.authenticateNewUser();
         var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
-        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
         var fakeUser = dummyDataCreator.generateUser(false);
         fakeUser.setId(UUID.randomUUID());
 
@@ -229,5 +233,106 @@ public class UserTest extends IntegrationTestAbstract {
                         UserFullInfoDto.class
                 );
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void refreshToken() {
+        /* Sign up user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Sign in user ang get token */
+        ResponseEntity<AuthSignInResponse> signInResponse = this.restTemplate
+                .withBasicAuth(signUpRequest.username(), signUpRequest.password())
+                .getForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("sign-in")),
+                        AuthSignInResponse.class
+                );
+        Assertions.assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(signInResponse.getBody()).isNotNull();
+        var jwtToken = signInResponse.getBody().getToken().tokenString();
+        Assertions.assertThat(jwtToken).isNotEmpty();
+        var jwtRefreshToken = signInResponse.getBody().getRefreshToken();
+        Assertions.assertThat(jwtRefreshToken.tokenString()).isNotEmpty();
+        Assertions.assertThat(jwtRefreshToken.expirationDate()).isAfter(LocalDateTime.now());
+
+        /* Refresh token */
+        var refreshRequest = new AuthRefreshTokenRequest(jwtToken, jwtRefreshToken.tokenString());
+        ResponseEntity<AuthRefreshTokenResponse> refreshTokenResponse = this.restTemplate
+                .postForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("refresh")),
+                        refreshRequest,
+                        AuthRefreshTokenResponse.class
+                );
+        Assertions.assertThat(refreshTokenResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(refreshTokenResponse.getBody()).isNotNull();
+        var newJwtToken = refreshTokenResponse.getBody().getJwtToken();
+        Assertions.assertThat(newJwtToken.tokenString()).isNotEmpty();
+        Assertions.assertThat(newJwtToken.expirationDate()).isAfter(Instant.now());
+    }
+
+    @Test
+    public void refreshToken_badRefreshToken() {
+        /* Sign up user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Sign in user ang get token */
+        ResponseEntity<AuthSignInResponse> signInResponse = this.restTemplate
+                .withBasicAuth(signUpRequest.username(), signUpRequest.password())
+                .getForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("sign-in")),
+                        AuthSignInResponse.class
+                );
+        Assertions.assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(signInResponse.getBody()).isNotNull();
+        var jwtToken = signInResponse.getBody().getToken().tokenString();
+        Assertions.assertThat(jwtToken).isNotEmpty();
+        var jwtRefreshToken = signInResponse.getBody().getRefreshToken();
+        Assertions.assertThat(jwtRefreshToken.tokenString()).isNotEmpty();
+        Assertions.assertThat(jwtRefreshToken.expirationDate()).isAfter(LocalDateTime.now());
+
+        /* Refresh token */
+        var refreshRequest = new AuthRefreshTokenRequest(jwtToken, "toto");
+        ResponseEntity<ErrorResponse> refreshTokenResponse = this.restTemplate
+                .postForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("refresh")),
+                        refreshRequest,
+                        ErrorResponse.class
+                );
+        Assertions.assertThat(refreshTokenResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        Assertions.assertThat(refreshTokenResponse.getBody()).isNotNull();
+        Assertions.assertThat(refreshTokenResponse.getBody().errorCode()).isEqualTo(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN.getCode());
+    }
+
+    @Test
+    public void refreshToken_badToken() {
+        /* Sign up user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Sign in user ang get token */
+        ResponseEntity<AuthSignInResponse> signInResponse = this.restTemplate
+                .withBasicAuth(signUpRequest.username(), signUpRequest.password())
+                .getForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("sign-in")),
+                        AuthSignInResponse.class
+                );
+        Assertions.assertThat(signInResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(signInResponse.getBody()).isNotNull();
+        var jwtToken = signInResponse.getBody().getToken().tokenString();
+        Assertions.assertThat(jwtToken).isNotEmpty();
+        var jwtRefreshToken = signInResponse.getBody().getRefreshToken();
+        Assertions.assertThat(jwtRefreshToken.tokenString()).isNotEmpty();
+        Assertions.assertThat(jwtRefreshToken.expirationDate()).isAfter(LocalDateTime.now());
+
+        /* Refresh token with bad token */
+        var refreshRequest = new AuthRefreshTokenRequest("toto", jwtRefreshToken.tokenString());
+        ResponseEntity<ErrorResponse> refreshTokenResponse = this.restTemplate
+                .postForEntity(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.authUrl.concat("refresh")),
+                        refreshRequest,
+                        ErrorResponse.class
+                );
+        Assertions.assertThat(refreshTokenResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        Assertions.assertThat(refreshTokenResponse.getBody()).isNotNull();
+        Assertions.assertThat(refreshTokenResponse.getBody().errorCode()).isEqualTo(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN.getCode());
     }
 }

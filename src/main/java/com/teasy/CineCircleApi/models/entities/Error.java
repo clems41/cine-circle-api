@@ -16,7 +16,7 @@ import java.util.UUID;
 @Setter
 @Table(name = "errors",
         indexes = {
-                @Index(columnList = "errorCode"),
+                @Index(columnList = "code"),
         }
 )
 @NoArgsConstructor

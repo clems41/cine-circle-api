@@ -8,6 +8,8 @@ public enum ErrorOnField {
     USER_RESET_PASSWORD_TOKEN,
     USER_PASSWORD,
     USER_DISPLAY_NAME,
+    USER_JWT_TOKEN,
+    USER_REFRESH_TOKEN,
 
     /* Library fields */
     LIBRARY_RATING,

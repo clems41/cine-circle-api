@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 @Table(name = "emails",
         indexes = {
-                @Index(columnList = "errorCode"),
+                @Index(columnList = "receiver"),
         }
 )
 public class Email {
