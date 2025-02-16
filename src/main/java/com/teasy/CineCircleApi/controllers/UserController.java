@@ -4,6 +4,7 @@ package com.teasy.CineCircleApi.controllers;
 import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.UserResetPasswordRequest;
+import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRelatedRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSearchRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.UserSendResetPasswordEmailRequest;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
@@ -73,6 +74,17 @@ public class UserController {
             @PathVariable UUID id
     ) throws ExpectedException {
         return ResponseEntity.ok().body(userService.getUser(id));
+    }
+
+    @GetMapping("/related")
+    @Operation(summary = "Get all related users with pagination and sorting")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<Page<UserDto>> getRelatedUsers(
+            Principal principal,
+            Pageable pageable,
+            @Valid UserSearchRelatedRequest request
+    ) throws ExpectedException {
+        return ResponseEntity.ok().body(userService.getRelatedUsers(pageable, request, principal.getName()));
     }
 
     @PutMapping("/related/{related_user_id}")

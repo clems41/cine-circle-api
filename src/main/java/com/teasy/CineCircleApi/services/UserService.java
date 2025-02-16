@@ -198,6 +198,25 @@ public class UserService {
         emailService.sendEmail(sendEmailRequest);
     }
 
+    public Page<UserDto> getRelatedUsers(Pageable pageable, UserSearchRelatedRequest request, String authenticatedUsername) throws ExpectedException {
+        var authenticatedUser = findUserByUsernameOrElseThrow(authenticatedUsername);
+        if(request.query() == null || request.query().isEmpty()) {
+            if (pageable.getSort().isEmpty()) {
+                // Default sorting : first the user that received the most recommendations from authenticatedUser
+                return userRepository.getRelatedUsersWithRecommendationsSentSorting(authenticatedUser.getId(), pageable).map(this::entityToDto);
+            } else {
+                return userRepository.getRelatedUsers(authenticatedUser.getId(), pageable).map(this::entityToDto);
+            }
+        } else {
+            if (pageable.getSort().isEmpty()) {
+                // Default sorting : first the user that received the most recommendations from authenticatedUser
+                return userRepository.getRelatedUsersWithRecommendationsSentSortingWithQueryFilter(authenticatedUser.getId(), request.query(), pageable).map(this::entityToDto);
+            } else {
+                return userRepository.getRelatedUsersWithQueryFilter(authenticatedUser.getId(), request.query(), pageable).map(this::entityToDto);
+            }
+        }
+    }
+
     public UserFullInfoDto addUserToRelatedUsers(String username, UUID relatedUserId) throws ExpectedException {
         var user = findUserByUsernameOrElseThrow(username);
         if (user.getId().equals(relatedUserId)) {

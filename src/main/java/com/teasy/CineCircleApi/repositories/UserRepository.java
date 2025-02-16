@@ -11,9 +11,9 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    public Optional<User> findByUsernameOrEmail(String username, String email);
-    public Optional<User> findByEmail(String email);
-    public Optional<User> findByUsername(String username);
+    Optional<User> findByUsernameOrEmail(String username, String email);
+    Optional<User> findByEmail(String email);
+    Optional<User> findByUsername(String username);
 
     @Query(value = "SELECT u FROM User u " +
             "WHERE (u.username LIKE %?1% " +
@@ -24,4 +24,42 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                     "OR u.displayName LIKE %?1%)" +
                     "AND u.id != ?2")
     Page<User> searchUsers(String query, UUID requestUserId, Pageable pageable);
+
+    @Query(value = "select * from users " +
+            "where id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1)",
+            countQuery = "select COUNT(*) from users " +
+                    "where id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1)",
+            nativeQuery = true)
+    Page<User> getRelatedUsers(UUID requestUserId, Pageable pageable);
+
+    @Query(value = "select users.* from users " +
+            "LEFT join recommendations ON recommendations.receiver = users.id AND recommendations.sent_by = ?1 " +
+            "where users.id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1) " +
+            "group by users.id " +
+            "order by count(recommendations.*) DESC",
+            countQuery = "select count(*) from users " +
+                    "where users.id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1) ",
+            nativeQuery = true)
+    Page<User> getRelatedUsersWithRecommendationsSentSorting(UUID requestUserId, Pageable pageable);
+
+    @Query(value = "select * from users " +
+            "where id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1)" +
+            "and users.username LIKE %?2% ",
+            countQuery = "select COUNT(*) from users " +
+                    "where id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1)" +
+                    "and users.username LIKE %?2% ",
+            nativeQuery = true)
+    Page<User> getRelatedUsersWithQueryFilter(UUID requestUserId, String query, Pageable pageable);
+
+    @Query(value = "select users.* from users " +
+            "LEFT join recommendations ON recommendations.receiver = users.id AND recommendations.sent_by = ?1 " +
+            "where users.id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1) " +
+            "and users.username LIKE %?2% " +
+            "group by users.id " +
+            "order by count(recommendations.*) DESC",
+            countQuery = "select count(*) from users " +
+                    "where users.id in (SELECT user_relationships.related_to_user_id FROM user_relationships WHERE user_relationships.user_id = ?1) " +
+            "and users.username LIKE %?2% ",
+            nativeQuery = true)
+    Page<User> getRelatedUsersWithRecommendationsSentSortingWithQueryFilter(UUID requestUserId, String query, Pageable pageable);
 }

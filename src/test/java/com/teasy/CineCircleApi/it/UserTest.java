@@ -1,14 +1,18 @@
 package com.teasy.CineCircleApi.it;
 
+import com.teasy.CineCircleApi.models.dtos.UserDto;
 import com.teasy.CineCircleApi.models.dtos.UserFullInfoDto;
 import com.teasy.CineCircleApi.models.dtos.requests.AuthRefreshTokenRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthRefreshTokenResponse;
 import com.teasy.CineCircleApi.models.dtos.responses.AuthSignInResponse;
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ErrorResponse;
+import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.utils.HttpUtils;
+import com.teasy.CineCircleApi.utils.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -16,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -334,5 +340,152 @@ public class UserTest extends IntegrationTestAbstract {
         Assertions.assertThat(refreshTokenResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         Assertions.assertThat(refreshTokenResponse.getBody()).isNotNull();
         Assertions.assertThat(refreshTokenResponse.getBody().errorCode()).isEqualTo(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN.getCode());
+    }
+
+    @Test
+    public void defaultSortingForRelatedUsers() {
+        /* Data */
+        var signUpRequest = authenticator.authenticateNewUser();
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+
+        // create relatedUsers with specific number of received recommendations from authenticated user
+        var userWhoReceived5Recommendations = dummyDataCreator.generateUser(true);
+        var userWhoReceived4Recommendations = dummyDataCreator.generateUser(true);
+        var userWhoReceived3Recommendations = dummyDataCreator.generateUser(true);
+        var userWhoReceived2Recommendations = dummyDataCreator.generateUser(true);
+        var userWhoReceived0Recommendations = dummyDataCreator.generateUser(true);
+        authenticatedUser.addRelatedUser(userWhoReceived5Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived4Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived3Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived2Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived0Recommendations);
+        userRepository.save(authenticatedUser);
+
+        // create recommendations for each related user
+        for (int i = 0; i < 5; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived5Recommendations, null, true);
+        }
+        for (int i = 0; i < 4; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived4Recommendations, null, true);
+        }
+        for (int i = 0; i < 3; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived3Recommendations, null, true);
+        }
+        for (int i = 0; i < 2; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived2Recommendations, null, true);
+        }
+
+        // create recommendations between other users
+        dummyDataCreator.generateRecommendation(true, userWhoReceived3Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived3Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived3Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived3Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived4Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived3Recommendations, userWhoReceived2Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived5Recommendations, userWhoReceived4Recommendations, null, true);
+        dummyDataCreator.generateRecommendation(true, userWhoReceived2Recommendations, userWhoReceived3Recommendations, null, true);
+
+
+        /* Get related users */
+        Map<String, Object> queryParameters = new HashMap<>();
+        queryParameters.put("page", 0);
+        queryParameters.put("size", 10);
+        ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
+                .exchange(
+                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
+                        HttpMethod.GET,
+                        new HttpEntity<>(null, headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(response.getBody()).isNotNull();
+
+        /* Check response and sorting */
+        var relatedUsers = response.getBody().getContent();
+        Assertions.assertThat(relatedUsers).isNotNull();
+        Assertions.assertThat(relatedUsers).hasSize(5);
+        Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(1).getId()).isEqualTo(userWhoReceived4Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(2).getId()).isEqualTo(userWhoReceived3Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(3).getId()).isEqualTo(userWhoReceived2Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.getLast().getId()).isEqualTo(userWhoReceived0Recommendations.getId().toString());
+
+    }
+
+    @Test
+    public void queryAndDefaultSortingForRelatedUsers() {
+        /* Data */
+        var signUpRequest = authenticator.authenticateNewUser();
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+
+        // create word that will use for matching username
+        var query = RandomUtils.randomString(4);
+
+        // create relatedUsers with specific number of received recommendations from authenticated user
+        var userWhoReceived5Recommendations = dummyDataCreator.generateUserWithUsername(true, RandomUtils.randomString(4).concat(query).concat(RandomUtils.randomString(2)));
+        var userWhoReceived4Recommendations = dummyDataCreator.generateUserWithUsername(true, RandomUtils.randomString(4).concat(query).concat(RandomUtils.randomString(2)));
+        var userWhoReceived3Recommendations = dummyDataCreator.generateUserWithUsername(true, RandomUtils.randomString(4).concat(query).concat(RandomUtils.randomString(2)));
+        var userWhoReceived2Recommendations = dummyDataCreator.generateUserWithUsername(true, RandomUtils.randomString(4).concat(query).concat(RandomUtils.randomString(2)));
+        var userWhoReceived1Recommendations = dummyDataCreator.generateUserWithUsername(true, RandomUtils.randomString(4).concat(query).concat(RandomUtils.randomString(2)));
+        authenticatedUser.addRelatedUser(userWhoReceived5Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived4Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived3Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived2Recommendations);
+        authenticatedUser.addRelatedUser(userWhoReceived1Recommendations);
+
+        // create non-matching relatedUser
+        for (int i = 0; i < 10; i++) {
+            var user = dummyDataCreator.generateUser(true);
+            authenticatedUser.addRelatedUser(user);
+        }
+
+        userRepository.save(authenticatedUser);
+
+        // create recommendations for each related user
+        for (int i = 0; i < 5; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived5Recommendations, null, true);
+        }
+        for (int i = 0; i < 4; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived4Recommendations, null, true);
+        }
+        for (int i = 0; i < 3; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived3Recommendations, null, true);
+        }
+        for (int i = 0; i < 2; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived2Recommendations, null, true);
+        }
+        for (int i = 0; i < 1; i++) {
+            dummyDataCreator.generateRecommendation(true, authenticatedUser, userWhoReceived1Recommendations, null, true);
+        }
+
+
+        /* Get related users */
+        Map<String, Object> queryParameters = new HashMap<>();
+        queryParameters.put("page", 0);
+        queryParameters.put("size", 10);
+        queryParameters.put("query", query);
+        ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
+                .exchange(
+                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
+                        HttpMethod.GET,
+                        new HttpEntity<>(null, headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(response.getBody()).isNotNull();
+
+        /* Check response and sorting */
+        var relatedUsers = response.getBody().getContent();
+        Assertions.assertThat(relatedUsers).isNotNull();
+        Assertions.assertThat(relatedUsers).hasSize(5);
+        Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(1).getId()).isEqualTo(userWhoReceived4Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(2).getId()).isEqualTo(userWhoReceived3Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(3).getId()).isEqualTo(userWhoReceived2Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.getLast().getId()).isEqualTo(userWhoReceived1Recommendations.getId().toString());
     }
 }

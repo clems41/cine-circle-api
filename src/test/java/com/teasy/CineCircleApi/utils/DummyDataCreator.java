@@ -22,8 +22,12 @@ public class DummyDataCreator {
     private CircleRepository circleRepository;
 
     public User generateUser(Boolean storeInDatabase) {
-        var displayName = RandomUtils.randomString(20);
         var username = RandomUtils.randomString(10);
+        return generateUserWithUsername(storeInDatabase, username);
+    }
+
+    public User generateUserWithUsername(Boolean storeInDatabase, String username) {
+        var displayName = RandomUtils.randomString(20);
         var email = String.format("%s@%s.com",
                 RandomUtils.randomString(10),
                 RandomUtils.randomString(6));
