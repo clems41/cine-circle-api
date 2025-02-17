@@ -48,7 +48,7 @@ public class User {
     @Column(unique = true, updatable = false)
     private UUID topicName;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany
     @JoinTable(
             name = "user_relationships",
             joinColumns = @JoinColumn(name = "user_id"),
