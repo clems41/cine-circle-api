@@ -14,10 +14,7 @@ import com.teasy.CineCircleApi.utils.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -50,8 +47,8 @@ public class UserTest extends IntegrationTestAbstract {
         Assertions.assertThat(response.getBody()).isNotNull();
 
         // check that user1 is in relatedUsers
-        Assertions.assertThat(response.getBody().getRelatedUsers().size()).isEqualTo(1);
-        Assertions.assertThat(response.getBody().getRelatedUsers().stream()
+        var relatedUsers = getRelatedUsers(headers, null);
+        Assertions.assertThat(relatedUsers.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd1.getId().toString())))
                 .isTrue();
 
@@ -72,8 +69,9 @@ public class UserTest extends IntegrationTestAbstract {
         Assertions.assertThat(response2.getBody()).isNotNull();
 
         // check that user1 is in relatedUsers
-        Assertions.assertThat(response2.getBody().getRelatedUsers().size()).isEqualTo(2);
-        Assertions.assertThat(response2.getBody().getRelatedUsers().stream()
+        var relatedUsers2 = getRelatedUsers(headers, null);
+        Assertions.assertThat(relatedUsers2).hasSize(2);
+        Assertions.assertThat(relatedUsers2.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd2.getId().toString())))
                 .isTrue();
 
@@ -94,35 +92,20 @@ public class UserTest extends IntegrationTestAbstract {
         Assertions.assertThat(response3.getBody()).isNotNull();
 
         // check that user1 is in relatedUsers
-        Assertions.assertThat(response3.getBody().getRelatedUsers().size()).isEqualTo(3);
-        Assertions.assertThat(response3.getBody().getRelatedUsers().stream()
+        var relatedUsers3 = getRelatedUsers(headers, null);
+        Assertions.assertThat(relatedUsers3).hasSize(3);
+        Assertions.assertThat(relatedUsers3.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd3.getId().toString())))
                 .isTrue();
 
-        /* Get user full info */
-        String urlGetUserFullInfo = String.format("%s%sme",
-                HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl
-        );
-        ResponseEntity<UserFullInfoDto> responseUserFullInfo = this.restTemplate
-                .exchange(
-                        urlGetUserFullInfo,
-                        HttpMethod.GET,
-                        new HttpEntity<>(null, headers),
-                        UserFullInfoDto.class
-                );
-
         /* Check that all 3 users are in relatedUsers */
-        Assertions.assertThat(responseUserFullInfo.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(responseUserFullInfo.getBody()).isNotNull();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().size()).isEqualTo(3);
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
+        Assertions.assertThat(relatedUsers3.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd1.getId().toString())))
                 .isTrue();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
+        Assertions.assertThat(relatedUsers3.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd2.getId().toString())))
                 .isTrue();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
+        Assertions.assertThat(relatedUsers3.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd3.getId().toString())))
                 .isTrue();
     }
@@ -182,37 +165,19 @@ public class UserTest extends IntegrationTestAbstract {
         Assertions.assertThat(response.getBody()).isNotNull();
 
         // check that userToRemove is not in relatedUsers
-        Assertions.assertThat(response.getBody().getRelatedUsers().size()).isEqualTo(2);
-        Assertions.assertThat(response.getBody().getRelatedUsers().stream()
+        var relatedUsers = getRelatedUsers(headers, null);
+        Assertions.assertThat(relatedUsers).hasSize(2);
+        Assertions.assertThat(relatedUsers.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToRemove.getId().toString())))
                 .isFalse();
 
-        /* Get user full info */
-        String urlGetUserFullInfo = String.format("%s%sme",
-                HttpUtils.getTestingUrl(port),
-                HttpUtils.authUrl
-        );
-        ResponseEntity<UserFullInfoDto> responseUserFullInfo = this.restTemplate
-                .exchange(
-                        urlGetUserFullInfo,
-                        HttpMethod.GET,
-                        new HttpEntity<>(null, headers),
-                        UserFullInfoDto.class
-                );
-
-        /* Check that only users 1 and 2 are in relatedUsers */
-        Assertions.assertThat(responseUserFullInfo.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(responseUserFullInfo.getBody()).isNotNull();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().size()).isEqualTo(2);
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
+        /* Check that users 1 and 2 are in relatedUsers */
+        Assertions.assertThat(relatedUsers.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd1.getId().toString())))
                 .isTrue();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
+        Assertions.assertThat(relatedUsers.stream()
                         .anyMatch(userDto -> Objects.equals(userDto.getId(), userToAdd2.getId().toString())))
                 .isTrue();
-        Assertions.assertThat(responseUserFullInfo.getBody().getRelatedUsers().stream()
-                        .anyMatch(userDto -> Objects.equals(userDto.getId(), userToRemove.getId().toString())))
-                .isFalse();
     }
 
     @Test
@@ -389,19 +354,9 @@ public class UserTest extends IntegrationTestAbstract {
         Map<String, Object> queryParameters = new HashMap<>();
         queryParameters.put("page", 0);
         queryParameters.put("size", 10);
-        ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
-                .exchange(
-                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
-                        HttpMethod.GET,
-                        new HttpEntity<>(null, headers),
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(response.getBody()).isNotNull();
+        var relatedUsers = getRelatedUsers(headers, queryParameters);
 
         /* Check response and sorting */
-        var relatedUsers = response.getBody().getContent();
         Assertions.assertThat(relatedUsers).isNotNull();
         Assertions.assertThat(relatedUsers).hasSize(5);
         Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
@@ -436,19 +391,9 @@ public class UserTest extends IntegrationTestAbstract {
         queryParameters.put("page", 0);
         queryParameters.put("size", 10);
         queryParameters.put("sort", "username,desc");
-        ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
-                .exchange(
-                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
-                        HttpMethod.GET,
-                        new HttpEntity<>(null, headers),
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(response.getBody()).isNotNull();
+        var relatedUsers = getRelatedUsers(headers, queryParameters);
 
         /* Check response and sorting by username desc */
-        var relatedUsers = response.getBody().getContent();
         Assertions.assertThat(relatedUsers).isNotNull();
         Assertions.assertThat(relatedUsers).hasSize(5);
         var expectedRelatedUsers = new ArrayList<>(List
@@ -509,19 +454,9 @@ public class UserTest extends IntegrationTestAbstract {
         queryParameters.put("page", 0);
         queryParameters.put("size", 10);
         queryParameters.put("query", "");
-        ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
-                .exchange(
-                        HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
-                        HttpMethod.GET,
-                        new HttpEntity<>(null, headers),
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-        Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Assertions.assertThat(response.getBody()).isNotNull();
+        var relatedUsers = getRelatedUsers(headers, queryParameters);
 
         /* Check response and sorting */
-        var relatedUsers = response.getBody().getContent();
         Assertions.assertThat(relatedUsers).isNotNull();
         Assertions.assertThat(relatedUsers).hasSize(5);
         Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
@@ -584,6 +519,19 @@ public class UserTest extends IntegrationTestAbstract {
         queryParameters.put("page", 0);
         queryParameters.put("size", 10);
         queryParameters.put("query", query);
+        var relatedUsers = getRelatedUsers(headers, queryParameters);
+
+        /* Check response and sorting */
+        Assertions.assertThat(relatedUsers).isNotNull();
+        Assertions.assertThat(relatedUsers).hasSize(5);
+        Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(1).getId()).isEqualTo(userWhoReceived4Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(2).getId()).isEqualTo(userWhoReceived3Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.get(3).getId()).isEqualTo(userWhoReceived2Recommendations.getId().toString());
+        Assertions.assertThat(relatedUsers.getLast().getId()).isEqualTo(userWhoReceived1Recommendations.getId().toString());
+    }
+    
+    private List<UserDto> getRelatedUsers(HttpHeaders headers, Map<String, Object> queryParameters) {
         ResponseEntity<CustomPageImpl<UserDto>> response = this.restTemplate
                 .exchange(
                         HttpUtils.getUriWithQueryParameter(port, HttpUtils.userUrl.concat("related"), queryParameters),
@@ -594,15 +542,7 @@ public class UserTest extends IntegrationTestAbstract {
                 );
         Assertions.assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         Assertions.assertThat(response.getBody()).isNotNull();
-
-        /* Check response and sorting */
-        var relatedUsers = response.getBody().getContent();
-        Assertions.assertThat(relatedUsers).isNotNull();
-        Assertions.assertThat(relatedUsers).hasSize(5);
-        Assertions.assertThat(relatedUsers.getFirst().getId()).isEqualTo(userWhoReceived5Recommendations.getId().toString());
-        Assertions.assertThat(relatedUsers.get(1).getId()).isEqualTo(userWhoReceived4Recommendations.getId().toString());
-        Assertions.assertThat(relatedUsers.get(2).getId()).isEqualTo(userWhoReceived3Recommendations.getId().toString());
-        Assertions.assertThat(relatedUsers.get(3).getId()).isEqualTo(userWhoReceived2Recommendations.getId().toString());
-        Assertions.assertThat(relatedUsers.getLast().getId()).isEqualTo(userWhoReceived1Recommendations.getId().toString());
+        Assertions.assertThat(response.getBody().getContent()).isNotNull();
+        return response.getBody().getContent();
     }
 }

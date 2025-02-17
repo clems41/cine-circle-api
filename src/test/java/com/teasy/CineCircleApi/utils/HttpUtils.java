@@ -23,8 +23,10 @@ public abstract class HttpUtils {
                 .scheme("http")
                 .host("localhost:".concat(String.valueOf(port)))
                 .path("/api/v1".concat(path));
-        for (Map.Entry<String, Object> entry : queryParameters.entrySet()) {
-            uriBuilder.queryParam(entry.getKey(), entry.getValue());
+        if (queryParameters != null) {
+            for (Map.Entry<String, Object> entry : queryParameters.entrySet()) {
+                uriBuilder.queryParam(entry.getKey(), entry.getValue());
+            }
         }
         return uriBuilder.toUriString().replace("%3A", ":");
     }
