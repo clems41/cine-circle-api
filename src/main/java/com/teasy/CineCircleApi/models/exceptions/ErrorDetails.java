@@ -93,6 +93,8 @@ public enum ErrorDetails {
             ErrorOnObject.USER, ErrorOnField.USER_JWT_TOKEN, HttpStatus.UNAUTHORIZED),
     ERR_AUTH_REFRESH_TOKEN_EXPIRED("Refresh token has expired, you should sign-in again",
             ErrorOnObject.USER, ErrorOnField.USER_REFRESH_TOKEN, HttpStatus.UNAUTHORIZED),
+    ERR_AUTH_JWT_TOKEN_INVALID("Cannot decode JWT token from %s",
+            ErrorOnObject.USER, ErrorOnField.USER_JWT_TOKEN, HttpStatus.UNAUTHORIZED),
 
     /* Global errors */
     ERR_GLOBAL_SEARCH_QUERY_EMPTY("Query is required to search",

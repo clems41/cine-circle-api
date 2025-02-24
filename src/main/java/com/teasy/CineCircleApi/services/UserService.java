@@ -53,12 +53,7 @@ public class UserService {
 
     public AuthRefreshTokenResponse refreshToken(AuthRefreshTokenRequest authRefreshTokenRequest) throws ExpectedException {
         // check that jwt token is correct, even if expired, with the username in claims
-        String username;
-        try {
-            username = tokenService.getUsernameFromToken(authRefreshTokenRequest.jwtToken());
-        } catch (Exception e) {
-            throw new ExpectedException(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN, e);
-        }
+        String username = tokenService.getUsernameFromTokenWithoutCheckingValidity(authRefreshTokenRequest.jwtToken());
         var user = findUserByUsernameOrElseThrow(username);
 
         // check that refreshToken provided match the one in database

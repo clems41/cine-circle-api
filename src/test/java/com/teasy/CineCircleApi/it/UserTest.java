@@ -337,7 +337,7 @@ public class UserTest extends IntegrationTestAbstract {
                 );
         Assertions.assertThat(refreshTokenResponse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         Assertions.assertThat(refreshTokenResponse.getBody()).isNotNull();
-        Assertions.assertThat(refreshTokenResponse.getBody().errorCode()).isEqualTo(ErrorDetails.ERR_AUTH_CANNOT_REFRESH_TOKEN.getCode());
+        Assertions.assertThat(refreshTokenResponse.getBody().errorCode()).isEqualTo(ErrorDetails.ERR_AUTH_JWT_TOKEN_INVALID.getCode());
     }
 
     @Test
