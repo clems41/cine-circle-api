@@ -2,14 +2,16 @@ package com.teasy.CineCircleApi.models.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -21,11 +23,7 @@ import java.util.UUID;
                 @Index(columnList = "externalId, mediaProvider")
         }
 )
-public class Media {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class Media extends BaseEntity {
     @Column(nullable = false)
     private String externalId;
 

@@ -23,11 +23,7 @@ import java.util.UUID;
                 @Index(columnList = "password")
         }
 )
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String username;
 

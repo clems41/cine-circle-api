@@ -11,6 +11,7 @@ import com.teasy.CineCircleApi.models.entities.Circle;
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.CircleRepository;
+import com.teasy.CineCircleApi.services.utils.CustomExampleMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -54,8 +55,7 @@ public class CircleService {
     }
 
     public Page<CirclePublicDto> searchPublicCircles(CircleSearchPublicRequest circleSearchPublicRequest, Pageable pageable) {
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
+        ExampleMatcher matcher = CustomExampleMatcher.matchingAll()
                 .withIgnoreNullValues()
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
         var matchingCircle = new Circle();

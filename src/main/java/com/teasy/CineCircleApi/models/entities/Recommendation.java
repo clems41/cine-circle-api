@@ -20,11 +20,7 @@ import java.util.UUID;
         }
 )
 @NoArgsConstructor
-public class Recommendation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class Recommendation extends BaseEntity {
     @Column
     private UUID recommendationRef;
 

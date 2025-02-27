@@ -2,14 +2,16 @@ package com.teasy.CineCircleApi.models.entities;
 
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.utils.StringUtils;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -20,11 +22,7 @@ import java.util.UUID;
         }
 )
 @NoArgsConstructor
-public class Error {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class Error extends BaseEntity {
     @Column
     private Integer httpStatusCode;
 

@@ -12,6 +12,7 @@ import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.models.externals.ExternalMediaShort;
 import com.teasy.CineCircleApi.repositories.MediaRepository;
 import com.teasy.CineCircleApi.services.externals.mediaProviders.MediaProvider;
+import com.teasy.CineCircleApi.services.utils.CustomExampleMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
@@ -103,8 +104,7 @@ public class MediaService {
 
     private Optional<Media> findMediaWithExternalId(String externalId) {
         // build example matcher with external id and media provider
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
+        ExampleMatcher matcher = CustomExampleMatcher.matchingAll()
                 .withIgnoreNullValues();
         var exampleMedia = new Media();
         exampleMedia.setExternalId(String.valueOf(externalId));

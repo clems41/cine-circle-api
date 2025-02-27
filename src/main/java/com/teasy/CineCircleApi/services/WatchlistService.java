@@ -9,8 +9,6 @@ import com.teasy.CineCircleApi.models.entities.Watchlist;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.WatchlistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,27 +34,16 @@ public class WatchlistService {
     }
 
     public void removeFromWatchlist(String username, UUID mediaId) throws ExpectedException {
-        // get existing watchlist record
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
-                .withIgnoreNullValues();
-        var matchingWatchlist = newWatchlist(username, mediaId);
-        matchingWatchlist.setAddedAt(null);
-        var existingRecord = watchlistRepository.findOne(Example.of(matchingWatchlist, matcher));
-
+        var user = userService.findUserByUsernameOrElseThrow(username);
+        mediaService.findMediaByIdOrElseThrow(mediaId); // check if media exists
+        var existingRecord = watchlistRepository.findByUser_IdAndMedia_Id(user.getId(), mediaId);
         existingRecord.ifPresent(watchlistRepository::delete);
     }
 
     public Page<MediaShortDto> getWatchlist(Pageable pageable, String username) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(username);
 
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
-                .withIgnoreNullValues();
-        var matchingWatchlist = new Watchlist();
-        matchingWatchlist.setUser(user);
-
-        var records = watchlistRepository.findAll(Example.of(matchingWatchlist, matcher), pageable);
+        var records = watchlistRepository.findByUser_Id(user.getId(), pageable);
         return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
     }
 

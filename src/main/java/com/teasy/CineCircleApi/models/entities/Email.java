@@ -1,11 +1,13 @@
 package com.teasy.CineCircleApi.models.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,11 +17,7 @@ import java.util.UUID;
                 @Index(columnList = "receiver"),
         }
 )
-public class Email {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class Email extends BaseEntity {
     @Column
     private String sender;
 

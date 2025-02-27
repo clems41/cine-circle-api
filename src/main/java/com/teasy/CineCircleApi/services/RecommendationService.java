@@ -7,12 +7,14 @@ import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationSearchRequest;
 import com.teasy.CineCircleApi.models.dtos.responses.RecommendationCreateResponse;
+import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.enums.RecommendationType;
 import com.teasy.CineCircleApi.models.exceptions.ErrorDetails;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.RecommendationRepository;
+import com.teasy.CineCircleApi.services.utils.CustomExampleMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -96,8 +98,7 @@ public class RecommendationService {
     ) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(authenticatedUsername);
 
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
+        ExampleMatcher matcher = CustomExampleMatcher.matchingAll()
                 .withIgnoreNullValues();
         var matchingRecommendation = new Recommendation();
         RecommendationType recommendationType;
@@ -107,15 +108,15 @@ public class RecommendationService {
             recommendationType = RecommendationType.getFromString(recommendationSearchRequest.type());
         }
         if (recommendationType == RecommendationType.RECEIVED) {
-            matchingRecommendation.setReceiver(user);
+            matchingRecommendation.setReceiver(createMatchingUser(user));
         } else if (recommendationType == RecommendationType.SENT) {
-            matchingRecommendation.setSentBy(user);
+            matchingRecommendation.setSentBy(createMatchingUser(user));
         } else {
             throw new ExpectedException(ErrorDetails.ERR_RECOMMENDATION_TYPE_NOT_SUPPORTED.addingArgs(recommendationSearchRequest.type()));
         }
         if (recommendationSearchRequest.mediaId() != null) {
             var media = mediaService.findMediaByIdOrElseThrow(recommendationSearchRequest.mediaId());
-            matchingRecommendation.setMedia(media);
+            matchingRecommendation.setMedia(createMatchingMedia(media));
         }
         if (recommendationSearchRequest.read() != null) {
             matchingRecommendation.setRead(recommendationSearchRequest.read());
@@ -136,6 +137,18 @@ public class RecommendationService {
         // mark as read
         recommendation.setRead(true);
         recommendationRepository.save(recommendation);
+    }
+
+    private User createMatchingUser(User user) {
+        var matchingUser = new User();
+        matchingUser.setId(user.getId());
+        return matchingUser;
+    }
+
+    private Media createMatchingMedia(Media media) {
+        var matchingMedia = new Media();
+        matchingMedia.setId(media.getId());
+        return matchingMedia;
     }
 
     private RecommendationDto fromEntityToDto(Recommendation recommendation) {

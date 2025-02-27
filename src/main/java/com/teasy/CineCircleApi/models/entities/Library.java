@@ -4,10 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.relational.core.sql.In;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Entity
@@ -21,11 +19,7 @@ import java.util.UUID;
         }
 )
 @NoArgsConstructor
-public class Library {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
-
+public class Library extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_id")
     User user;

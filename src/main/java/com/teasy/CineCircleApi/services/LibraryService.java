@@ -8,8 +8,10 @@ import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
 import com.teasy.CineCircleApi.models.entities.Library;
 import com.teasy.CineCircleApi.models.entities.Media;
+import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.LibraryRepository;
+import com.teasy.CineCircleApi.services.utils.CustomExampleMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -35,7 +37,7 @@ public class LibraryService {
 
     public void addToLibrary(UUID mediaId, LibraryAddMediaRequest libraryAddMediaRequest, String username) throws ExpectedException {
         // update existing library adding if exists
-        var existingRecord = findExistingRecord(username, mediaId);
+        var existingRecord = getExistingLibrary(username, mediaId);
         if (existingRecord.isPresent()) {
             if (libraryAddMediaRequest != null) {
                 var existingLibrary = existingRecord.get();
@@ -54,7 +56,7 @@ public class LibraryService {
 
     public void removeFromLibrary(String username, UUID mediaId) throws ExpectedException {
         // get existing library record
-        var existingRecord = findExistingRecord(username, mediaId);
+        var existingRecord = getExistingLibrary(username, mediaId);
         existingRecord.ifPresent(libraryRepository::delete);
     }
 
@@ -63,15 +65,15 @@ public class LibraryService {
                                                String username) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(username);
 
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
+        // creating matcher
+        ExampleMatcher matcher = CustomExampleMatcher.matchingAll()
                 .withIgnoreNullValues()
                 .withIgnoreCase()
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
 
         // creating matching library based on request
         var matchingLibrary = new Library();
-        matchingLibrary.setUser(user);
+        matchingLibrary.setUser(createMatchingUser(user));
         matchingLibrary.setMedia(createMatchingMedia(librarySearchRequest));
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
@@ -83,13 +85,16 @@ public class LibraryService {
         return libraryRepository.existsByUser_IdAndMedia_Id(user.getId(), mediaId);
     }
 
-    private Optional<Library> findExistingRecord(String username, UUID mediaId) throws ExpectedException {
-        ExampleMatcher matcher = ExampleMatcher
-                .matchingAll()
-                .withIgnoreNullValues();
-        var matchingLibrary = newLibrary(username, mediaId, new LibraryAddMediaRequest(null, null));
-        matchingLibrary.setAddedAt(null);
-        return libraryRepository.findOne(Example.of(matchingLibrary, matcher));
+    private User createMatchingUser(User user) {
+        var matchingUser = new User();
+        matchingUser.setId(user.getId());
+        return matchingUser;
+    }
+
+    private Optional<Library> getExistingLibrary(String username, UUID mediaId) throws ExpectedException {
+        var user = userService.findUserByUsernameOrElseThrow(username);
+        mediaService.findMediaByIdOrElseThrow(mediaId);
+        return libraryRepository.findByUser_IdAndMedia_Id(user.getId(), mediaId);
     }
 
     private Media createMatchingMedia(LibrarySearchRequest librarySearchRequest) {

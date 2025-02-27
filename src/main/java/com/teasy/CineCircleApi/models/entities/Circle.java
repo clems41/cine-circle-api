@@ -8,11 +8,10 @@ import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Getter
-@Entity
 @Setter
+@Entity
 @Table(
         name = "circles",
         indexes = {
@@ -22,11 +21,7 @@ import java.util.UUID;
         }
 )
 @NoArgsConstructor
-public class Circle {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class Circle extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPublic;
 
