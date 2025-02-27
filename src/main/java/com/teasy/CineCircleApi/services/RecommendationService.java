@@ -80,7 +80,7 @@ public class RecommendationService {
             recommendationRepository.save(recommendation);
 
             // send recommendation to concerned users
-            notificationService.sendRecommendation(recommendation);
+            notificationService.sendRecommendation(fromEntityToDto(recommendation));
         }
 
         // add media to library for sender

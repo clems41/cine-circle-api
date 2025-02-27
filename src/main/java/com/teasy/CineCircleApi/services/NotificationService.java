@@ -1,7 +1,7 @@
 package com.teasy.CineCircleApi.services;
 
+import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.responses.NotificationTopicResponse;
-import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.entities.User;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +29,12 @@ public class NotificationService {
         return new NotificationTopicResponse(getTopicFromUser(user));
     }
 
-    public void sendRecommendation(Recommendation recommendation) {
+    public void sendRecommendation(RecommendationDto recommendation) throws ExpectedException {
         try {
-            messagingTemplate.convertAndSend(getTopicFromUser(recommendation.getReceiver()), recommendation);
+            var topic = getTopicForUsername(recommendation.getSentBy().getUsername());
+            messagingTemplate.convertAndSend(topic.getTopic(), recommendation);
         } catch (MessagingException e) {
-            log.error("Error chile sending recommendation through WebSocket for user {} : ",
+            log.error("Error while sending recommendation through WebSocket for user {} : ",
                     recommendation.getReceiver().getId(), e);
         }
     }
