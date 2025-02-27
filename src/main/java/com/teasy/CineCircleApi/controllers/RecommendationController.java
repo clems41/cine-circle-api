@@ -8,6 +8,10 @@ import com.teasy.CineCircleApi.models.dtos.responses.RecommendationCreateRespons
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.services.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -42,9 +46,32 @@ public class RecommendationController {
 
     @GetMapping("")
     @Operation(summary = "Search among all recommendations (received and sent)")
+    @Parameters({
+            @Parameter(name = "page", example = "0",
+                    description = "Results page you want to retrieve (0..N)"),
+            @Parameter(name = "size", example = "10", allowEmptyValue = true,
+                    description = "Number of records per page."),
+            @Parameter(name = "sort", allowEmptyValue = true, example = "sentAt,desc",
+                    schema = @Schema(defaultValue = "sentAt,desc"),
+                    description = "Sort result on specific field and specific order (,asc|desc)"),
+            @Parameter(name = "type", allowEmptyValue = true,
+                    schema = @Schema(allowableValues = {"sent", "received"}),
+                    description = "Filter by recommendation type :sent by authenticated user or received by authenticated user",
+                    examples = {
+                            @ExampleObject(value = "sent"),
+                            @ExampleObject(value = "received")
+                    }
+            ),
+            @Parameter(name = "mediaId", example = "6d085ff5-5e5d-47d7-bce1-b6c5f80199d3", allowEmptyValue = true,
+                    description = "Filter to get only all recommendations about a specific media"),
+            @Parameter(name = "read", example = "false", allowEmptyValue = true,
+                    description = "Filter to get only read recommendations or not"),
+    })
     public ResponseEntity<Page<RecommendationDto>> listReceivedRecommendations(
-            @PageableDefault(sort = "sentAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @Valid RecommendationSearchRequest recommendationSearchRequest,
+            @PageableDefault(sort = "sentAt", direction = Sort.Direction.DESC)
+            @Parameter(hidden = true)
+            Pageable pageable,
+            @Valid @Parameter(hidden = true) RecommendationSearchRequest recommendationSearchRequest,
             Principal principal
     ) throws ExpectedException {
         return ResponseEntity.ok().body(recommendationService.searchRecommendations(
