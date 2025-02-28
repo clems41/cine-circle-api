@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.services.externals.mediaProviders.theMovieDb;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nimbusds.jose.util.Pair;
 import com.teasy.CineCircleApi.models.dtos.requests.MediaSearchRequest;
 import com.teasy.CineCircleApi.models.enums.MediaProviderEnum;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
@@ -39,6 +40,14 @@ import java.util.*;
 @Slf4j
 public class TheMovieDbService implements MediaProvider {
     private final static String stringArrayDelimiter = ",";
+    private final static String genreDelimiter = " & ";
+    private final static List<Pair<String, String>> genresToTranslate = List.of(
+            Pair.of("Politics", "Politique"),
+            Pair.of("War", "Guerre"),
+            Pair.of("Adventure", "Aventure"),
+            Pair.of("Kids", "Enfants"),
+            Pair.of("Reality", "Télé-réalité")
+    );
 
     private final static String tvSuffix = "/tv";
     private final static String movieSuffix = "/movie";
@@ -134,12 +143,7 @@ public class TheMovieDbService implements MediaProvider {
 
         // adding genre
         if (genres != null && !genres.isEmpty()) {
-            media.setGenres(String.join(stringArrayDelimiter, genres
-                    .stream()
-                    .map(NamedIdElement::getName)
-                    .filter(s -> !s.isEmpty())
-                    .toList()
-            ));
+            media.setGenres(arrangeGenres(genres));
         }
 
         // adding trailer
@@ -187,6 +191,29 @@ public class TheMovieDbService implements MediaProvider {
             log.warn("Error when getting watch providers with url {} : {}", url, e.getMessage());
             return List.of();
         }
+    }
+
+    private String arrangeGenres(List<Genre> genres) {
+        // get only not empty genre, cut genre with '&' char and translate the ones that are not already
+        List<String> genresNames = genres.stream().map(Genre::getName).filter(genreName -> !genreName.isEmpty()).toList();
+        List<String> finalGenreNames = new ArrayList<>();
+        for (String genreName : genresNames) {
+            // split by &
+            var splitGenres = genreName.split(genreDelimiter);
+            for (String splitGenre : splitGenres) {
+                String finalGenre = splitGenre;
+                for (Pair<String, String> genreToTranslate: genresToTranslate) {
+                    // translate if needed
+                    if (genreToTranslate.getLeft().equals(splitGenre)) {
+                        finalGenre = genreToTranslate.getRight();
+                        break;
+                    }
+                }
+                // add genre after translation and cut
+                finalGenreNames.add(finalGenre);
+            }
+        }
+        return String.join(stringArrayDelimiter, finalGenreNames);
     }
 
     private <T> ExternalMediaShort fromMovieDbMediaToExternalMediaShort(T movieDbMedia, Class<T> movieDbMediaType) {

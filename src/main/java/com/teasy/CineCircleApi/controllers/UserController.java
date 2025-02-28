@@ -12,7 +12,6 @@ import com.teasy.CineCircleApi.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -89,16 +86,15 @@ public class UserController {
                     description = "Results page you want to retrieve (0..N)"),
             @Parameter(name = "size", example = "10", allowEmptyValue = true,
                     description = "Number of records per page."),
-            @Parameter(name = "sort", allowEmptyValue = true, example = "displayName,asc",
-                    schema = @Schema(defaultValue = "displayName,asc"),
-                    description = "Sort result on specific field and specific order (,asc|desc)"),
+            @Parameter(name = "sort", allowEmptyValue = true, example = "display_name,asc",
+                    description = "Sort result on specific field and specific order (,asc|desc)" +
+                            "Default sorting : user who received the most of recommendations from authenticated user"),
             @Parameter(name = "query", allowEmptyValue = true,
                     description = "Filter with username : username of related users should contains query (case ignored)"
             )
     })
     public ResponseEntity<Page<UserDto>> getRelatedUsers(
             Principal principal,
-            @PageableDefault(sort = "displayName", direction = Sort.Direction.ASC)
             @Parameter(hidden = true) Pageable pageable,
             @Valid @Parameter(hidden = true) UserSearchRelatedRequest request
     ) throws ExpectedException {
