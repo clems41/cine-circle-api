@@ -18,7 +18,7 @@ services:
       - SMTP_SERVER=${SMTP_SERVER}
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_PORT_TLS=587
+      - SMTP_PORT_TLS=465
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/actuator/health"]
       interval: 10s
