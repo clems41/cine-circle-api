@@ -29,7 +29,7 @@ public class EmailService {
     private final EmailRepository emailRepository;
     private final JavaMailSender emailSender;
 
-    private final static String sender = "noreply@cinecirlce.com";
+    private final static String sender = "noreply@hucoapp.io";
     private final static String senderName = "HuCo";
 
     @Value("${spring.mail.templates.path}")
