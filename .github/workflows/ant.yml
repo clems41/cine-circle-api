@@ -20,6 +20,6 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '21'
-        distribution: 'amazon-coretto'
+        distribution: 'coretto'
     - name: Build with Ant
       run: ant -noinput -buildfile build.xml
