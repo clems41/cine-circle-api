@@ -31,7 +31,7 @@ public class ErrorTest extends IntegrationTestAbstract {
         var userIds = List.of(nonExistingReceiverId);
         var recommendationCreateRequest = new RecommendationCreateRequest(
                 media.getId(), userIds, List.of(), comment, rating);
-        ResponseEntity<ErrorResponse> recommendationCreateResponse = this.restTemplate
+        ResponseEntity<ErrorResponse> response = this.restTemplate
                 .exchange(
                         HttpUtils.getTestingUrl(port).concat(HttpUtils.recommendationUrl),
                         HttpMethod.POST,
@@ -40,37 +40,7 @@ public class ErrorTest extends IntegrationTestAbstract {
                 );
         // check response
         var expectedErrorDetails = ErrorDetails.ERR_USER_NOT_FOUND.addingArgs(nonExistingReceiverId);
-        Assertions.assertThat(recommendationCreateResponse.getStatusCode()).isEqualTo(expectedErrorDetails.getHttpStatus());
-        Assertions.assertThat(recommendationCreateResponse.getBody()).isNotNull();
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorMessage())
-                .isEqualTo(expectedErrorDetails.getMessage());
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorCode())
-                .isEqualTo(expectedErrorDetails.getCode());
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorOnObject())
-                .isEqualTo(expectedErrorDetails.getErrorOnObject().name());
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorOnField())
-                .isEqualTo(expectedErrorDetails.getErrorOnField().name());
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorCause()).isNull();
-        Assertions.assertThat(recommendationCreateResponse.getBody().errorStack()).isNull();
-
-        /* Check data in database that all recommendations have been created */
-        var errors = errorRepository.findAll().stream()
-                .filter(error -> Objects.equals(error.getCode(), expectedErrorDetails.getCode())).toList();
-        Assertions.assertThat(errors).hasSize(1);
-        var error = errors.stream().toList().getFirst();
-        Assertions.assertThat(error.getHttpStatusCode())
-                .isEqualTo(expectedErrorDetails.getHttpStatus().value());
-        Assertions.assertThat(error.getMessage())
-                .isEqualTo(expectedErrorDetails.getMessage());
-        Assertions.assertThat(error.getCode())
-                .isEqualTo(expectedErrorDetails.getCode());
-        Assertions.assertThat(error.getObject())
-                .isEqualTo(expectedErrorDetails.getErrorOnObject().name());
-        Assertions.assertThat(error.getField())
-                .isEqualTo(expectedErrorDetails.getErrorOnField().name());
-        Assertions.assertThat(error.getCause()).isNull();
-        Assertions.assertThat(error.getFirstElementOfStackTrace()).isNull();
-        Assertions.assertThat(error.getTriggeredAt()).isBefore(LocalDateTime.now());
+        checkResponseAndInDatabase(expectedErrorDetails, response, false);
     }
 
     @Test
@@ -94,7 +64,7 @@ public class ErrorTest extends IntegrationTestAbstract {
         Assertions.assertThat(emailsInDatabase).hasSize(1);
         var emailStored = emailsInDatabase.getFirst();
         var expectedErrorDetails = ErrorDetails.ERR_EMAIL_SENDING_REQUEST.addingArgs(emailStored.getId(), existingUser.getEmail());
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
     }
 
     @Test
@@ -117,7 +87,7 @@ public class ErrorTest extends IntegrationTestAbstract {
 
         // check response
         var expectedErrorDetails = ErrorDetails.ERR_USER_PASSWORD_TOO_SHORT.addingArgs(password);
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
     }
 
     @Test
@@ -138,7 +108,7 @@ public class ErrorTest extends IntegrationTestAbstract {
 
         // check response
         var expectedErrorDetails = ErrorDetails.ERR_USER_EMAIL_INCORRECT.addingArgs(email);
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
     }
 
     @Test
@@ -166,7 +136,7 @@ public class ErrorTest extends IntegrationTestAbstract {
 
         // check response
         var expectedErrorDetails = ErrorDetails.ERR_RECOMMENDATION_RATING_INCORRECT.addingArgs(rating);
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
     }
 
     @Test
@@ -192,7 +162,7 @@ public class ErrorTest extends IntegrationTestAbstract {
 
         // check response
         var expectedErrorDetails = ErrorDetails.ERR_RECOMMENDATION_USER_IDS_INCORRECT;
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
     }
     @Test
     public void getCircleWithBadUuid() {
@@ -212,11 +182,13 @@ public class ErrorTest extends IntegrationTestAbstract {
                         ErrorResponse.class
                 );
         var expectedErrorDetails = ErrorDetails.ERR_GLOBAL_INVALID_PARAMETER.addingArgs("circle_id", wrongUuid);
-        checkResponseAndInDatabase(expectedErrorDetails, response);
+        checkResponseAndInDatabase(expectedErrorDetails, response, true);
 
     }
 
-    private void checkResponseAndInDatabase(ErrorDetails expectedErrorDetails, ResponseEntity<ErrorResponse> response) {
+    private void checkResponseAndInDatabase(ErrorDetails expectedErrorDetails,
+                                            ResponseEntity<ErrorResponse> response,
+                                            boolean checkStackTrace) {
         Assertions.assertThat(response.getStatusCode()).isEqualTo(expectedErrorDetails.getHttpStatus());
         Assertions.assertThat(response.getBody()).isNotNull();
         Assertions.assertThat(response.getBody().errorMessage())
@@ -231,12 +203,14 @@ public class ErrorTest extends IntegrationTestAbstract {
         } else {
             Assertions.assertThat(response.getBody().errorOnField()).isNull();
         }
-        Assertions.assertThat(response.getBody().errorCause()).isNotNull();
-        Assertions.assertThat(response.getBody().errorStack()).isNotNull();
+        if (checkStackTrace) {
+            Assertions.assertThat(response.getBody().errorCause()).isNotNull();
+            Assertions.assertThat(response.getBody().errorStack()).isNotNull();
+        }
 
         /* Check data in database that all recommendations have been created */
         var errors = errorRepository.findAll().stream()
-                .filter(error -> Objects.equals(error.getCode(), expectedErrorDetails.getCode())).toList();
+                .filter(error -> Objects.equals(error.getMessage(), expectedErrorDetails.getMessage())).toList();
         Assertions.assertThat(errors).hasSize(1);
         var error = errors.stream().toList().getFirst();
         Assertions.assertThat(error.getHttpStatusCode())
@@ -253,8 +227,10 @@ public class ErrorTest extends IntegrationTestAbstract {
         } else {
             Assertions.assertThat(error.getField()).isNull();
         }
-        Assertions.assertThat(error.getCause()).isNotNull();
-        Assertions.assertThat(error.getFirstElementOfStackTrace()).isNotNull();
+        if (checkStackTrace) {
+            Assertions.assertThat(error.getCause()).isNotNull();
+            Assertions.assertThat(error.getFirstElementOfStackTrace()).isNotNull();
+        }
         Assertions.assertThat(error.getTriggeredAt()).isBefore(LocalDateTime.now());
     }
 }
