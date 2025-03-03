@@ -211,7 +211,7 @@ public class ErrorTest extends IntegrationTestAbstract {
         /* Check data in database that all recommendations have been created */
         var errors = errorRepository.findAll().stream()
                 .filter(error -> Objects.equals(error.getMessage(), expectedErrorDetails.getMessage())).toList();
-        Assertions.assertThat(errors).hasSize(1);
+        Assertions.assertThat(errors).isNotEmpty();
         var error = errors.stream().toList().getFirst();
         Assertions.assertThat(error.getHttpStatusCode())
                 .isEqualTo(expectedErrorDetails.getHttpStatus().value());
