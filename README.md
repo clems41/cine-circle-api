@@ -20,21 +20,23 @@ Pour que l'API puisse fonctionner avec Postgres mais également d'autres service
 
 Pour ce faire, créer un fichier ``.env`` et copier le contenu suivant dedans :
 ```dotenv
-DATABASE_USER=postgres
-DATABASE_PASSWORD=postgres
-DATABASE_NAME=cine-circle-api
+DATABASE_USER="postgres"
+DATABASE_PASSWORD="postgres"
+DATABASE_NAME="huco-db"
 THE_MOVIE_DATABASE_API_KEY="XXX"
-SMTP_SERVER="smtp.gmail.com"
-SMTP_USERNAME="teasycinecircle@gmail.com"
+SMTP_SERVER="smtp.hostinger.com"
+SMTP_USERNAME="noreply@hucoapp.io"
 SMTP_PASSWORD="XXX"
 ```
 
 Remplacez les `XXX` par les valeurs correspondantes :
 - `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started), qui peut s'obtenir gratuitement. 
 Il suffit de se créer un compte sur le site.
-- `SMTP_PASSWORD` : mot de passe du compte Gmail Teasy pour l'utiliser comme server SMTP.
+- `SMTP_PASSWORD` : mot de passe du compte mail noreply@hucoapp.io.
 
 ## Lancement
+
+### Démarrer le projet en local avec Docker (recommandé)
 
 Démarrez l'API avec la base de données PostgreSQL :
 ```bash
@@ -50,55 +52,19 @@ docker compose logs api -f
 
 Rendez-vous à la section [Authentification & Swagger](#authentification--swagger) pour découvrir les webservices disponibles.
 
-## Démarrer le projet en local avec Java
+### Démarrer le projet en local avec Java (debug)
 
-### Pré-requis
-
-**Génération de clés**
-
-```bash
-# create rsa key pair
-openssl genrsa -out keypair.pem 2048
-
-# extract public key
-openssl rsa -in keypair.pem -pubout -out public.pem
-
-# create private key in PKCS#8 format
-openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
-```
-
-Copier les clés `public.pem` et `private.pem` dans le dossier `src/main/resources/certs`. Si le dossier n'existe pas, il faut le créer.
-La clé `keypair.pem` peut ensuite être supprimée.
+#### Pré-requis
 
 **PostgreSQL**
 
-Pour fonctionner, l'API a besoin d'une base de données PostgresSQL.
-Plusieurs possibilités :
-1. Utiliser Docker Compose : créer un fichier `docker-compose.yaml` et copier le contenu suivant dedans.
-```yaml
-version: '3.5'
+Pour fonctionner, l'API a besoin d'une base de données PostgresSQL. 
+Vous pouvez utiliser celle paramétrée dans le `docker-compose.yaml`.
+Pour ce faire :
 
-services:
-  postgres:
-    container_name: local_database
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: cine-circle-api
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-       - postgres:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: always
-    
-volumes:
-    postgres:
+```bash
+docker compose up -d database
 ```
-Il suffit ensuite de faire `docker compose up -d` pour déployer la base de données PostgreSQL.
-
-2. Installer Postgres sur la machine et configurer la base de données avec un outil de gestion de base comme `pgAdmin` ou `DBeaver`.
 
 **Variables d'environnement**
 
@@ -106,26 +72,29 @@ Pour que l'API puisse fonctionner avec Postgres mais également d'autres service
 
 Pour ce faire, créer un fichier ``local.yaml`` et copier le contenu suivant dedans :
 ```yaml
-DB_PASSWORD: "XXX"
 DB_USER: "postgres"
+DB_PASSWORD: "postgres"
 DB_HOST: "localhost"
-DB_PORT: "5432"
-DB_NAME: "cine-circle-api"
+DB_NAME: "huco-db"
 THE_MOVIE_DATABASE_API_KEY: "XXX"
-SMTP_SERVER: "smtp.gmail.com"
-SMTP_USERNAME: "teasycinecircle@gmail.com"
+SMTP_SERVER: "smtp.hostinger.com"
+SMTP_USERNAME: "noreply@hucoapp.io"
 SMTP_PASSWORD: "XXX"
-SMTP_PORT_TLS: "587"
+SMTP_PORT_TLS: "465"
 ```
 
 Remplacez les `XXX` par les valeurs correspondantes :
-- `DB_PASSWORD` : mot de passe utiliser pour votre base [PostgreSQL](#postgresql)
 - `THE_MOVIE_DATABASE_API_KEY` : la clé API associée à votre compte [TheMovieDb](https://developer.themoviedb.org/reference/intro/getting-started, qui peut sobtenir gratuitement, il suffit simplement de créer un compte.
-- `SMTP_PASSWORD` : mot de passe du compte Gmail Teasy pour l'utiliser comme server SMTP.
+- `SMTP_PASSWORD` : mot de passe du compte mail noreply@hucoapp.io.
+
+**Plugin EnvFile pour Intellij**
+
+Pour que la configuration fonctionne avec le fichier d'environnement précédemment créé, il faut installer le plugin `EnvFile` dans votre IDE.
 
 ### Lancement
 
 Utilisez la configuration CineCircleApiapplication déjà créée dans Intellij qui utilise le fichier de variables d'environnement.
+Si vous n'utilisez pas Intellij, il faut démarrer le projet en ajoutant les variables du fichier `local.yaml` en tant que variables d'environnement avant de démarrer l'API.
 
 Rendez-vous à la section [Authentification & Swagger](#authentification--swagger) pour découvrir les webservices disponibles.
 
