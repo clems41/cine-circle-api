@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +38,7 @@ public class WatchlistController {
     @GetMapping("")
     @Operation(summary = "List medias from authenticated user watchlist")
     public ResponseEntity<Page<MediaShortDto>> getWatchlist(
-            Pageable page,
+            @PageableDefault(sort = "addedAt", direction = Sort.Direction.DESC) Pageable page,
             Principal principal
     ) throws ExpectedException {
         return ResponseEntity.ok().body(watchlistService.getWatchlist(page, principal.getName()));
