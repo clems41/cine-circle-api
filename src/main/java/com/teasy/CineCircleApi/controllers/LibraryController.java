@@ -41,7 +41,7 @@ public class LibraryController {
     @GetMapping("/")
     @Operation(summary = "Search medias among authenticated user library")
     public ResponseEntity<Page<MediaShortDto>> searchInLibrary(
-            @PageableDefault(sort = "addedAt", direction = Sort.Direction.DESC) Pageable page,
+            @PageableDefault(sort = "addedAt", direction = Sort.Direction.DESC, size = 50) Pageable page,
             @Valid LibrarySearchRequest librarySearchRequest,
             Principal principal
     ) throws ExpectedException {

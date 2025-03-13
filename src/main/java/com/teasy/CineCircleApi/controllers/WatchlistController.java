@@ -38,7 +38,7 @@ public class WatchlistController {
     @GetMapping("")
     @Operation(summary = "List medias from authenticated user watchlist")
     public ResponseEntity<Page<MediaShortDto>> getWatchlist(
-            @PageableDefault(sort = "addedAt", direction = Sort.Direction.DESC) Pageable page,
+            @PageableDefault(sort = "addedAt", direction = Sort.Direction.DESC, size = 50) Pageable page,
             Principal principal
     ) throws ExpectedException {
         return ResponseEntity.ok().body(watchlistService.getWatchlist(page, principal.getName()));
