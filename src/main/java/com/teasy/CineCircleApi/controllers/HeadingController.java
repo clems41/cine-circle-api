@@ -34,9 +34,10 @@ public class HeadingController {
     @GetMapping("/users/{userId}")
     @Operation(summary = "List headings for specific user")
     public ResponseEntity<List<MediaShortDto>> listHeadings(
-            @PathVariable("userId") UUID userId
+            @PathVariable("userId") UUID userId,
+            Principal principal
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(headingService.listHeadings(userId));
+        return ResponseEntity.ok().body(headingService.listHeadingsForUser(userId, principal.getName()));
     }
 
     @GetMapping("/")

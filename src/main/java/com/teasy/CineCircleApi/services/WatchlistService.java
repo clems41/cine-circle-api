@@ -1,10 +1,6 @@
 package com.teasy.CineCircleApi.services;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
-import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.entities.Watchlist;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import com.teasy.CineCircleApi.repositories.WatchlistRepository;
@@ -42,9 +38,14 @@ public class WatchlistService {
 
     public Page<MediaShortDto> getWatchlist(Pageable pageable, String username) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(username);
-
         var records = watchlistRepository.findByUser_Id(user.getId(), pageable);
-        return records.map(watchlist -> fromMediaEntityToMediaDto(watchlist.getMedia()));
+        return records.map(watchlist -> {
+            try {
+                return this.mediaService.fromMediaEntityToDto(watchlist.getMedia(), MediaShortDto.class, username);
+            } catch (ExpectedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public boolean isInWatchlist(String username, UUID mediaId) throws ExpectedException {
@@ -56,12 +57,5 @@ public class WatchlistService {
         var user = userService.findUserByUsernameOrElseThrow(username);
         var media = mediaService.findMediaByIdOrElseThrow(mediaId);
         return new Watchlist(user, media);
-    }
-
-    private MediaShortDto fromMediaEntityToMediaDto(Media media) {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaShortDto.class);
     }
 }

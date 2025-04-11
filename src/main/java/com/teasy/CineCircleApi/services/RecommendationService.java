@@ -3,6 +3,7 @@ package com.teasy.CineCircleApi.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationCreateRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.RecommendationSearchRequest;
@@ -82,7 +83,7 @@ public class RecommendationService {
             recommendationRepository.save(recommendation);
 
             // send recommendation to concerned users
-            notificationService.sendRecommendation(fromEntityToDto(recommendation));
+            notificationService.sendRecommendation(fromEntityToDto(recommendation, authenticatedUsername));
         }
 
         // add media to library for sender
@@ -121,7 +122,13 @@ public class RecommendationService {
         if (recommendationSearchRequest.read() != null) {
             matchingRecommendation.setRead(recommendationSearchRequest.read());
         }
-        return recommendationRepository.findAll(Example.of(matchingRecommendation, matcher), pageable).map(this::fromEntityToDto);
+        return recommendationRepository.findAll(Example.of(matchingRecommendation, matcher), pageable).map(recommendation -> {
+            try {
+                return fromEntityToDto(recommendation, authenticatedUsername);
+            } catch (ExpectedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void markRecommendationAsRead(UUID recommendationId, String authenticatedUsername) throws ExpectedException {
@@ -151,10 +158,12 @@ public class RecommendationService {
         return matchingMedia;
     }
 
-    private RecommendationDto fromEntityToDto(Recommendation recommendation) {
+    private RecommendationDto fromEntityToDto(Recommendation recommendation, String authenticatedUsername) throws ExpectedException {
         var mapper = new ObjectMapper()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .registerModule(new JavaTimeModule());
-        return mapper.convertValue(recommendation, RecommendationDto.class);
+        var dto = mapper.convertValue(recommendation, RecommendationDto.class);
+        dto.setMedia(this.mediaService.fromMediaEntityToDto(recommendation.getMedia(), MediaShortDto.class, authenticatedUsername));
+        return dto;
     }
 }

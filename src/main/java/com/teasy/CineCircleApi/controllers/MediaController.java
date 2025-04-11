@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,17 +40,19 @@ public class MediaController {
     @Operation(summary = "Search media (movie or tv show)")
     public ResponseEntity<List<MediaShortDto>> searchMedias(
             Pageable page,
-            @Valid MediaSearchRequest request
+            @Valid MediaSearchRequest request,
+            Principal principal
     ) {
-        return ResponseEntity.ok().body(mediaService.searchMedia(page, request));
+        return ResponseEntity.ok().body(mediaService.searchMedia(page, request, principal.getName()));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get more details about specific media")
     public ResponseEntity<MediaFullDto> getMedia(
-            @PathVariable("id") UUID id
+            @PathVariable("id") UUID id,
+            Principal principal
     ) throws ExpectedException {
-        return ResponseEntity.ok().body(mediaService.getMedia(id));
+        return ResponseEntity.ok().body(mediaService.getMedia(id, principal.getName()));
     }
 
     @GetMapping("/{id}/watch-providers")

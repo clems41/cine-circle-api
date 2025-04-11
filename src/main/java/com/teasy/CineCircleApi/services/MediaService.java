@@ -39,7 +39,7 @@ public class MediaService {
         this.mediaRepository = mediaRepository;
     }
 
-    public List<MediaShortDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest) {
+    public List<MediaShortDto> searchMedia(Pageable pageable, MediaSearchRequest mediaSearchRequest, String authenticatedUsername) {
         var medias = mediaProvider.searchMedia(pageable, mediaSearchRequest);
         List<MediaShortDto> result = new ArrayList<>();
         medias.forEach(externalMedia -> {
@@ -47,15 +47,15 @@ public class MediaService {
             var existingMedia = findMediaWithExternalId(externalMedia.getExternalId());
             try {
                 if (existingMedia.isPresent()) {
-                    result.add(fromMediaEntityToDto(existingMedia.get(), MediaShortDto.class));
+                    result.add(fromMediaEntityToDto(existingMedia.get(), MediaShortDto.class, authenticatedUsername));
                 } else {
                     var newMedia = fromExternalMediaShortToMediaEntity(externalMedia);
                     newMedia.setCompleted(false);
                     mediaRepository.save(newMedia);
-                    result.add(fromMediaEntityToDto(newMedia, MediaShortDto.class));
+                    result.add(fromMediaEntityToDto(newMedia, MediaShortDto.class, authenticatedUsername));
                 }
             } catch (ExpectedException e) {
-                log.error("Error while converting media entity to dto: " + e.getMessage());
+                log.error("Error while converting media entity to dto", e);
             }
         });
         return result;
@@ -70,7 +70,7 @@ public class MediaService {
         return mediaProvider.getWatchProvidersForMedia(media.getExternalId(), media.getMediaType());
     }
 
-    public MediaFullDto getMedia(UUID id) throws ExpectedException {
+    public MediaFullDto getMedia(UUID id, String authenticatedUsername) throws ExpectedException {
         // get media from database
         var media = findMediaByIdOrElseThrow(id);
 
@@ -79,13 +79,32 @@ public class MediaService {
             completeMedia(media);
             mediaRepository.save(media);
         }
-        return fromMediaEntityToDto(media, MediaFullDto.class);
+        return fromMediaEntityToDto(media, MediaFullDto.class, authenticatedUsername);
     }
 
     public Media findMediaByIdOrElseThrow(UUID id) throws ExpectedException {
         return mediaRepository
                 .findById(id).
                 orElseThrow(() -> new ExpectedException(ErrorDetails.ERR_MEDIA_NOT_FOUND.addingArgs(id)));
+    }
+
+    public <T> T fromMediaEntityToDto(Media media, Class<T> toValueType, String authenticatedUsername) throws ExpectedException {
+        if (toValueType != MediaShortDto.class && toValueType != MediaFullDto.class) {
+            throw new ExpectedException(ErrorDetails.ERR_MEDIA_TYPE_NOT_SUPPORTED.addingArgs(toValueType));
+        }
+        var mapper = new ObjectMapper()
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .registerModule(new JavaTimeModule());
+        var dto = mapper.convertValue(media, toValueType);
+        if (toValueType == MediaShortDto.class) {
+            MediaShortDto mediaDto = (MediaShortDto) dto;
+            completeMediaShortDto(mediaDto, authenticatedUsername);
+            return (T) mediaDto;
+        } else {
+            MediaFullDto mediaFullDto = (MediaFullDto) dto;
+            completeMediaShortDto(mediaFullDto, authenticatedUsername);
+            return (T) mediaFullDto;
+        }
     }
 
     private void completeMedia(Media media) throws ExpectedException {
@@ -114,11 +133,9 @@ public class MediaService {
                 .findOne(Example.of(exampleMedia, matcher));
     }
 
-    private <T> T fromMediaEntityToDto(Media media, Class<T> toValueType) throws ExpectedException {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, toValueType);
+    private void completeMediaShortDto(MediaShortDto mediaShortDto, String authenticatedUsername) {
+        mediaShortDto.setIsInLibrary(mediaRepository.isInLibraryOfUser(mediaShortDto.getId(), authenticatedUsername));
+        mediaShortDto.setIsInWatchlist(mediaRepository.isInWatchlistOfUser(mediaShortDto.getId(), authenticatedUsername));
     }
 
     private Media fromExternalMediaShortToMediaEntity(ExternalMediaShort externalMediaShort) {

@@ -1,14 +1,11 @@
 package com.teasy.CineCircleApi.services;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
-import com.teasy.CineCircleApi.models.entities.Media;
 import com.teasy.CineCircleApi.models.exceptions.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,24 +43,17 @@ public class HeadingService {
         userService.save(user);
     }
 
-    public List<MediaShortDto> listHeadings(UUID userId) throws ExpectedException {
-        var user = userService.findUserByIdOrElseThrow(userId);
-        return user.getHeadings().stream().map(
-                this::fromMediaEntityToMediaDto
-        ).toList();
-    }
-
     public List<MediaShortDto> listHeadingsForAuthenticatedUser(String username) throws ExpectedException {
         var user = userService.findUserByUsernameOrElseThrow(username);
-        return user.getHeadings().stream().map(
-                this::fromMediaEntityToMediaDto
-        ).toList();
+        return listHeadingsForUser(user.getId(), username);
     }
 
-    private MediaShortDto fromMediaEntityToMediaDto(Media media) {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaShortDto.class);
+    public List<MediaShortDto> listHeadingsForUser(UUID userId, String authenticatedUsername) throws ExpectedException {
+        var user = userService.findUserByIdOrElseThrow(userId);
+        var headings = new ArrayList<MediaShortDto>();
+        for (var heading : user.getHeadings()) {
+            headings.add(this.mediaService.fromMediaEntityToDto(heading, MediaShortDto.class, authenticatedUsername));
+        }
+        return headings;
     }
 }

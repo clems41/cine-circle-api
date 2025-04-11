@@ -12,6 +12,7 @@ public abstract class HttpUtils {
     public final static String libraryUrl = "/library/";
     public final static String circleUrl = "/circles/";
     public final static String mediaUrl = "/medias/";
+    public final static String headingsUrl = "/headings/";
     public final static String recommendationUrl = "/recommendations";
     public final static String watchlistUrl = "/watchlist";
     public static String getTestingUrl(int port) {

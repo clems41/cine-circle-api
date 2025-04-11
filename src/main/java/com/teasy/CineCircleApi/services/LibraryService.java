@@ -1,8 +1,5 @@
 package com.teasy.CineCircleApi.services;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
 import com.teasy.CineCircleApi.models.dtos.requests.LibraryAddMediaRequest;
 import com.teasy.CineCircleApi.models.dtos.requests.LibrarySearchRequest;
@@ -77,7 +74,13 @@ public class LibraryService {
         matchingLibrary.setMedia(createMatchingMedia(librarySearchRequest));
 
         var records = libraryRepository.findAll(Example.of(matchingLibrary, matcher), pageable);
-        return records.map(library -> fromMediaEntityToMediaDto(library.getMedia()));
+        return records.map(library -> {
+            try {
+                return this.mediaService.fromMediaEntityToDto(library.getMedia(), MediaShortDto.class, username);
+            } catch (ExpectedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public boolean isInLibrary(String username, UUID mediaId) throws ExpectedException {
@@ -111,12 +114,5 @@ public class LibraryService {
         var user = userService.findUserByUsernameOrElseThrow(username);
         var media = mediaService.findMediaByIdOrElseThrow(mediaId);
         return new Library(user, media, libraryAddMediaRequest.comment(), libraryAddMediaRequest.rating());
-    }
-
-    private MediaShortDto fromMediaEntityToMediaDto(Media media) {
-        var mapper = new ObjectMapper()
-                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .registerModule(new JavaTimeModule());
-        return mapper.convertValue(media, MediaShortDto.class);
     }
 }

@@ -21,4 +21,6 @@ public class MediaShortDto {
     private MediaTypeEnum mediaType;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate releaseDate;
+    private Boolean isInLibrary;
+    private Boolean isInWatchlist;
 }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -91,6 +92,9 @@ public class User extends BaseEntity {
     }
 
     public void addMediaToHeadings(Media media) {
+        if(this.headings == null) {
+            this.headings = new HashSet<>();
+        }
         this.headings.add(media);
     }
 

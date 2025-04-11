@@ -1,9 +1,13 @@
 package com.teasy.CineCircleApi.it;
 
+import com.teasy.CineCircleApi.models.dtos.MediaFullDto;
 import com.teasy.CineCircleApi.models.dtos.MediaShortDto;
+import com.teasy.CineCircleApi.models.dtos.RecommendationDto;
+import com.teasy.CineCircleApi.models.entities.Recommendation;
 import com.teasy.CineCircleApi.models.enums.MediaTypeEnum;
 import com.teasy.CineCircleApi.utils.CustomPageImpl;
 import com.teasy.CineCircleApi.utils.HttpUtils;
+import com.teasy.CineCircleApi.utils.RandomUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.ParameterizedTypeReference;
@@ -157,5 +161,81 @@ public class WatchlistTest extends IntegrationTestAbstract {
         Assertions.assertThat(watchlist3.stream().anyMatch(
                 mediaDto -> Objects.equals(mediaDto.getId(), media3.getId().toString())
         )).isTrue(); // check that watchlist3 contains media3
+    }
+
+    @Test
+    public void AddMedia_CheckThatIsInWatchlistIsTrueWhenGettingMedia() {
+        /* Init */
+        var media = dummyDataCreator.generateMedia(true, MediaTypeEnum.MOVIE); // create media in database
+
+        /* Create user */
+        var signUpRequest = authenticator.authenticateNewUser();
+
+        /* Create Authorization header with JWT token */
+        var headers = authenticator.authenticateUserAndGetHeadersWithJwtToken(signUpRequest.username(), signUpRequest.password());
+
+        /* Add media to watchlist */
+        ResponseEntity<String> addMediaResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.watchlistUrl).concat("/").concat(media.getId().toString()),
+                        HttpMethod.PUT,
+                        new HttpEntity<>(null, headers),
+                        String.class
+                );
+        Assertions.assertThat(addMediaResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        /* Get media */
+        ResponseEntity<MediaFullDto> getMediaResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.mediaUrl).concat(media.getId().toString()),
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        MediaFullDto.class
+                );
+        Assertions.assertThat(getMediaResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(getMediaResponse.getBody()).isNotNull();
+        Assertions.assertThat(getMediaResponse.getBody().getIsInWatchlist()).isTrue();
+
+        /* Add media to relatedUser's heading */
+        var relatedUserUsername = RandomUtils.randomString(10);
+        var relatedUser = dummyDataCreator.generateUserWithUsername(true, relatedUserUsername);
+        var authenticatedUser = userRepository.findByUsername(signUpRequest.username()).orElseThrow();
+        authenticatedUser.addRelatedUser(relatedUser);
+        userRepository.save(authenticatedUser);
+        relatedUser.addMediaToHeadings(media);
+        userRepository.save(relatedUser);
+
+        /* Get headings for related user and check boolean */
+        ResponseEntity<List<MediaShortDto>> headingsResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.headingsUrl).concat("users/").concat(relatedUser.getId().toString()),
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(headingsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(headingsResponse.getBody()).isNotNull();
+        List<MediaShortDto> headings = headingsResponse.getBody();
+        Assertions.assertThat(headings).hasSize(1);
+        Assertions.assertThat(headings.getFirst().getIsInWatchlist()).isTrue();
+
+        /* RelatedUser send recommendation to authenticatedUser for this media */
+        var recommendation = new Recommendation(UUID.randomUUID(), relatedUser, media, authenticatedUser, "top", 5);
+        recommendationRepository.save(recommendation);
+
+        /* Get recommendations and check boolean */
+        ResponseEntity<CustomPageImpl<RecommendationDto>> recommendationsResponse = this.restTemplate
+                .exchange(
+                        HttpUtils.getTestingUrl(port).concat(HttpUtils.recommendationUrl),
+                        HttpMethod.GET,
+                        new HttpEntity<>(headers),
+                        new ParameterizedTypeReference<>() {
+                        }
+                );
+        Assertions.assertThat(recommendationsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Assertions.assertThat(recommendationsResponse.getBody()).isNotNull();
+        Assertions.assertThat(recommendationsResponse.getBody().getContent()).hasSize(1);
+        Assertions.assertThat(recommendationsResponse.getBody().getContent().getFirst().getMedia().getIsInWatchlist()).isTrue();
     }
 }
